@@ -1,139 +1,221 @@
-<div className="max-w-[1180px] mx-auto">
+import { Phone, Mail } from "lucide-react";
+import {
+  FaFacebookF,
+  FaInstagram,
+  FaYoutube,
+} from "react-icons/fa";
 
-  <div className="border-t border-[#E8E8E8]" />
+import botikLogo from "../assets/Botik.png";
 
-  <div className="grid grid-cols-[180px_130px_130px_150px_180px] justify-between pt-[55px] pb-[48px]">
+function Footer() {
+  return (
+    <footer className="w-full bg-white mt-24">
 
-    {/* LOGO */}
+      <div className="max-w-[1280px] mx-auto px-2">
 
-    <div>
+        {/* Top Border */}
 
-      <img
-        src={botikLogo}
-        alt=""
-        className="w-[135px]"
-      />
+        <div className="border-t border-[#E5E5E5]"></div>
 
-      <p className="mt-[2px] text-[12px] tracking-[8px]">
-        FASHION
-      </p>
+        {/* Main Footer */}
 
-      <p className="mt-8 w-[180px] text-[12px] leading-[18px] text-[#222]">
-        A Social Impact Enterprise run by ex-servicemen.
-        100 acres of organic farmland in Hyderabad,
-        working towards dignified livelihoods through
-        natural precision farming.
-      </p>
+        <div className="grid grid-cols-1 md:grid-cols-[250px_150px_150px_170px_210px] justify-between gap-10 py-[60px]">
 
-    </div>
+          {/* Logo */}
 
-    {/* CUSTOMER */}
+          <div>
 
-    <div>
+            <img
+              src={botikLogo}
+              alt="BOTIK"
+              className="w-[135px]"
+            />
 
-      <h4 className="text-[12px] font-semibold uppercase mb-5">
-        CUSTOMER CARE
-      </h4>
+            <p className="mt-[2px] text-[12px] tracking-[8px] uppercase text-black">
+              FASHION
+            </p>
 
-      <ul className="space-y-[9px] text-[12px]">
-        <li>Orders & Shipment</li>
-        <li>Returns & Exchange</li>
-        <li>Contact Us</li>
-        <li>FAQs</li>
-      </ul>
+            <p className="mt-8 w-[215px] text-[12px] leading-[18px] text-[#111111]">
+              A Social Impact Enterprise run by ex-servicemen.
+              100 acres of organic farmland in Hyderabad,
+              working towards dignified livelihoods through
+              natural precision farming.
+            </p>
 
-    </div>
+          </div>
 
-    {/* EXPERIENCE */}
+          {/* Customer Care */}
 
-    <div>
+          <div>
 
-      <h4 className="text-[12px] font-semibold uppercase mb-5">
-        EXPERIENCE
-      </h4>
+            <h3 className="text-[13px] font-semibold uppercase mb-5 tracking-wide">
+              CUSTOMER CARE
+            </h3>
 
-      <ul className="space-y-[9px] text-[12px]">
-        <li>About Us</li>
-        <li>Contact Us</li>
-        <li>Bulk Orders</li>
-        <li>Sitemap</li>
-      </ul>
+            <ul className="space-y-[10px] text-[12px] text-[#111111]">
 
-    </div>
+              <li>
+                <a href="#">Orders & Shipment</a>
+              </li>
 
-    {/* EXPLORE */}
+              <li>
+                <a href="#">Returns & Exchange</a>
+              </li>
 
-    <div>
+              <li>
+                <a href="#">Contact Us</a>
+              </li>
 
-      <h4 className="text-[12px] font-semibold uppercase mb-5">
-        EXPLORE
-      </h4>
+              <li>
+                <a href="#">FAQs</a>
+              </li>
 
-      <ul className="space-y-[9px] text-[12px]">
-        <li>Lehenga</li>
-        <li>Gowns</li>
-        <li>Bridal Collections</li>
-        <li>Dress Materials</li>
-      </ul>
+            </ul>
 
-    </div>
+          </div>
 
-    {/* CONTACT */}
+          {/* Experience */}
 
-    <div>
+          <div>
 
-      <h4 className="text-[12px] font-semibold uppercase mb-5">
-        CONTACT US
-      </h4>
+            <h3 className="text-[13px] font-semibold uppercase mb-5 tracking-wide">
+              EXPERIENCE
+            </h3>
 
-      <div className="space-y-3 text-[12px]">
+            <ul className="space-y-[10px] text-[12px] text-[#111111]">
 
-        <div className="flex items-center gap-2">
-          <Phone size={14}/>
-          <span>+91 93899 03752</span>
+              <li>
+                <a href="#">About Us</a>
+              </li>
+
+              <li>
+                <a href="#">Contact Us</a>
+              </li>
+
+              <li>
+                <a href="#">Bulk Orders</a>
+              </li>
+
+              <li>
+                <a href="#">Sitemap</a>
+              </li>
+
+            </ul>
+
+          </div>
+
+          {/* Explore */}
+
+          <div>
+
+            <h3 className="text-[13px] font-semibold uppercase mb-5 tracking-wide">
+              EXPLORE
+            </h3>
+
+            <ul className="space-y-[10px] text-[12px] text-[#111111]">
+
+              <li>
+                <a href="#">Lehenga</a>
+              </li>
+
+              <li>
+                <a href="#">Gowns</a>
+              </li>
+
+              <li>
+                <a href="#">Bridal Collections</a>
+              </li>
+
+              <li>
+                <a href="#">Dress Materials</a>
+              </li>
+
+            </ul>
+
+          </div>
+
+          {/* Contact */}
+
+          <div>
+
+            <h3 className="text-[13px] font-semibold uppercase mb-5 tracking-wide">
+              CONTACT US
+            </h3>
+
+            <div className="space-y-4">
+
+              <div className="flex items-center gap-3 text-[12px]">
+
+                <Phone size={15} strokeWidth={2} />
+
+                <span>+91 93899 03752</span>
+
+              </div>
+
+              <div className="flex items-center gap-3 text-[12px]">
+
+                <Mail size={15} strokeWidth={2} />
+
+                <span>info@botikfashion.in</span>
+
+              </div>
+
+            </div>
+
+            <h3 className="text-[13px] font-semibold uppercase mt-10 mb-4 tracking-wide">
+              FOLLOW US
+            </h3>
+
+            <div className="flex items-center gap-4 text-[16px]">
+
+              <a href="#">
+                <FaFacebookF />
+              </a>
+
+              <a href="#">
+                <FaInstagram />
+              </a>
+
+              <a href="#">
+                <FaYoutube />
+              </a>
+
+            </div>
+
+          </div>
+
         </div>
 
-        <div className="flex items-center gap-2">
-          <Mail size={14}/>
-          <span>info@botikfashion.in</span>
+        {/* Bottom */}
+
+        <div className="border-t border-[#E5E5E5] h-[66px] flex flex-col md:flex-row items-center justify-between">
+
+          <p className="text-[12px] text-[#222222]">
+            © 2026 Botik Fashion. All rights reserved.
+          </p>
+
+          <div className="flex items-center gap-6 text-[12px] text-[#222222] mt-3 md:mt-0">
+
+            <a href="#">
+              Privacy Policy
+            </a>
+
+            <a href="#">
+              Refund Policy
+            </a>
+
+            <a href="#">
+              Terms of Use
+            </a>
+
+          </div>
+
         </div>
 
       </div>
 
-      <h4 className="mt-8 text-[12px] font-semibold uppercase">
-        FOLLOW US
-      </h4>
+    </footer>
+  );
+}
 
-      <div className="flex gap-3 mt-4">
-
-        <FaFacebookF size={14}/>
-
-        <FaInstagram size={14}/>
-
-        <FaYoutube size={14}/>
-
-      </div>
-
-    </div>
-
-  </div>
-
-  <div className="border-t border-[#E8E8E8] py-6 flex justify-between items-center">
-
-    <p className="text-[12px]">
-      © 2026 Botik Fashion. All rights reserved.
-    </p>
-
-    <div className="flex gap-5 text-[12px]">
-
-      <a href="#">Privacy Policy</a>
-
-      <a href="#">Refund Policy</a>
-
-      <a href="#">Terms of Use</a>
-
-    </div>
-
-  </div>
-
-</div>
+export default Footer;
