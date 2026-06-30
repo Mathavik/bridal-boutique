@@ -11,10 +11,7 @@ function Home() {
   return (
     <>
       <Banner />
-      <Celebration />
-      <NewArrivals />
       <SpotlightSection />
-      <Spotlight />
       <NewArrivals />
       <EditorsPick/>
       <Celebration />
