@@ -3,19 +3,23 @@ import bannerImage from "../assets/banner.png";
 
 function Banner() {
   return (
-    <section
+    <div
       style={{
         width: "100%",
-        height: "100vh",
-        backgroundImage: `url(${bannerImage})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-        backgroundAttachment: "fixed",
+        height: "500px",
+        backgroundColor: "red",
       }}
     >
-      {/* Your banner content goes here */}
-    </section>
+      <img
+        src={bannerImage}
+        alt="Banner"
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+        }}
+      />
+    </div>
   );
 }
 

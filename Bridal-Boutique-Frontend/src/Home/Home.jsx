@@ -1,24 +1,18 @@
 import React from "react";
-
-// import Header from "../components/Header";
-// import Banner from "./Banner";
+import Banner from "./banner";
 import Celebration from "./celebration";
 import NewArrivals from "./newarrivals";
 import Spotlight from "./spotlight";
 import Workflow from "./workflow";
-import Banner from "./banner";
-// import Footer from "../components/Footer";
 
 function Home() {
   return (
     <>
-   
-      <Banner/>
+      <Banner />
       <Celebration />
       <NewArrivals />
       <Spotlight />
       <Workflow />
-     
     </>
   );
 }
