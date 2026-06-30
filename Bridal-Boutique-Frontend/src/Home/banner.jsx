@@ -2,14 +2,17 @@ import bannerImage from "../assets/banner.png";
 
 function Banner() {
   return (
-    <section className="w-full mt-6">
-      <div className="max-w-[1280px] mx-auto px-6 lg:px-10">
+    <section className="pt-[100px] pb-8">
+
+<div className="max-w-[1220px] mx-auto px-0">
         <img
           src={bannerImage}
           alt="Banner"
-          className="w-full h-[520px] object-cover object-[78%_center]"
+          className="w-full h-[540px] object-cover object-[80%_center]"
         />
+
       </div>
+
     </section>
   );
 }
