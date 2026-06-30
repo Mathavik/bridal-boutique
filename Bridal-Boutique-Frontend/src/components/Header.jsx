@@ -6,74 +6,113 @@ import {
   ShoppingBag,
 } from "lucide-react";
 
+import botikLogo from "../assets/Botik.png";
+
 function Header() {
   return (
-    <header className="w-full border-b border-gray-200 bg-white">
-      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 lg:px-8">
+<header className="w-full bg-white border-b border-[#ECECEC] mt-[30px]">
+        <div className="max-w-[1280px] mx-auto h-[88px] px-6 lg:px-10 flex items-center justify-between">
 
-        {/* Left */}
-        <div className="flex items-center gap-8">
+        {/* LEFT */}
+        <div className="flex items-center gap-8 flex-1">
 
-          <button className="flex items-center gap-2 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-100">
-            <Menu size={16} />
-            Shop All
+          <button className="flex items-center gap-2 border border-[#D7D7D7] rounded-md px-4 h-[40px] text-[14px] font-medium hover:bg-gray-50 duration-200">
+            <Menu size={15} strokeWidth={2} />
+            <span>Shop All</span>
           </button>
 
-          <nav className="hidden lg:flex items-center gap-8 text-sm font-medium text-gray-700">
-            <a href="#" className="hover:text-black">
+          <nav className="hidden lg:flex items-center gap-8 text-[14px] text-[#181818] font-medium">
+
+            <a href="#" className="hover:text-black duration-200">
               Bridal Lehenga
             </a>
 
-            <a href="#" className="hover:text-black">
+            <a href="#" className="hover:text-black duration-200">
               Bridal Gowns
             </a>
 
-            <a href="#" className="hover:text-black">
+            <a href="#" className="hover:text-black duration-200">
               Dress Materials
             </a>
+
           </nav>
 
         </div>
 
-        {/* Logo */}
+        {/* CENTER LOGO */}
 
-        <div className="absolute left-1/2 -translate-x-1/2 text-center">
+        <div className="flex flex-col items-center justify-center flex-shrink-0 px-10">
+  <img
+    src={botikLogo}
+    alt="BOTIK"
+    className="w-[150px] h-auto"
+  />
 
-          <h1 className="text-4xl font-black tracking-widest">
-            BOTIK
-          </h1>
+  <span
+    className="mt-[2px] text-[13px] uppercase tracking-[8px] text-[#181818]"
+  >
+    FASHION
+  </span>
+</div>
 
-          <p className="text-xs tracking-[8px] text-gray-500">
-            FASHION
-          </p>
+        {/* RIGHT */}
 
-        </div>
+        <div className="flex items-center justify-end gap-6 flex-1">
 
-        {/* Right */}
-
-        <div className="flex items-center gap-5">
-
-          <div className="hidden md:flex items-center rounded-md border border-gray-300 px-3">
+          <div className="hidden md:flex items-center w-[275px] h-[42px] border border-[#D7D7D7] rounded-md px-4">
 
             <input
               type="text"
               placeholder="Search"
-              className="h-10 w-52 outline-none"
+              className="flex-1 text-[14px] outline-none bg-transparent"
             />
 
-            <Search size={18} />
+            <Search
+              size={22}
+              strokeWidth={2}
+              className="cursor-pointer"
+            />
 
           </div>
 
-          <User className="cursor-pointer" size={21} />
+          <User
+            size={24}
+            strokeWidth={2}
+            className="cursor-pointer hover:scale-110 duration-200"
+          />
 
-          <Heart className="cursor-pointer" size={21} />
+          <Heart
+            size={24}
+            strokeWidth={2}
+            className="cursor-pointer hover:scale-110 duration-200"
+          />
 
-          <ShoppingBag className="cursor-pointer" size={21} />
+          <ShoppingBag
+            size={24}
+            strokeWidth={2}
+            className="cursor-pointer hover:scale-110 duration-200"
+          />
 
         </div>
 
       </div>
+
+      {/* MOBILE */}
+
+      <div className="lg:hidden border-t border-[#ECECEC] px-4 py-3 overflow-x-auto">
+
+        <div className="flex gap-6 whitespace-nowrap text-sm">
+
+          <a href="#">Bridal Lehenga</a>
+
+          <a href="#">Bridal Gowns</a>
+
+          <a href="#">Dress Materials</a>
+
+        </div>
+
+      </div>
+
     </header>
   );
 }
