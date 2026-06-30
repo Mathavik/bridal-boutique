@@ -1,25 +1,16 @@
-import React from "react";
 import bannerImage from "../assets/banner.png";
 
 function Banner() {
   return (
-    <div
-      style={{
-        width: "100%",
-        height: "500px",
-        backgroundColor: "red",
-      }}
-    >
-      <img
-        src={bannerImage}
-        alt="Banner"
-        style={{
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-        }}
-      />
-    </div>
+    <section className="w-full mt-6">
+      <div className="max-w-[1280px] mx-auto px-6 lg:px-10">
+        <img
+          src={bannerImage}
+          alt="Banner"
+          className="w-full h-[520px] object-cover object-[78%_center]"
+        />
+      </div>
+    </section>
   );
 }
 
