@@ -1,7 +1,9 @@
-import AppRoutes from "./routes/AppRoutes";
-import './App.css';
+
+
 function App() {
-  return <AppRoutes />;
+  return (
+    <div className="App"></div>
+  );
 }
 
 export default App;
