@@ -4,6 +4,7 @@ import Celebration from "./celebration";
 import NewArrivals from "./newarrivals";
 import Spotlight from "./spotlight";
 import Workflow from "./workflow";
+import EditorsPick from "./editors pick";
 
 function Home() {
   return (
@@ -11,6 +12,7 @@ function Home() {
       <Banner />
       <Celebration />
       <NewArrivals />
+      <EditorsPick/>
       <Spotlight />
       <Workflow />
     </>
