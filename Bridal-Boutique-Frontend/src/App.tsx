@@ -1,36 +1,38 @@
 import React from "react";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-} from "react-router-dom";
-import "./App.css";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+// import "./App.css";
+import Home from "./Home/Home";
 
+// import Home from "./pages/Home/Home";
 
 const App: React.FC = () => {
-
   return (
     <Router>
       <Routes>
-        {/* Public Pages */}
+        {/* Home Page */}
         <Route path="/" element={<Home />} />
-       
 
-        </Route>
-
-        {/* 404 Fallback */}
+        {/* 404 Page */}
         <Route
           path="*"
           element={
-            <h1 className="text-gray-700 text-center mt-20 text-3xl">
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "100vh",
+                fontSize: "32px",
+                fontWeight: "bold",
+              }}
+            >
               404 - Page Not Found
-            </h1>
+            </div>
           }
         />
       </Routes>
     </Router>
   );
 };
-
 
 export default App;
