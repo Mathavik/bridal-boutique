@@ -10,10 +10,10 @@ function Home() {
   return (
     <>
       <Banner />
-      <Celebration />
+      <Spotlight />
       <NewArrivals />
       <EditorsPick/>
-      <Spotlight />
+      <Celebration />
       <Workflow />
     </>
   );
