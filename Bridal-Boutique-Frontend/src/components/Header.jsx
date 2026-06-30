@@ -10,8 +10,8 @@ import botikLogo from "../assets/Botik.png";
 
 function Header() {
   return (
-<header className="w-full bg-white border-b border-[#ECECEC] mt-[30px]">
-        <div className="max-w-[1280px] mx-auto h-[88px] px-6 lg:px-10 flex items-center justify-between">
+<header className="w-full bg-white mt-[30px]">
+          <div className="max-w-[1280px] mx-auto h-[88px] px-6 lg:px-10 flex items-center justify-between">
 
         {/* LEFT */}
         <div className="flex items-center gap-8 flex-1">
