@@ -6,8 +6,6 @@ import image3 from "../assets/spotlight/image3.png";
 import image4 from "../assets/spotlight/image4.png";
 import image5 from "../assets/spotlight/image5.png";
 import image6 from "../assets/spotlight/image6.png";
-// import banner from "../assets/spotlight/banner.png";
-// import botik from "../assets/spotlight/Botik.png";
 
 const products1 = [
   {
@@ -28,133 +26,149 @@ const products1 = [
   },
 ];
 
-const products2 = [
-  {
-    id: 3,
-    image: image5,
-    title: "Agaphi Lehenga",
-    price: "₹3499",
-    oldPrice: "₹6999",
-    offer: "50% OFF",
-  },
-  {
-    id: 4,
-    image: image4,
-    title: "Agaphi Lehenga",
-    price: "₹3499",
-    oldPrice: "₹6999",
-    offer: "50% OFF",
-  },
-];
-
 const Spotlight = () => {
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12">
-
+    <section className="max-w-7xl mx-auto px-6 py-12">
+      {/* Heading */}
       <h2 className="text-3xl font-semibold tracking-[5px] text-center uppercase mb-10">
         IN THE SPOTLIGHT
       </h2>
 
-      {/* Top Section */}
-      <div className="grid lg:grid-cols-3 gap-6 mb-10">
+      {/* ==================== TOP SECTION ==================== */}
 
+      <div className="grid lg:grid-cols-3 gap-6 mb-12">
         {/* Left Products */}
         <div className="grid grid-cols-2 gap-4">
           {products1.map((item) => (
             <div key={item.id}>
               <img
                 src={item.image}
-                alt=""
+                alt={item.title}
                 className="w-full h-[280px] object-cover"
               />
 
-              <h3 className="mt-2 text-sm">{item.title}</h3>
+              <h3 className="mt-3 text-lg font-medium">{item.title}</h3>
 
-              <div className="flex gap-2 text-sm">
+              <div className="flex items-center gap-3 mt-1">
                 <span className="font-semibold">{item.price}</span>
+
                 <span className="line-through text-gray-400">
                   {item.oldPrice}
                 </span>
+
                 <span>{item.offer}</span>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Banner */}
-        <div className="lg:col-span-2 relative">
-
+        {/* Right Banner */}
+        <div className="lg:col-span-2 relative overflow-hidden">
           <img
             src={image1}
-            alt=""
+            alt="Crafted For Celebration"
             className="w-full h-[360px] object-cover"
           />
 
-          <div className="absolute inset-0 flex flex-col justify-center items-center text-white">
-            <h1 className="text-5xl font-serif mb-5">
+          <div className="absolute inset-0 bg-black/10 flex flex-col justify-center items-center">
+            <h1 className="text-5xl font-serif text-white mb-6">
               Crafted For Celebration
             </h1>
 
-            <button className="bg-white text-black px-6 py-2">
+            <button className="bg-white text-black px-8 py-3 font-semibold hover:bg-black hover:text-white transition">
               SHOP NOW
             </button>
           </div>
-
         </div>
       </div>
 
-      {/* Bottom Section */}
-      <div className="grid lg:grid-cols-3 gap-6">
+      {/* ==================== BOTTOM BANNER ==================== */}
 
-        {/* Left Banner */}
-        <div className="lg:col-span-2 relative">
+      <div
+        className="relative h-[420px] bg-cover bg-center overflow-hidden"
+        style={{
+          backgroundImage: `url(${image6})`,
+        }}
+      >
+        <div className="absolute inset-0 bg-black/20"></div>
 
-          <img
-            src={image6}
-            alt=""
-            className="w-full h-[360px] object-cover"
-          />
+        <div className="relative z-10 h-full flex items-center justify-between px-12">
+          {/* Left Content */}
 
-          <div className="absolute inset-0 flex flex-col justify-end p-10 text-white">
-            <h1 className="text-5xl font-serif mb-5">
+          <div className="text-white">
+            <h2 className="text-6xl font-serif mb-8">
               For Every Occasion
-            </h1>
+            </h2>
 
-            <button className="bg-white text-black px-6 py-2 w-fit">
+            <button className="bg-white text-black px-8 py-3 font-semibold hover:bg-black hover:text-white transition">
               SHOP NOW
             </button>
           </div>
 
-        </div>
+          {/* Right Products */}
 
-        {/* Right Products */}
-        <div className="grid grid-cols-2 gap-4">
+          <div className="flex items-center gap-6">
+            {/* Product 1 */}
 
-          {products2.map((item) => (
-            <div key={item.id}>
+            <div className="w-[190px]">
               <img
-                src={item.image}
-                alt=""
-                className="w-full h-[280px] object-cover"
+                src={image4}
+                alt="Agaphi Lehenga"
+                className="w-full h-[265px] object-cover"
               />
 
-              <h3 className="mt-2 text-sm">{item.title}</h3>
+              <div className="text-white mt-3">
+                <h3 className="text-2xl font-medium">
+                  Agaphi Lehenga
+                </h3>
 
-              <div className="flex gap-2 text-sm">
-                <span className="font-semibold">{item.price}</span>
-                <span className="line-through text-gray-400">
-                  {item.oldPrice}
-                </span>
-                <span>{item.offer}</span>
+                <div className="flex items-center gap-3 mt-2 text-xl">
+                  <span className="font-semibold">₹3499</span>
+
+                  <span className="line-through text-gray-300">
+                    ₹6999
+                  </span>
+
+                  <span>50% OFF</span>
+                </div>
               </div>
             </div>
-          ))}
 
+            {/* Product 2 */}
+
+            <div className="w-[190px]">
+              <img
+                src={image5}
+                alt="Agaphi Lehenga"
+                className="w-full h-[265px] object-cover"
+              />
+
+              <div className="text-white mt-3">
+                <h3 className="text-2xl font-medium">
+                  Agaphi Lehenga
+                </h3>
+
+                <div className="flex items-center gap-3 mt-2 text-xl">
+                  <span className="font-semibold">₹3499</span>
+
+                  <span className="line-through text-gray-300">
+                    ₹6999
+                  </span>
+
+                  <span>50% OFF</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Arrow Button */}
+
+            <button className="w-11 h-11 rounded-full bg-white text-black text-xl flex items-center justify-center hover:bg-gray-200 transition">
+              →
+            </button>
+          </div>
         </div>
-
       </div>
-
-    </div>
+    </section>
   );
 };
 
