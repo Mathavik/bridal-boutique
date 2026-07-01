@@ -15,18 +15,22 @@ export default function Wishlist() {
   }, [wishlistItems]);
 
   const removeItem = async (id) => {
-    await axios.delete(`${API_BASE}/wishlist/delete.php?id=${id}`);
-    refreshCounts();
+    const response = await axios.delete(`${API_BASE}/wishlist/delete.php?id=${id}`);
+    if (response.data?.status) {
+      await refreshCounts();
+    }
   };
 
   const moveToCart = async (product) => {
-    await axios.post(`${API_BASE}/cart/save.php`, {
+    const response = await axios.post(`${API_BASE}/cart/save.php`, {
       guest_id: guestId(),
       product_id: product.product_id,
       quantity: 1,
       price: product.offer_price || product.price,
     });
-    removeItem(product.id);
+    if (response.data?.status) {
+      await removeItem(product.id);
+    }
   };
 
   return (

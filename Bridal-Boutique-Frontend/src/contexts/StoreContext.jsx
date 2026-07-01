@@ -2,16 +2,27 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 
 const StoreContext = createContext();
-const guestId = () => localStorage.getItem("bridal_guest_id") || `guest-${Date.now()}`;
+
+const createGuestId = () => {
+  let id = localStorage.getItem("bridal_guest_id");
+  if (!id) {
+    id = `guest-${Date.now()}`;
+    localStorage.setItem("bridal_guest_id", id);
+  }
+  return id;
+};
 
 export function StoreProvider({ children }) {
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
   const [cartItems, setCartItems] = useState([]);
   const [wishlistItems, setWishlistItems] = useState([]);
+  const [guestIdValue] = useState(createGuestId);
+
+  const guestId = () => guestIdValue;
 
   const refreshCounts = async () => {
-    const id = guestId();
+    const id = guestIdValue;
     try {
       const [cartRes, wishlistRes] = await Promise.all([
         axios.get(`http://localhost/bridal-boutique/Bridal-Boutique-backend/api/cart/get.php?guest_id=${id}`),
@@ -33,7 +44,6 @@ export function StoreProvider({ children }) {
   };
 
   useEffect(() => {
-    localStorage.setItem("bridal_guest_id", guestId());
     refreshCounts();
   }, []);
 

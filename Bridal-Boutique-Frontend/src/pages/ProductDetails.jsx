@@ -24,21 +24,25 @@ export default function ProductDetails() {
   }, [id]);
 
   const addToCart = async () => {
-    await axios.post(`${API_BASE}/cart/save.php`, {
+    const response = await axios.post(`${API_BASE}/cart/save.php`, {
       guest_id: guestId(),
       product_id: product.id,
       quantity: 1,
       price: product.offer_price || product.price,
     });
-    refreshCounts();
+    if (response.data?.status) {
+      await refreshCounts();
+    }
   };
 
   const addToWishlist = async () => {
-    await axios.post(`${API_BASE}/wishlist/save.php`, {
+    const response = await axios.post(`${API_BASE}/wishlist/save.php`, {
       guest_id: guestId(),
       product_id: product.id,
     });
-    refreshCounts();
+    if (response.data?.status) {
+      await refreshCounts();
+    }
   };
 
   if (!product) {
