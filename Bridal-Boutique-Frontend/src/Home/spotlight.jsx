@@ -72,7 +72,7 @@ const Spotlight = () => {
         </div>
       ) : (
         <div className="space-y-6">
-          <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+          <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
             <div className="grid gap-4 sm:grid-cols-2">
               {featuredProducts.map((product) => (
                 <div key={product.id} className="rounded-[28px] overflow-hidden border border-[#efe2d0] bg-white shadow-sm">
@@ -102,32 +102,35 @@ const Spotlight = () => {
               ))}
             </div>
 
-            <div className="group relative overflow-hidden rounded-[32px] bg-[#f6efe8] shadow-[0_20px_60px_rgba(0,0,0,0.08)]">
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-              <div className="h-[420px] w-full">
+            <div className="rounded-[28px] overflow-hidden border border-[#efe2d0] bg-white shadow-sm">
+              <button
+                type="button"
+                onClick={() => navigate(`/bridal-lehenga?category_id=${featuredCategory?.id || ''}&product_id=${featuredProducts[0]?.id || ''}`)}
+                className="block w-full overflow-hidden"
+              >
                 {featuredCategory?.banner_image ? (
                   <img
                     src={resolveImageUrl(featuredCategory.banner_image)}
                     alt={featuredCategory.name}
-                    className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                    className="h-72 w-full object-cover transition duration-500 hover:scale-105"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-gray-500">
+                  <div className="flex h-72 w-full items-center justify-center text-gray-500 bg-[#f6efe8]">
                     No spotlight banner available
                   </div>
                 )}
-              </div>
-              <div className="absolute inset-x-0 bottom-0 p-8 text-white sm:p-10">
-                <p className="text-sm uppercase tracking-[4px] text-[#f3d7b8]">Featured Edit</p>
-                <h3 className="mt-2 text-3xl font-semibold sm:text-4xl">
+              </button>
+              <div className="p-4">
+                <p className="text-xs uppercase tracking-[4px] text-[#a97c50]">Featured Edit</p>
+                <h3 className="mt-2 text-xl font-semibold text-[#181818]">
                   {featuredCategory?.name || "Latest Bridal Collection"}
                 </h3>
-                <p className="mt-3 max-w-xl text-sm text-white/80 sm:text-base">
+                <p className="mt-3 text-sm text-gray-600">
                   Discover rich fabrics, statement silhouettes, and bridal essentials crafted for unforgettable moments.
                 </p>
                 <button
                   onClick={() => navigate(`/bridal-lehenga?category_id=${featuredCategory?.id || ''}&product_id=${featuredProducts[0]?.id || ''}`)}
-                  className="mt-6 rounded-full bg-white px-6 py-3 text-sm font-semibold uppercase text-[#181818] transition hover:bg-[#a97c50] hover:text-white"
+                  className="mt-6 rounded-full bg-[#a97c50] px-6 py-3 text-sm font-semibold uppercase text-white transition hover:bg-[#8a663d]"
                 >
                   Shop Now
                 </button>
@@ -168,7 +171,7 @@ const Spotlight = () => {
               </div>
             </div>
 
-            <div className="grid gap-4 sm:grid-rows-2">
+            <div className="grid gap-4 sm:grid-cols-2">
               {gownProducts.map((product) => (
                 <div key={product.id} className="rounded-[28px] overflow-hidden border border-[#efe2d0] bg-white shadow-sm">
                   <button
@@ -179,7 +182,7 @@ const Spotlight = () => {
                     <img
                       src={resolveImageUrl(product.image || "") || "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0"}
                       alt={product.product_name}
-                      className="h-48 w-full object-cover transition duration-200 hover:scale-[1.01]"
+                      className="h-72 w-full object-cover transition duration-200 hover:scale-[1.01]"
                     />
                   </button>
                   <div className="p-4">

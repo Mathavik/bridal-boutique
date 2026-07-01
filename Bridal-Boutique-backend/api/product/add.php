@@ -107,15 +107,23 @@ $query = "INSERT INTO products (
     product_name, product_code, category_id, company_id, price, stock, gst_percentage, barcode, unit,
     short_description, full_description, fabric, embroidery, color, available_sizes, occasion,
     image, image_gallery_json, video_url
-) VALUES (
-    '$name', '$product_code', $category_id, $company_id, $price, $stock, $gst_percentage, '$barcode', '$unit',
-    '$short_description', '$full_description', '$fabric', '$embroidery', '$color', '$available_sizes', '$occasion',
-    '$image', '$image_gallery_json', '$video_url'
-)";
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-if ($conn->query($query)) {
+$stmt = $conn->prepare($query);
+if (!$stmt) {
+    echo json_encode(["status" => false, "message" => $conn->error]);
+    exit;
+}
+
+$params = [$name, $product_code, $category_id, $company_id, $price, $stock, $gst_percentage, $barcode, $unit, $short_description, $full_description, $fabric, $embroidery, $color, $available_sizes, $occasion, $image, $image_gallery_json, $video_url];
+$types = 'ssii' . 'd' . 'i' . 'd' . str_repeat('s', 12);
+$stmt->bind_param($types, ...$params);
+
+if ($stmt->execute()) {
     echo json_encode(["status" => true, "message" => "Product added", "id" => $conn->insert_id]);
 } else {
-    echo json_encode(["status" => false, "message" => $conn->error]);
+    echo json_encode(["status" => false, "message" => $stmt->error]);
 }
+
+$stmt->close();
 ?>
