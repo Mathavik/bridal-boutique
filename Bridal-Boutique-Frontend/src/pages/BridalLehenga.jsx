@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import axios from "axios";
 import { Heart, ShoppingBag } from "lucide-react";
@@ -7,10 +7,15 @@ import { useStore } from "../contexts/StoreContext";
 
 const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
 
+const resolveImageUrl = (src) => {
+  if (!src) return "";
+  return src.startsWith("http") ? src : `${API_BASE}/${src}`;
+};
+
 export default function BridalLehenga() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { guestId, refreshCounts } = useStore();
+  const { guestId, refreshCounts, wishlistItems } = useStore();
   const location = useLocation();
 
   useEffect(() => {
@@ -41,24 +46,47 @@ export default function BridalLehenga() {
   }, [location.search]);
 
   const addToCart = async (product) => {
-    const response = await axios.post(`${API_BASE}/cart/save.php`, {
-      guest_id: guestId(),
-      product_id: product.id,
-      quantity: 1,
-      price: product.offer_price || product.price,
-    });
-    if (response.data?.status) {
-      await refreshCounts();
+    try {
+      const response = await axios.post(`${API_BASE}/cart/save.php`, {
+        guest_id: guestId(),
+        product_id: product.id,
+        quantity: 1,
+        price: product.offer_price || product.price,
+      });
+      if (response.data?.status) {
+        await refreshCounts();
+        alert("Added to cart");
+      } else {
+        alert(response.data?.message || "Unable to add to cart");
+      }
+    } catch (error) {
+      console.error("Add to cart failed:", error);
+      alert("Add to cart failed. Please try again.");
     }
   };
 
+  const wishlistIds = useMemo(
+    () => new Set(wishlistItems.map((item) => item.product_id)),
+    [wishlistItems]
+  );
+
+  const isWishlisted = (product) => wishlistIds.has(product.id);
+
   const addToWishlist = async (product) => {
-    const response = await axios.post(`${API_BASE}/wishlist/save.php`, {
-      guest_id: guestId(),
-      product_id: product.id,
-    });
-    if (response.data?.status) {
-      await refreshCounts();
+    try {
+      const response = await axios.post(`${API_BASE}/wishlist/save.php`, {
+        guest_id: guestId(),
+        product_id: product.id,
+      });
+      if (response.data?.status) {
+        await refreshCounts();
+        alert("Added to wishlist");
+      } else {
+        alert(response.data?.message || "Unable to add to wishlist");
+      }
+    } catch (error) {
+      console.error("Add to wishlist failed:", error);
+      alert("Add to wishlist failed. Please try again.");
     }
   };
 
@@ -81,12 +109,12 @@ export default function BridalLehenga() {
             {products.map((product) => (
               <div key={product.id} className="bg-white rounded-xl shadow-sm overflow-hidden">
                 <Link to={`/product/${product.id}`}>
-                  <img src={product.image || "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0"} alt={product.product_name} className="w-full h-80 object-cover" />
+                  <img src={resolveImageUrl(product.image || "") || "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0"} alt={product.product_name} className="w-full h-80 object-cover" />
                 </Link>
                 <div className="p-5">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold">{product.product_name}</h3>
-                    <span className="text-sm text-[#a97c50]">{product.brand || "BOTIK"}</span>
+                    <span className="text-sm text-[#a97c50]">{product.brand || "Padmavathi Collection"}</span>
                   </div>
                   <p className="text-sm text-gray-600 mt-2 line-clamp-2">{product.short_description}</p>
                   <div className="mt-3 flex items-center gap-2 text-sm text-gray-500">
@@ -102,8 +130,11 @@ export default function BridalLehenga() {
                     <button onClick={() => addToCart(product)} className="flex-1 flex items-center justify-center gap-2 rounded-md bg-[#181818] px-3 py-2 text-white">
                       <ShoppingBag size={16} /> Add to Cart
                     </button>
-                    <button onClick={() => addToWishlist(product)} className="rounded-md border border-gray-200 p-2">
-                      <Heart size={16} />
+                    <button
+                      onClick={() => addToWishlist(product)}
+                      className={`rounded-md border p-2 ${isWishlisted(product) ? "border-red-200 bg-red-50" : "border-gray-200"}`}
+                    >
+                      <Heart size={16} className={isWishlisted(product) ? "text-red-600" : "text-gray-600"} />
                     </button>
                   </div>
                 </div>
