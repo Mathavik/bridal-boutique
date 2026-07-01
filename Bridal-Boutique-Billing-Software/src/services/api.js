@@ -14,7 +14,7 @@
 
 import axios from "axios";
 
-export const API_BASE_URL = "http://localhost/smart-ledger-backend/api/";
+export const API_BASE_URL = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api/";
 
 // Axios instance
 const api = axios.create({
