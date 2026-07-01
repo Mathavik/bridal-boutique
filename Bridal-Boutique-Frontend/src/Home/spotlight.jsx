@@ -67,18 +67,17 @@ const Spotlight = () => {
           <img
             src={image1}
             alt="Crafted For Celebration"
-            className="w-full h-[360px] object-cover"
-          />
+className="w-full h-[360px] object-cover object-top"          />
 
-          <div className="absolute inset-0 bg-black/10 flex flex-col justify-center items-center">
-            <h1 className="text-5xl font-serif text-white mb-6">
-              Crafted For Celebration
-            </h1>
+          <div className="absolute inset-0 bg-black/10 flex flex-col items-center justify-center pt-24">
+  <h1 className="text-[56px] leading-none font-serif text-white mb-8">
+    Crafted For Celebration
+  </h1>
 
-            <button className="bg-white text-black px-8 py-3 font-semibold hover:bg-black hover:text-white transition">
-              SHOP NOW
-            </button>
-          </div>
+  <button className="bg-white text-black px-10 py-3 text-[15px] font-semibold hover:bg-black hover:text-white transition">
+    SHOP NOW
+  </button>
+</div>
         </div>
       </div>
 

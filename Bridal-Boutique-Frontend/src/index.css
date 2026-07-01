@@ -17,3 +17,13 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+@font-face {
+  font-family: "Porsha Richela";
+  src: url("./assets/fonts/PorshaRichela-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+.font-porsha {
+  font-family: "Porsha Richela", serif;
+}
