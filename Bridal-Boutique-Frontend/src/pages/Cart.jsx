@@ -6,6 +6,11 @@ import { useStore } from "../contexts/StoreContext";
 
 const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
 
+const resolveImageUrl = (src) => {
+  if (!src) return "";
+  return src.startsWith("http") ? src : `${API_BASE}/${src}`;
+};
+
 export default function Cart() {
   const { guestId, cartItems, refreshCounts } = useStore();
   const [items, setItems] = useState(cartItems);
@@ -36,7 +41,7 @@ export default function Cart() {
             {items.length === 0 ? <div className="rounded-xl bg-white p-6">Your cart is empty.</div> : items.map((item) => (
               <div key={item.id} className="flex flex-col md:flex-row items-start md:items-center justify-between rounded-xl bg-white p-4 shadow-sm">
                 <div className="flex items-center gap-4">
-                  <img src={item.image || "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0"} alt={item.product_name} className="h-24 w-24 rounded-lg object-cover" />
+                  <img src={resolveImageUrl(item.image || "") || "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0"} alt={item.product_name} className="h-24 w-24 rounded-lg object-cover" />
                   <div>
                     <h3 className="font-semibold">{item.product_name}</h3>
                     <p className="text-sm text-gray-500">{formatCurrency(item.price)}</p>

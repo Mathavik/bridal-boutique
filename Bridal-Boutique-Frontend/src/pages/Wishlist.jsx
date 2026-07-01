@@ -6,6 +6,11 @@ import { useStore } from "../contexts/StoreContext";
 
 const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
 
+const resolveImageUrl = (src) => {
+  if (!src) return "";
+  return src.startsWith("http") ? src : `${API_BASE}/${src}`;
+};
+
 export default function Wishlist() {
   const { guestId, wishlistItems, refreshCounts } = useStore();
   const [items, setItems] = useState(wishlistItems);
@@ -40,7 +45,7 @@ export default function Wishlist() {
         <div className="mt-6 grid md:grid-cols-2 xl:grid-cols-3 gap-6">
           {items.length === 0 ? <div className="rounded-xl bg-white p-6">No wishlist items yet.</div> : items.map((item) => (
             <div key={item.id} className="rounded-xl bg-white p-4 shadow-sm">
-              <img src={item.image || "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0"} alt={item.product_name} className="h-56 w-full rounded-lg object-cover" />
+              <img src={resolveImageUrl(item.image || "") || "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0"} alt={item.product_name} className="h-56 w-full rounded-lg object-cover" />
               <h3 className="mt-4 font-semibold">{item.product_name}</h3>
               <p className="text-sm text-gray-500">{formatCurrency(item.offer_price || item.price)}</p>
               <div className="mt-4 flex gap-2">

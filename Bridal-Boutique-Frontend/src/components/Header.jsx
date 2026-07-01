@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Menu,
   Search,
@@ -8,6 +8,9 @@ import {
   X,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import axios from "axios";
+
+const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
 
 import botikLogo from "../assets/Botik.png";
 import { useStore } from "../contexts/StoreContext";
@@ -15,8 +18,26 @@ import { useAuth } from "../contexts/AuthContext";
 
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [categories, setCategories] = useState([]);
   const { cartCount, wishlistCount } = useStore();
   const { user, logout } = useAuth();
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const companyId = params.get("company_id") || "47";
+        const response = await axios.get(`${API_BASE}/category/get_active_category.php?company_id=${companyId}`);
+        if (response.data?.status) {
+          setCategories(response.data.data || []);
+        }
+      } catch (error) {
+        console.error("Error loading categories:", error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   return (
     <>
@@ -46,9 +67,15 @@ function Header() {
             {/* Desktop Navigation */}
 
             <nav className="hidden lg:flex items-center gap-7 text-[14px] font-medium text-[#181818]">
-              <a href="#">Bridal Lehenga</a>
-              <a href="#">Bridal Gowns</a>
-              <a href="#">Dress Materials</a>
+              {categories.slice(0, 3).map((category) => (
+                <Link
+                  key={category.id}
+                  to={`/bridal-lehenga?category_id=${category.id}`}
+                  className="hover:text-[#a97c50]"
+                >
+                  {category.name}
+                </Link>
+              ))}
             </nav>
 
           </div>
@@ -105,7 +132,7 @@ function Header() {
             )}
 
             <Link to="/wishlist" className="relative">
-              <Heart size={22} className="cursor-pointer" />
+              <Heart size={22} className={`${wishlistCount > 0 ? "text-red-600" : "text-black"} cursor-pointer`} />
               <span className="absolute -top-2 -right-2 rounded-full bg-[#a97c50] px-1.5 py-0.5 text-[10px] text-white">{wishlistCount}</span>
             </Link>
 
@@ -176,35 +203,24 @@ function Header() {
         {/* Menu */}
 
         <nav className="px-5 flex flex-col">
+          {categories.slice(0, 4).map((category) => (
+            <Link
+              key={category.id}
+              to={`/bridal-lehenga?category_id=${category.id}`}
+              className="py-4 border-b font-medium"
+              onClick={() => setMenuOpen(false)}
+            >
+              {category.name}
+            </Link>
+          ))}
 
           <Link
             to="/bridal-lehenga"
             className="py-4 border-b font-medium"
-          >
-            Bridal Lehenga
-          </Link>
-
-          <a
-            href="#"
-            className="py-4 border-b font-medium"
-          >
-            Bridal Gowns
-          </a>
-
-          <a
-            href="#"
-            className="py-4 border-b font-medium"
-          >
-            Dress Materials
-          </a>
-
-          <a
-            href="#"
-            className="py-4 border-b font-medium"
+            onClick={() => setMenuOpen(false)}
           >
             Shop All
-          </a>
-
+          </Link>
         </nav>
 
         {/* Bottom Icons */}
@@ -226,7 +242,7 @@ function Header() {
             )}
 
             <Link to="/wishlist" className="flex flex-col items-center py-4 gap-2">
-              <Heart size={22} />
+              <Heart size={22} className={`${wishlistCount > 0 ? "text-red-600" : "text-black"}`} />
               <span className="text-xs">Wishlist</span>
             </Link>
 
