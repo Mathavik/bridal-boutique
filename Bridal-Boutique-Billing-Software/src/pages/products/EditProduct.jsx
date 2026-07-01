@@ -275,6 +275,12 @@ const fetchCategoriesByCompany = async(company_id) => {
           display: flex; align-items: flex-start; justify-content: center;
           padding: 2.5rem 1.5rem; position: relative; overflow-x: hidden;
         }
+        .ep-card {
+          max-height: none;
+        }
+        .ep-page {
+          overflow-y: auto;
+        }
         .ep-deco { position:fixed; pointer-events:none; border-radius:50%; filter:blur(70px); opacity:0.25; }
         .ep-deco-1 { width:380px;height:380px;background:#3b82f6;top:-120px;right:-100px; }
         .ep-deco-2 { width:260px;height:260px;background:#6366f1;bottom:-60px;left:-60px; }

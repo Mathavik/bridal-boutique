@@ -250,12 +250,13 @@ const handleCompanyChange = async(e) => {
       .pl-card{
         background:#fff;
         border-radius:20px;
-        overflow:hidden;
+        overflow-x:auto;
         border:1px solid #e2e8f0;
         box-shadow:0 4px 24px rgba(37,99,235,0.08);
       }
 
       .pl-table{
+        min-width:1200px;
         width:100%;
         border-collapse:collapse;
       }
@@ -535,8 +536,8 @@ const handleCompanyChange = async(e) => {
         {/* TABLE */}
 
         <div className="pl-card">
-
-          <table className="pl-table">
+          <div style={{ overflowX: 'auto' }}>
+            <table className="pl-table">
 
             <thead>
               <tr>
@@ -735,6 +736,7 @@ const handleCompanyChange = async(e) => {
             </tbody>
 
           </table>
+          </div>
 
           {!loading && filtered.length > ITEMS_PER_PAGE && (
   <div style={{

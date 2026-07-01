@@ -29,9 +29,21 @@ if (!$id || !$status) {
 
 $status = mysqli_real_escape_string($conn, $status);
 
+if ($status === 'active') {
+    $active_status = 1;
+} elseif ($status === 'inactive') {
+    $active_status = 0;
+} else {
+    echo json_encode([
+        "success" => false,
+        "message" => "Invalid status value"
+    ]);
+    exit;
+}
+
 $update = mysqli_query($conn, "
 UPDATE products
-SET status='$status'
+SET active_status='$active_status'
 WHERE id='$id'
 ");
 
