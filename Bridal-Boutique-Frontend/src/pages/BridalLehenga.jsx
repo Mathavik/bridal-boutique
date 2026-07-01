@@ -15,7 +15,7 @@ const resolveImageUrl = (src) => {
 export default function BridalLehenga() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { guestId, refreshCounts, wishlistItems } = useStore();
+  const { guestId, refreshCounts, wishlistItems, incrementCartCount, incrementWishlistCount } = useStore();
   const location = useLocation();
 
   useEffect(() => {
@@ -54,6 +54,7 @@ export default function BridalLehenga() {
         price: product.offer_price || product.price,
       });
       if (response.data?.status) {
+        incrementCartCount(1);
         await refreshCounts();
         alert("Added to cart");
       } else {
@@ -79,6 +80,7 @@ export default function BridalLehenga() {
         product_id: product.id,
       });
       if (response.data?.status) {
+        incrementWishlistCount(1);
         await refreshCounts();
         alert("Added to wishlist");
       } else {

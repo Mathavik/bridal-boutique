@@ -11,7 +11,7 @@ export default function ProductDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
-  const { guestId, refreshCounts } = useStore();
+  const { guestId, refreshCounts, incrementCartCount, incrementWishlistCount } = useStore();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -32,6 +32,7 @@ export default function ProductDetails() {
       price: product.offer_price || product.price,
     });
     if (response.data?.status) {
+      incrementCartCount(1);
       await refreshCounts();
     }
   };
@@ -42,6 +43,7 @@ export default function ProductDetails() {
       product_id: product.id,
     });
     if (response.data?.status) {
+      incrementWishlistCount(1);
       await refreshCounts();
     }
   };

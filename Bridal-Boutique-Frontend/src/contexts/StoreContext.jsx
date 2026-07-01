@@ -23,24 +23,44 @@ export function StoreProvider({ children }) {
 
   const refreshCounts = async () => {
     const id = guestIdValue;
+    let cartItemsData = null;
+    let wishlistItemsData = null;
+
     try {
-      const [cartRes, wishlistRes] = await Promise.all([
-        axios.get(`http://localhost/bridal-boutique/Bridal-Boutique-backend/api/cart/get.php?guest_id=${id}`),
-        axios.get(`http://localhost/bridal-boutique/Bridal-Boutique-backend/api/wishlist/get.php?guest_id=${id}`),
-      ]);
-
+      const cartRes = await axios.get(`http://localhost/bridal-boutique/Bridal-Boutique-backend/api/cart/get.php?guest_id=${id}`);
       if (cartRes.data?.status) {
-        setCartItems(cartRes.data.data || []);
-        setCartCount((cartRes.data.data || []).reduce((sum, item) => sum + Number(item.quantity || 0), 0));
-      }
-
-      if (wishlistRes.data?.status) {
-        setWishlistItems(wishlistRes.data.data || []);
-        setWishlistCount((wishlistRes.data.data || []).length);
+        cartItemsData = cartRes.data.data || [];
       }
     } catch (error) {
-      console.error(error);
+      console.error("Cart count refresh failed:", error);
     }
+
+    try {
+      const wishlistRes = await axios.get(`http://localhost/bridal-boutique/Bridal-Boutique-backend/api/wishlist/get.php?guest_id=${id}`);
+      if (wishlistRes.data?.status) {
+        wishlistItemsData = wishlistRes.data.data || [];
+      }
+    } catch (error) {
+      console.error("Wishlist count refresh failed:", error);
+    }
+
+    if (cartItemsData !== null) {
+      setCartItems(cartItemsData);
+      setCartCount(cartItemsData.reduce((sum, item) => sum + Number(item.quantity || 0), 0));
+    }
+
+    if (wishlistItemsData !== null) {
+      setWishlistItems(wishlistItemsData);
+      setWishlistCount(wishlistItemsData.length);
+    }
+  };
+
+  const changeCartCount = (delta = 1) => {
+    setCartCount((prev) => Math.max(0, prev + delta));
+  };
+
+  const changeWishlistCount = (delta = 1) => {
+    setWishlistCount((prev) => Math.max(0, prev + delta));
   };
 
   useEffect(() => {
@@ -53,6 +73,10 @@ export function StoreProvider({ children }) {
     cartItems,
     wishlistItems,
     refreshCounts,
+    changeCartCount,
+    changeWishlistCount,
+    incrementCartCount: changeCartCount,
+    incrementWishlistCount: changeWishlistCount,
     guestId,
   }), [cartCount, wishlistCount, cartItems, wishlistItems]);
 

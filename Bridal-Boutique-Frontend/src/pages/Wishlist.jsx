@@ -35,6 +35,7 @@ export default function Wishlist() {
     });
     if (response.data?.status) {
       await removeItem(product.id);
+      await refreshCounts();
     }
   };
 

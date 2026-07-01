@@ -22,12 +22,12 @@ export default function Cart() {
   const updateQuantity = async (id, quantity) => {
     if (quantity < 1) return;
     await axios.post(`${API_BASE}/cart/update.php`, { id, quantity });
-    refreshCounts();
+    await refreshCounts();
   };
 
   const removeItem = async (id) => {
     await axios.delete(`${API_BASE}/cart/delete.php?id=${id}`);
-    refreshCounts();
+    await refreshCounts();
   };
 
   const subtotal = useMemo(() => items.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1), 0), [items]);
