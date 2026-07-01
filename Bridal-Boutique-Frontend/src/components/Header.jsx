@@ -88,7 +88,7 @@ function Header() {
               <img
                 src={botikLogo}
                 alt="BOTIK"
-                className="w-[120px] md:w-[145px]"
+                className="w-[120px] md:w-[185px]"
               />
             </Link>
 
