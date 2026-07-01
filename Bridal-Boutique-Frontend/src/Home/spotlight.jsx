@@ -35,8 +35,6 @@ const Spotlight = () => {
             setGownProducts(gownRes.data?.status ? gownRes.data.data || [] : []);
           }
         }
-      } catch (error) {
-        console.error("Error fetching spotlight data:", error);
       } finally {
         setLoading(false);
       }
@@ -48,8 +46,6 @@ const Spotlight = () => {
   const featuredCategory = categories[0];
   const gownCategory = categories.find((category) => category.name?.toLowerCase().includes("gown")) || categories[1] || categories[0];
   const secondaryCategory = gownCategory || categories[1] || categories[0];
-  const gownCategories = categories.filter((category) => category.name?.toLowerCase().includes("gown"));
-  const bannerCategory = gownCategories[0] || categories[1] || categories[0];
 
   const resolveImageUrl = (src) => {
     if (!src) return "";
@@ -57,71 +53,84 @@ const Spotlight = () => {
   };
 
   return (
-    <section className="max-w-7xl mx-auto px-4 py-12 lg:py-16">
-      <div className="mb-10 text-center">
-        <p className="text-xs uppercase tracking-[6px] text-[#a97c50]">Curated For Celebrations</p>
-        <h2 className="mt-3 text-3xl font-medium tracking-[4px] uppercase sm:text-4xl">
+    <section className="max-w-7xl mx-auto px-6 py-12 lg:py-16">
+      <div className="mb-8 text-center">
+        <p className="text-sm uppercase tracking-[6px] text-[#a97c50]">Curated For Celebrations</p>
+        <h2 className="mt-3 text-3xl font-semibold tracking-[4px] uppercase sm:text-4xl">
           In The Spotlight
         </h2>
       </div>
 
       {loading ? (
-        <div className="space-y-12">
-          <div className="grid gap-6 md:grid-cols-[1fr_1fr]">
-            <div className="grid grid-cols-2 gap-4"><div className="h-[350px] bg-gray-100 animate-pulse" /><div className="h-[350px] bg-gray-100 animate-pulse" /></div>
-            <div className="h-[450px] bg-gray-100 animate-pulse" />
+        <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="h-[420px] rounded-[28px] bg-gray-100 animate-pulse" />
+          <div className="grid gap-4">
+            <div className="h-24 rounded-[24px] bg-gray-100 animate-pulse" />
+            <div className="h-24 rounded-[24px] bg-gray-100 animate-pulse" />
+            <div className="h-24 rounded-[24px] bg-gray-100 animate-pulse" />
           </div>
         </div>
       ) : (
-        <div className="space-y-12">
-          {/* Section 1: 2 Products Left, 1 Big Banner Right */}
-          <div className="grid gap-6 md:grid-cols-2 items-stretch">
-            <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-6">
+          <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
+            <div className="grid gap-4 sm:grid-cols-2">
               {featuredProducts.map((product) => (
-                <div key={product.id} className="flex flex-col bg-white group cursor-pointer">
-                  <div className="overflow-hidden bg-gray-50 aspect-[3/4]">
+                <div key={product.id} className="rounded-[28px] overflow-hidden border border-[#efe2d0] bg-white shadow-sm">
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/bridal-lehenga?category_id=${featuredCategory?.id || ''}&product_id=${product.id}`)}
+                    className="block w-full overflow-hidden"
+                  >
                     <img
                       src={resolveImageUrl(product.image || "") || "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0"}
                       alt={product.product_name}
-                      className="h-full w-full object-cover transition duration-500 group-hover:scale-102"
+                      className="h-72 w-full object-cover transition duration-200 hover:scale-[1.01]"
                     />
-                  </div>
-                  <div className="pt-3 pb-2 text-left">
-                    <h4 className="text-[14px] font-medium text-[#181818] tracking-wide truncate">{product.product_name}</h4>
-                    <div className="mt-1 flex items-center gap-2 text-sm font-semibold">
-                      <span className="text-gray-900">₹{product.offer_price || product.price}</span>
+                  </button>
+                  <div className="p-4">
+                    <p className="text-xs uppercase tracking-[3px] text-[#a97c50]">{featuredCategory?.name || "Lehenga"}</p>
+                    <h4 className="mt-2 text-lg font-semibold text-[#181818]">{product.product_name}</h4>
+                    <div className="mt-2 flex items-center gap-2 text-sm text-gray-500">
+                      <span>₹{product.offer_price || product.price}</span>
                       {product.discount_percentage ? (
-                        <span className="line-through text-gray-400 font-normal">₹{product.price}</span>
+                        <span className="line-through">₹{product.price}</span>
                       ) : null}
-                      {product.discount_percentage ? (
-                        <span className="text-[#a97c50] font-normal">{product.discount_percentage}% OFF</span>
-                      ) : null}
+                      {product.discount_percentage ? <span className="text-[#a97c50]">{product.discount_percentage}% OFF</span> : null}
                     </div>
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="group relative overflow-hidden bg-gray-100 flex flex-col justify-end min-h-[400px]">
-              <div className="absolute inset-0 bg-black/20 z-10" />
-              {featuredCategory?.banner_image ? (
-                <img
-                  src={resolveImageUrl(featuredCategory.banner_image)}
-                  alt={featuredCategory.name}
-                  className="absolute inset-0 h-full w-full object-cover"
-                />
-              ) : (
-                <div className="absolute inset-0 flex h-full w-full items-center justify-center text-gray-500">
-                  No spotlight banner available
-                </div>
-              )}
-              <div className="relative p-6 text-white text-center z-20 flex flex-col items-center justify-end w-full h-full bg-gradient-to-t from-black/60 via-black/10 to-transparent pt-40">
-                <h3 className="text-3xl font-serif tracking-wide sm:text-4xl text-white">
-                  Crafted For Celebration
+            <div className="rounded-[28px] overflow-hidden border border-[#efe2d0] bg-white shadow-sm">
+              <button
+                type="button"
+                onClick={() => navigate(`/bridal-lehenga?category_id=${featuredCategory?.id || ''}&product_id=${featuredProducts[0]?.id || ''}`)}
+                className="block w-full overflow-hidden"
+              >
+                {featuredCategory?.banner_image ? (
+                  <img
+                    src={resolveImageUrl(featuredCategory.banner_image)}
+                    alt={featuredCategory.name}
+                    className="h-72 w-full object-cover transition duration-500 hover:scale-105"
+                  />
+                ) : (
+                  <div className="flex h-72 w-full items-center justify-center text-gray-500 bg-[#f6efe8]">
+                    No spotlight banner available
+                  </div>
+                )}
+              </button>
+              <div className="p-4">
+                <p className="text-xs uppercase tracking-[4px] text-[#a97c50]">Featured Edit</p>
+                <h3 className="mt-2 text-xl font-semibold text-[#181818]">
+                  {featuredCategory?.name || "Latest Bridal Collection"}
                 </h3>
+                <p className="mt-3 text-sm text-gray-600">
+                  Discover rich fabrics, statement silhouettes, and bridal essentials crafted for unforgettable moments.
+                </p>
                 <button
                   onClick={() => navigate(`/bridal-lehenga?category_id=${featuredCategory?.id || ''}&product_id=${featuredProducts[0]?.id || ''}`)}
-                  className="mt-5 rounded-none bg-white px-8 py-3 text-xs font-semibold uppercase tracking-widest text-[#181818] transition hover:bg-[#a97c50] hover:text-white"
+                  className="mt-6 rounded-full bg-[#a97c50] px-6 py-3 text-sm font-semibold uppercase text-white transition hover:bg-[#8a663d]"
                 >
                   Shop Now
                 </button>
@@ -129,32 +138,68 @@ const Spotlight = () => {
             </div>
           </div>
 
-          {/* Section 2: Single full-width category banner */}
-          <div className="relative overflow-hidden bg-gray-100 flex flex-col justify-end min-h-[450px] group">
-            <div className="absolute inset-0 bg-black/20 z-10" />
-            {bannerCategory?.banner_image ? (
-              <img
-                src={resolveImageUrl(bannerCategory.banner_image)}
-                alt={bannerCategory.name}
-                className="absolute inset-0 h-full w-full"
-              />
-            ) : (
-              <div className="absolute inset-0 flex h-full w-full items-center justify-center text-gray-500">
-                No category banner available
+          <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="group relative overflow-hidden rounded-[32px] bg-[#f6efe8] shadow-[0_20px_60px_rgba(0,0,0,0.08)]">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+              <div className="h-[420px] w-full">
+                {secondaryCategory?.banner_image ? (
+                  <img
+                    src={resolveImageUrl(secondaryCategory.banner_image)}
+                    alt={secondaryCategory.name}
+                    className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-gray-500">
+                    No secondary banner available
+                  </div>
+                )}
               </div>
-            )}
-            <div className="relative p-6 text-white text-center z-20 flex flex-col items-center justify-end w-full h-full bg-gradient-to-t from-black/60 via-black/10 to-transparent pt-36">
-              <p className="text-xs uppercase tracking-[6px] text-white/80">Category</p>
-              <h4 className="mt-3 text-3xl font-semibold tracking-wide text-white">{bannerCategory?.name || "Gowns"}</h4>
-              <button
-                onClick={() => navigate(`/bridal-lehenga?category_id=${bannerCategory?.id || ''}`)}
-                className="mt-5 rounded-none bg-white px-8 py-3 text-xs font-semibold uppercase tracking-widest text-[#181818] transition hover:bg-[#a97c50] hover:text-white"
-              >
-                View Collection
-              </button>
+              <div className="absolute inset-x-0 bottom-0 p-8 text-white sm:p-10">
+                <p className="text-sm uppercase tracking-[4px] text-[#f3d7b8]">For Every Occasion</p>
+                <h3 className="mt-2 text-3xl font-semibold sm:text-4xl">
+                  {secondaryCategory?.name || "Gowns"}
+                </h3>
+                <p className="mt-3 max-w-xl text-sm text-white/80 sm:text-base">
+                  {secondaryCategory?.name ? `Explore our ${secondaryCategory.name} collection with a fresh curated banner.` : "Discover elegant silhouettes for your next celebration."}
+                </p>
+                <button
+                  onClick={() => navigate(`/bridal-lehenga?category_id=${secondaryCategory?.id || ''}&product_id=${gownProducts[0]?.id || ''}`)}
+                  className="mt-6 rounded-full bg-white px-6 py-3 text-sm font-semibold uppercase text-[#181818] transition hover:bg-[#a97c50] hover:text-white"
+                >
+                  View Collection
+                </button>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              {gownProducts.map((product) => (
+                <div key={product.id} className="rounded-[28px] overflow-hidden border border-[#efe2d0] bg-white shadow-sm">
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/bridal-lehenga?category_id=${secondaryCategory?.id || ''}&product_id=${product.id}`)}
+                    className="block w-full overflow-hidden"
+                  >
+                    <img
+                      src={resolveImageUrl(product.image || "") || "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0"}
+                      alt={product.product_name}
+                      className="h-72 w-full object-cover transition duration-200 hover:scale-[1.01]"
+                    />
+                  </button>
+                  <div className="p-4">
+                    <p className="text-xs uppercase tracking-[3px] text-[#a97c50]">{secondaryCategory?.name || "Gowns"}</p>
+                    <h4 className="mt-2 text-lg font-semibold text-[#181818]">{product.product_name}</h4>
+                    <div className="mt-2 flex items-center gap-2 text-sm text-gray-500">
+                      <span>₹{product.offer_price || product.price}</span>
+                      {product.discount_percentage ? (
+                        <span className="line-through">₹{product.price}</span>
+                      ) : null}
+                      {product.discount_percentage ? <span className="text-[#a97c50]">{product.discount_percentage}% OFF</span> : null}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-
         </div>
       )}
     </section>
