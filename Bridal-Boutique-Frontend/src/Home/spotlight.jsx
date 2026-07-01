@@ -1,172 +1,192 @@
-import React from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
-import image1 from "../assets/spotlight/image1.png";
-import image2 from "../assets/spotlight/image2.png";
-import image3 from "../assets/spotlight/image3.png";
-import image4 from "../assets/spotlight/image4.png";
-import image5 from "../assets/spotlight/image5.png";
-import image6 from "../assets/spotlight/image6.png";
-
-const products1 = [
-  {
-    id: 1,
-    image: image3,
-    title: "Agaphi Lehenga",
-    price: "₹3499",
-    oldPrice: "₹6999",
-    offer: "50% OFF",
-  },
-  {
-    id: 2,
-    image: image2,
-    title: "Agaphi Lehenga",
-    price: "₹3499",
-    oldPrice: "₹6999",
-    offer: "50% OFF",
-  },
-];
+const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
 
 const Spotlight = () => {
+  const [categories, setCategories] = useState([]);
+  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [gownProducts, setGownProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const companyId = params.get("company_id") || "47";
+        const response = await axios.get(`${API_BASE}/category/get_active_category.php?company_id=${companyId}`);
+        if (response.data?.status) {
+          const categoryData = response.data.data || [];
+          setCategories(categoryData);
+
+          if (categoryData.length > 0) {
+            const featuredCategoryId = categoryData[0].id;
+            const gownCategory = categoryData.find((category) => category.name?.toLowerCase().includes("gown")) || categoryData[1] || categoryData[0];
+            const gownCategoryId = gownCategory?.id || featuredCategoryId;
+
+            const [featuredRes, gownRes] = await Promise.all([
+              axios.get(`${API_BASE}/product/get.php?category_id=${featuredCategoryId}&limit=2`),
+              axios.get(`${API_BASE}/product/get.php?category_id=${gownCategoryId}&limit=2`),
+            ]);
+
+            setFeaturedProducts(featuredRes.data?.status ? featuredRes.data.data || [] : []);
+            setGownProducts(gownRes.data?.status ? gownRes.data.data || [] : []);
+          }
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  const featuredCategory = categories[0];
+  const gownCategory = categories.find((category) => category.name?.toLowerCase().includes("gown")) || categories[1] || categories[0];
+  const secondaryCategory = gownCategory || categories[1] || categories[0];
+
+  const resolveImageUrl = (src) => {
+    if (!src) return "";
+    return src.startsWith("http") ? src : `${API_BASE}/${src}`;
+  };
+
   return (
-    <section className="max-w-7xl mx-auto px-6 py-12">
-      {/* Heading */}
-      <h2 className="text-3xl font-semibold tracking-[5px] text-center uppercase mb-10">
-        IN THE SPOTLIGHT
-      </h2>
-
-      {/* ==================== TOP SECTION ==================== */}
-
-      <div className="grid lg:grid-cols-3 gap-6 mb-12">
-        {/* Left Products */}
-        <div className="grid grid-cols-2 gap-4">
-          {products1.map((item) => (
-            <div key={item.id}>
-              <img
-                src={item.image}
-                alt={item.title}
-                className="w-full h-[280px] object-cover"
-              />
-
-              <h3 className="mt-3 text-lg font-medium">{item.title}</h3>
-
-              <div className="flex items-center gap-3 mt-1">
-                <span className="font-semibold">{item.price}</span>
-
-                <span className="line-through text-gray-400">
-                  {item.oldPrice}
-                </span>
-
-                <span>{item.offer}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Right Banner */}
-        <div className="lg:col-span-2 relative overflow-hidden">
-          <img
-            src={image1}
-            alt="Crafted For Celebration"
-className="w-full h-[360px] object-cover object-top"          />
-
-          <div className="absolute inset-0 bg-black/10 flex flex-col items-center justify-center pt-24">
-  <h1 className="text-[56px] leading-none font-serif text-white mb-8">
-    Crafted For Celebration
-  </h1>
-
-  <button className="bg-white text-black px-10 py-3 text-[15px] font-semibold hover:bg-black hover:text-white transition">
-    SHOP NOW
-  </button>
-</div>
-        </div>
+    <section className="max-w-7xl mx-auto px-6 py-12 lg:py-16">
+      <div className="mb-8 text-center">
+        <p className="text-sm uppercase tracking-[6px] text-[#a97c50]">Curated For Celebrations</p>
+        <h2 className="mt-3 text-3xl font-semibold tracking-[4px] uppercase sm:text-4xl">
+          In The Spotlight
+        </h2>
       </div>
 
-      {/* ==================== BOTTOM BANNER ==================== */}
-
-      <div
-        className="relative h-[420px] bg-cover bg-center overflow-hidden"
-        style={{
-          backgroundImage: `url(${image6})`,
-        }}
-      >
-        <div className="absolute inset-0 bg-black/20"></div>
-
-        <div className="relative z-10 h-full flex items-center justify-between px-12">
-          {/* Left Content */}
-
-          <div className="text-white">
-            <h2 className="text-6xl font-serif mb-8">
-              For Every Occasion
-            </h2>
-
-            <button className="bg-white text-black px-8 py-3 font-semibold hover:bg-black hover:text-white transition">
-              SHOP NOW
-            </button>
-          </div>
-
-          {/* Right Products */}
-
-          <div className="flex items-center gap-6">
-            {/* Product 1 */}
-
-            <div className="w-[190px]">
-              <img
-                src={image4}
-                alt="Agaphi Lehenga"
-                className="w-full h-[265px] object-cover"
-              />
-
-              <div className="text-white mt-3">
-                <h3 className="text-2xl font-medium">
-                  Agaphi Lehenga
-                </h3>
-
-                <div className="flex items-center gap-3 mt-2 text-xl">
-                  <span className="font-semibold">₹3499</span>
-
-                  <span className="line-through text-gray-300">
-                    ₹6999
-                  </span>
-
-                  <span>50% OFF</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Product 2 */}
-
-            <div className="w-[190px]">
-              <img
-                src={image5}
-                alt="Agaphi Lehenga"
-                className="w-full h-[265px] object-cover"
-              />
-
-              <div className="text-white mt-3">
-                <h3 className="text-2xl font-medium">
-                  Agaphi Lehenga
-                </h3>
-
-                <div className="flex items-center gap-3 mt-2 text-xl">
-                  <span className="font-semibold">₹3499</span>
-
-                  <span className="line-through text-gray-300">
-                    ₹6999
-                  </span>
-
-                  <span>50% OFF</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Arrow Button */}
-
-            <button className="w-11 h-11 rounded-full bg-white text-black text-xl flex items-center justify-center hover:bg-gray-200 transition">
-              →
-            </button>
+      {loading ? (
+        <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="h-[420px] rounded-[28px] bg-gray-100 animate-pulse" />
+          <div className="grid gap-4">
+            <div className="h-24 rounded-[24px] bg-gray-100 animate-pulse" />
+            <div className="h-24 rounded-[24px] bg-gray-100 animate-pulse" />
+            <div className="h-24 rounded-[24px] bg-gray-100 animate-pulse" />
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="space-y-6">
+          <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+            <div className="grid gap-4 sm:grid-cols-2">
+              {featuredProducts.map((product) => (
+                <div key={product.id} className="rounded-[28px] overflow-hidden border border-[#efe2d0] bg-white shadow-sm">
+                  <img
+                    src={resolveImageUrl(product.image || "") || "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0"}
+                    alt={product.product_name}
+                    className="h-72 w-full object-cover"
+                  />
+                  <div className="p-4">
+                    <p className="text-xs uppercase tracking-[3px] text-[#a97c50]">{featuredCategory?.name || "Lehenga"}</p>
+                    <h4 className="mt-2 text-lg font-semibold text-[#181818]">{product.product_name}</h4>
+                    <div className="mt-2 flex items-center gap-2 text-sm text-gray-500">
+                      <span>₹{product.offer_price || product.price}</span>
+                      {product.discount_percentage ? (
+                        <span className="line-through">₹{product.price}</span>
+                      ) : null}
+                      {product.discount_percentage ? <span className="text-[#a97c50]">{product.discount_percentage}% OFF</span> : null}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="group relative overflow-hidden rounded-[32px] bg-[#f6efe8] shadow-[0_20px_60px_rgba(0,0,0,0.08)]">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+              <div className="h-[420px] w-full">
+                {featuredCategory?.banner_image ? (
+                  <img
+                    src={resolveImageUrl(featuredCategory.banner_image)}
+                    alt={featuredCategory.name}
+                    className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-gray-500">
+                    No spotlight banner available
+                  </div>
+                )}
+              </div>
+              <div className="absolute inset-x-0 bottom-0 p-8 text-white sm:p-10">
+                <p className="text-sm uppercase tracking-[4px] text-[#f3d7b8]">Featured Edit</p>
+                <h3 className="mt-2 text-3xl font-semibold sm:text-4xl">
+                  {featuredCategory?.name || "Latest Bridal Collection"}
+                </h3>
+                <p className="mt-3 max-w-xl text-sm text-white/80 sm:text-base">
+                  Discover rich fabrics, statement silhouettes, and bridal essentials crafted for unforgettable moments.
+                </p>
+                <button
+                  onClick={() => navigate(`/bridal-lehenga?category_id=${featuredCategory?.id || ''}&product_id=${featuredProducts[0]?.id || ''}`)}
+                  className="mt-6 rounded-full bg-white px-6 py-3 text-sm font-semibold uppercase text-[#181818] transition hover:bg-[#a97c50] hover:text-white"
+                >
+                  Shop Now
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="group relative overflow-hidden rounded-[32px] bg-[#f6efe8] shadow-[0_20px_60px_rgba(0,0,0,0.08)]">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+              <div className="h-[420px] w-full">
+                {secondaryCategory?.banner_image ? (
+                  <img
+                    src={resolveImageUrl(secondaryCategory.banner_image)}
+                    alt={secondaryCategory.name}
+                    className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-gray-500">
+                    No secondary banner available
+                  </div>
+                )}
+              </div>
+              <div className="absolute inset-x-0 bottom-0 p-8 text-white sm:p-10">
+                <p className="text-sm uppercase tracking-[4px] text-[#f3d7b8]">For Every Occasion</p>
+                <h3 className="mt-2 text-3xl font-semibold sm:text-4xl">
+                  {secondaryCategory?.name || "Gowns"}
+                </h3>
+                <p className="mt-3 max-w-xl text-sm text-white/80 sm:text-base">
+                  {secondaryCategory?.name ? `Explore our ${secondaryCategory.name} collection with a fresh curated banner.` : "Discover elegant silhouettes for your next celebration."}
+                </p>
+                <button
+                  onClick={() => navigate(`/bridal-lehenga?category_id=${secondaryCategory?.id || ''}&product_id=${gownProducts[0]?.id || ''}`)}
+                  className="mt-6 rounded-full bg-white px-6 py-3 text-sm font-semibold uppercase text-[#181818] transition hover:bg-[#a97c50] hover:text-white"
+                >
+                  View Collection
+                </button>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-rows-2">
+              {gownProducts.map((product) => (
+                <div key={product.id} className="rounded-[28px] overflow-hidden border border-[#efe2d0] bg-white shadow-sm">
+                  <img
+                    src={resolveImageUrl(product.image || "") || "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0"}
+                    alt={product.product_name}
+                    className="h-48 w-full object-cover"
+                  />
+                  <div className="p-4">
+                    <p className="text-xs uppercase tracking-[3px] text-[#a97c50]">{secondaryCategory?.name || "Gowns"}</p>
+                    <h4 className="mt-2 text-lg font-semibold text-[#181818]">{product.product_name}</h4>
+                    <div className="mt-2 flex items-center gap-2 text-sm text-gray-500">
+                      <span>₹{product.offer_price || product.price}</span>
+                      {product.discount_percentage ? (
+                        <span className="line-through">₹{product.price}</span>
+                      ) : null}
+                      {product.discount_percentage ? <span className="text-[#a97c50]">{product.discount_percentage}% OFF</span> : null}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

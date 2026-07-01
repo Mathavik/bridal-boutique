@@ -1,11 +1,9 @@
 <?php
-// 🔥 CORS HEADERS
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Methods: GET, OPTIONS");
 
-// 🔥 PREFLIGHT
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     http_response_code(200);
     exit();
@@ -13,48 +11,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 
 include __DIR__ . '/../../config/db.php';
 
-// 🔥 GET PARAM
 $id = intval($_GET['id'] ?? 0);
-$company_id = intval($_GET['company_id'] ?? 0);
-
-$result = mysqli_query($conn, "
-SELECT p.*, c.name as category_name
-FROM products p
-LEFT JOIN categories c
-ON p.category_id = c.id
-WHERE p.id='$id'
-AND p.company_id='$company_id'
-AND p.is_deleted=0
-");
-
 if (!$id) {
-    echo json_encode([
-        "status"=>false,
-        "message"=>"Product ID required"
-    ]);
+    echo json_encode(["status" => false, "message" => "Product ID required"]);
     exit;
 }
 
-// 🔥 FETCH PRODUCT
-$result = mysqli_query($conn, "
-SELECT p.*, c.name as category_name 
-FROM products p
-LEFT JOIN categories c ON p.category_id = c.id
-WHERE p.id='$id' AND p.is_deleted=0
-");
-
+$result = mysqli_query($conn, "SELECT p.*, c.name AS category_name FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.id=$id");
 $product = mysqli_fetch_assoc($result);
 
 if (!$product) {
-    echo json_encode([
-        "status"=>false,
-        "message"=>"Product not found"
-    ]);
+    echo json_encode(["status" => false, "message" => "Product not found"]);
     exit;
 }
 
-echo json_encode([
-    "status"=>true,
-    "data"=>$product
-]);
+if (empty($product['image_gallery_json'])) {
+    $product['image_gallery_json'] = json_encode([]);
+}
+
+echo json_encode(["status" => true, "data" => $product]);
 ?>

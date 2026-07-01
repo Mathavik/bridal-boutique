@@ -547,6 +547,10 @@ const handleCompanyChange = async(e) => {
                 <th className="center">Stock</th>
                 <th className="center">GST</th>
                 <th className="center">Barcode</th>
+                <th className="center">Occasion</th>
+                <th className="center">Fabric</th>
+                <th className="center">Color</th>
+                <th className="center">Sizes</th>
                 <th className="center">Actions</th>
                 <th className="center">Status</th>
               </tr>
@@ -557,7 +561,7 @@ const handleCompanyChange = async(e) => {
               {loading ? (
 
                 <tr>
-                  <td colSpan="9">
+                  <td colSpan="13">
                     Please Select Your company & show your products
                   </td>
                 </tr>
@@ -565,7 +569,7 @@ const handleCompanyChange = async(e) => {
               ) : paginated.length === 0 ? (
 
                 <tr>
-                  <td colSpan="9">
+                  <td colSpan="13">
                     No Products Found
                   </td>
                 </tr>
@@ -661,6 +665,11 @@ const handleCompanyChange = async(e) => {
                         </div>
 
                       </td>
+
+                      <td className="center">{p.occasion || "-"}</td>
+                      <td className="center">{p.fabric || "-"}</td>
+                      <td className="center">{p.color || "-"}</td>
+                      <td className="center">{p.available_sizes || "-"}</td>
 
                       {/* ACTION */}
 

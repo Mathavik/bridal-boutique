@@ -103,13 +103,16 @@ function ToastPortal({ toasts, remove }) {
 export default function CategoryForm() {
   const navigate = useNavigate();
   const [name, setName] = useState("");
+  const [bannerImage, setBannerImage] = useState("");
+  const [bannerFile, setBannerFile] = useState(null);
+  const [bannerPreview, setBannerPreview] = useState("");
   const [loading, setLoading] = useState(false);
   const [charCount, setCharCount] = useState(0);
   const { toasts, show, remove } = useToast();
-const [companies,setCompanies] = useState([]);
-const [selectedCompany,setSelectedCompany] = useState(
-  localStorage.getItem("selected_company_id") || ""
-);
+  const [companies, setCompanies] = useState([]);
+  const [selectedCompany, setSelectedCompany] = useState(
+    localStorage.getItem("selected_company_id") || ""
+  );
 
 
 useEffect(() => {
@@ -167,6 +170,26 @@ const loadCompanies = async(admin_id) => {
     setCharCount(e.target.value.length);
   };
 
+  const readFileAsBase64 = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64Data = reader.result.split(",")[1] || "";
+      resolve(base64Data);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
+  const handleBannerFileChange = (e) => {
+    const file = e.target.files?.[0] || null;
+    setBannerFile(file);
+    if (!file) {
+      setBannerPreview("");
+      return;
+    }
+    setBannerPreview(URL.createObjectURL(file));
+    setBannerImage("");
+  };
 
   const handleSubmit = async () => {
     // const user = JSON.parse(localStorage.getItem("user"));
@@ -185,10 +208,25 @@ Number(selectedCompany);
 
     setLoading(true);
     try {
-      const res = await api.post("/category/create.php",   {
-    name: name.trim(),
-    company_id: company_id
-  });
+      let banner_image_value = bannerImage;
+      if (bannerFile) {
+        try {
+          banner_image_value = await readFileAsBase64(bannerFile);
+        } catch (error) {
+          console.error(error);
+          show("error", "Upload failed", "Unable to read the selected image.");
+          setLoading(false);
+          return;
+        }
+      }
+
+      const payload = {
+        name: name.trim(),
+        company_id: company_id,
+        banner_image: banner_image_value,
+      };
+
+      const res = await api.post("/category/create.php", payload);
       if (res.data.status) {
         show("success", "Category added!", `"${name.trim()}" has been created.`);
         setTimeout(() => navigate("/category"), 2000);
@@ -650,6 +688,41 @@ Number(selectedCompany);
               />
               <div className="cf-input-prefix">#</div>
             </div>
+
+            <div className="cf-label-row">
+              <span className="cf-label">Category Banner Image</span>
+              <span className="cf-char">Optional</span>
+            </div>
+            <div className="cf-input-group">
+              <input
+                type="file"
+                accept="image/*"
+                className="cf-input"
+                onChange={handleBannerFileChange}
+              />
+            </div>
+            <div className="cf-input-group">
+              <input
+                type="text"
+                className="cf-input"
+                placeholder="Or paste image URL"
+                value={bannerImage}
+                onChange={(e) => {
+                  setBannerImage(e.target.value);
+                  setBannerFile(null);
+                  setBannerPreview(e.target.value);
+                }}
+              />
+            </div>
+            {(bannerPreview || bannerImage) && (
+              <div className="mb-4 rounded-2xl overflow-hidden border border-[#e2e8f0]">
+                <img
+                  src={bannerPreview || bannerImage}
+                  alt="Banner preview"
+                  className="w-full object-cover"
+                />
+              </div>
+            )}
 
             {/* Quick-fill suggestion chips */}
             <div className="cf-chips">

@@ -25,6 +25,13 @@ $barcode = $data['barcode'] ?? '';
 $unit = $data['unit'] ?? 'piece';
 $gst = floatval($data['gst_percentage'] ?? 0);
 $company_id = intval($data['company_id'] ?? 0);
+$short_description = $conn->real_escape_string(trim($data['short_description'] ?? ''));
+$full_description = $conn->real_escape_string(trim($data['full_description'] ?? ''));
+$fabric = $conn->real_escape_string(trim($data['fabric'] ?? ''));
+$embroidery = $conn->real_escape_string(trim($data['embroidery'] ?? ''));
+$color = $conn->real_escape_string(trim($data['color'] ?? ''));
+$available_sizes = $conn->real_escape_string(trim($data['available_sizes'] ?? ''));
+$occasion = $conn->real_escape_string(trim($data['occasion'] ?? ''));
 
 if (!$id || !$name || !$category_id || !$company_id) {
     echo json_encode(["status"=>false,"message"=>"Missing fields"]);
@@ -48,7 +55,14 @@ price='$price',
 stock='$stock',
 barcode='$barcode',
 unit='$unit',
-gst_percentage='$gst'
+gst_percentage='$gst',
+short_description='$short_description',
+full_description='$full_description',
+fabric='$fabric',
+embroidery='$embroidery',
+color='$color',
+available_sizes='$available_sizes',
+occasion='$occasion'
 WHERE id='$id'";
 
 if ($conn->query($sql)) {

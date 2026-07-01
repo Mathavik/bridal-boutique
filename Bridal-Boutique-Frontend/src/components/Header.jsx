@@ -7,11 +7,14 @@ import {
   ShoppingBag,
   X,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 import botikLogo from "../assets/Botik.png";
+import { useStore } from "../contexts/StoreContext";
 
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { cartCount, wishlistCount } = useStore();
 
   return (
     <>
@@ -52,11 +55,13 @@ function Header() {
 
           <div className="flex flex-col items-center flex-shrink-0">
 
-            <img
-              src={botikLogo}
-              alt="BOTIK"
-              className="w-[120px] md:w-[145px]"
-            />
+            <Link to="/">
+              <img
+                src={botikLogo}
+                alt="BOTIK"
+                className="w-[120px] md:w-[145px]"
+              />
+            </Link>
 
             <span className="text-[10px] md:text-[12px] tracking-[6px] md:tracking-[8px] uppercase">
               FASHION
@@ -93,15 +98,15 @@ function Header() {
               className="cursor-pointer"
             />
 
-            <Heart
-              size={22}
-              className="cursor-pointer"
-            />
+            <Link to="/wishlist" className="relative">
+              <Heart size={22} className="cursor-pointer" />
+              <span className="absolute -top-2 -right-2 rounded-full bg-[#a97c50] px-1.5 py-0.5 text-[10px] text-white">{wishlistCount}</span>
+            </Link>
 
-            <ShoppingBag
-              size={22}
-              className="cursor-pointer"
-            />
+            <Link to="/cart" className="relative">
+              <ShoppingBag size={22} className="cursor-pointer" />
+              <span className="absolute -top-2 -right-2 rounded-full bg-[#a97c50] px-1.5 py-0.5 text-[10px] text-white">{cartCount}</span>
+            </Link>
 
           </div>
         </div>
@@ -166,12 +171,12 @@ function Header() {
 
         <nav className="px-5 flex flex-col">
 
-          <a
-            href="#"
+          <Link
+            to="/bridal-lehenga"
             className="py-4 border-b font-medium"
           >
             Bridal Lehenga
-          </a>
+          </Link>
 
           <a
             href="#"
@@ -209,19 +214,15 @@ function Header() {
               </span>
             </button>
 
-            <button className="flex flex-col items-center py-4 gap-2">
+            <Link to="/wishlist" className="flex flex-col items-center py-4 gap-2">
               <Heart size={22} />
-              <span className="text-xs">
-                Wishlist
-              </span>
-            </button>
+              <span className="text-xs">Wishlist</span>
+            </Link>
 
-            <button className="flex flex-col items-center py-4 gap-2">
+            <Link to="/cart" className="flex flex-col items-center py-4 gap-2">
               <ShoppingBag size={22} />
-              <span className="text-xs">
-                Cart
-              </span>
-            </button>
+              <span className="text-xs">Cart</span>
+            </Link>
 
           </div>
 

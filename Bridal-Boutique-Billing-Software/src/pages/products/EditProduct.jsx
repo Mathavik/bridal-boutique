@@ -48,10 +48,23 @@ const [productCompanyId, setProductCompanyId] = useState("");
 
 
   const [form, setForm] = useState({
-    name: "",  product_code: "", price: "", stock: "", gst: "", barcode: "", category_id: "", unit: ""
+    name: "",
+    product_code: "",
+    price: "",
+    stock: "",
+    gst: "",
+    barcode: "",
+    category_id: "",
+    unit: "",
+    description: "",
+    fabric: "",
+    embroidery: "",
+    color: "",
+    available_sizes: "",
+    occasion: "",
   });
 
-  const set = (field, val) => setForm(p => ({ ...p, [field]: val }));
+  const set = (field, val) => setForm((p) => ({ ...p, [field]: val }));
 
 const getCompanyId = () => {
   const user = JSON.parse(localStorage.getItem("user"));
@@ -138,16 +151,20 @@ const fetchProduct = async () => {
    await fetchCompanyGSTByCompanyId(p.company_id);
 
       setForm({
-
         name: p.product_name,
         product_code: p.product_code || "",
         price: p.price,
         stock: p.stock,
         gst: p.gst_percentage || "",
         barcode: p.barcode || "",
-        category_id: String(p.category_id), // IMPORTANT
-        unit: p.unit || ""
-
+        category_id: String(p.category_id),
+        unit: p.unit || "",
+        description: p.short_description || "",
+        fabric: p.fabric || "",
+        embroidery: p.embroidery || "",
+        color: p.color || "",
+        available_sizes: p.available_sizes || "",
+        occasion: p.occasion || "",
       });
 
     }
@@ -219,12 +236,19 @@ const fetchCategoriesByCompany = async(company_id) => {
         product_name: form.name,
         product_code: form.product_code,
         category_id: form.category_id,
-company_id: productCompanyId,
+        company_id: productCompanyId,
         price: form.price,
         stock: form.stock,
         gst_percentage: gstEnabled ? form.gst : "",
         barcode: form.barcode,
-        unit: form.unit
+        unit: form.unit,
+        short_description: form.description,
+        full_description: form.description,
+        fabric: form.fabric,
+        embroidery: form.embroidery,
+        color: form.color,
+        available_sizes: form.available_sizes,
+        occasion: form.occasion,
       });
       if (res.data.status) {
         show("success", "Product Updated!", `"${form.name}" saved successfully.`);
@@ -562,6 +586,97 @@ company_id: productCompanyId,
               }
             </div>
 
+            <div className="ep-field">
+              <label className="ep-label">Product Description</label>
+              {fetching
+                ? <div className="ep-skel" />
+                : <textarea
+                    className="ep-input"
+                    style={{ minHeight: "110px", paddingTop: "14px", resize: "vertical" }}
+                    placeholder="Describe the bridal product, fabric, and design"
+                    value={form.description}
+                    onChange={e => set("description", e.target.value)}
+                  />
+              }
+            </div>
+
+            <div className="ep-grid-2">
+              <div className="ep-field">
+                <label className="ep-label">Occasion</label>
+                {fetching
+                  ? <div className="ep-skel" />
+                  : <div className="ep-input-wrap">
+                      <input
+                        className="ep-input"
+                        placeholder="e.g. Bridal, Wedding, Reception"
+                        value={form.occasion}
+                        onChange={e => set("occasion", e.target.value)}
+                      />
+                    </div>
+                }
+              </div>
+              <div className="ep-field">
+                <label className="ep-label">Fabric</label>
+                {fetching
+                  ? <div className="ep-skel" />
+                  : <div className="ep-input-wrap">
+                      <input
+                        className="ep-input"
+                        placeholder="e.g. Silk, Velvet, Net"
+                        value={form.fabric}
+                        onChange={e => set("fabric", e.target.value)}
+                      />
+                    </div>
+                }
+              </div>
+            </div>
+
+            <div className="ep-grid-2">
+              <div className="ep-field">
+                <label className="ep-label">Embroidery / Work</label>
+                {fetching
+                  ? <div className="ep-skel" />
+                  : <div className="ep-input-wrap">
+                      <input
+                        className="ep-input"
+                        placeholder="e.g. Zari, Sequins, Thread"
+                        value={form.embroidery}
+                        onChange={e => set("embroidery", e.target.value)}
+                      />
+                    </div>
+                }
+              </div>
+              <div className="ep-field">
+                <label className="ep-label">Color</label>
+                {fetching
+                  ? <div className="ep-skel" />
+                  : <div className="ep-input-wrap">
+                      <input
+                        className="ep-input"
+                        placeholder="e.g. Ivory, Champagne, Red"
+                        value={form.color}
+                        onChange={e => set("color", e.target.value)}
+                      />
+                    </div>
+                }
+              </div>
+            </div>
+
+            <div className="ep-field">
+              <label className="ep-label">Available Sizes</label>
+              {fetching
+                ? <div className="ep-skel" />
+                : <div className="ep-input-wrap">
+                    <input
+                      className="ep-input"
+                      placeholder="e.g. S, M, L, XL"
+                      value={form.available_sizes}
+                      onChange={e => set("available_sizes", e.target.value)}
+                    />
+                  </div>
+              }
+            </div>
+
             {/* ── Pricing & Stock ── */}
             <p className="ep-section" style={{marginTop:"1.25rem"}}>Pricing & Stock</p>
 
@@ -592,7 +707,7 @@ company_id: productCompanyId,
               </div>
             </div>
 
-            {/* <div className="ep-field">
+            <div className="ep-field">
               <label className="ep-label">Unit <span style={{color:"#ef4444"}}>*</span></label>
               {fetching
                 ? <div className="ep-skel" />
@@ -606,7 +721,7 @@ company_id: productCompanyId,
                     />
                   </div>
               }
-            </div> */}
+            </div>
 
             {/* ── GST (conditional) ── */}
             <div className="ep-field">

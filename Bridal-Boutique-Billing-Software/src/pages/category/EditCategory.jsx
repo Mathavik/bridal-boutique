@@ -108,6 +108,10 @@ export default function EditCategory() {
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [originalName, setOriginalName] = useState("");
+  const [bannerImage, setBannerImage] = useState("");
+  const [originalBannerImage, setOriginalBannerImage] = useState("");
+  const [bannerFile, setBannerFile] = useState(null);
+  const [bannerPreview, setBannerPreview] = useState("");
   const [charCount, setCharCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
@@ -120,6 +124,9 @@ export default function EditCategory() {
       if (res.data.status) {
         setName(res.data.data.name);
         setOriginalName(res.data.data.name);
+        setBannerImage(res.data.data.banner_image || "");
+        setOriginalBannerImage(res.data.data.banner_image || "");
+        setBannerPreview(res.data.data.banner_image || "");
         setCharCount(res.data.data.name.length);
       } else {
         show("error", "Not found", "Category could not be loaded.");
@@ -133,9 +140,30 @@ export default function EditCategory() {
 
   useEffect(() => { fetchCategory(); }, [id]);
 
+  const readFileAsBase64 = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64Data = reader.result.split(",")[1] || "";
+      resolve(base64Data);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
   const handleChange = (e) => {
     setName(e.target.value);
     setCharCount(e.target.value.length);
+  };
+
+  const handleBannerFileChange = (e) => {
+    const file = e.target.files?.[0] || null;
+    setBannerFile(file);
+    if (!file) {
+      setBannerPreview("");
+      return;
+    }
+    setBannerPreview(URL.createObjectURL(file));
+    setBannerImage("");
   };
 
   const handleUpdate = async () => {
@@ -143,13 +171,24 @@ export default function EditCategory() {
       show("warn", "Missing field", "Category name cannot be empty.");
       return;
     }
-    if (name.trim() === originalName) {
+    if (name.trim() === originalName && bannerFile === null && bannerImage.trim() === originalBannerImage.trim()) {
       show("warn", "No changes", "You haven't changed anything.");
       return;
     }
     setLoading(true);
     try {
-      const res = await api.post("/category/update.php", { id, name: name.trim() });
+      let banner_image_value = bannerImage;
+      if (bannerFile) {
+        try {
+          banner_image_value = await readFileAsBase64(bannerFile);
+        } catch (error) {
+          console.error(error);
+          show("error", "Upload failed", "Unable to read the selected image.");
+          setLoading(false);
+          return;
+        }
+      }
+      const res = await api.post("/category/update.php", { id, name: name.trim(), banner_image: banner_image_value });
       if (res.data.status) {
         show("success", "Category updated!", `"${name.trim()}" saved successfully.`);
         setTimeout(() => navigate("/category"), 2000);
@@ -163,7 +202,7 @@ export default function EditCategory() {
     }
   };
 
-  const isDirty = name.trim() !== originalName;
+  const isDirty = name.trim() !== originalName || bannerImage.trim() !== originalBannerImage.trim();
 
   return (
     <>
@@ -543,6 +582,41 @@ export default function EditCategory() {
                   onKeyDown={e => e.key === "Enter" && handleUpdate()}
                 />
                 <div className="ec-input-prefix">#</div>
+              </div>
+            )}
+
+            <div className="ec-label-row">
+              <span className="ec-label">Banner Image</span>
+              <span className="ec-char">Optional</span>
+            </div>
+            <div className="ec-input-group">
+              <input
+                type="file"
+                accept="image/*"
+                className="ec-input"
+                onChange={handleBannerFileChange}
+              />
+            </div>
+            <div className="ec-input-group">
+              <input
+                type="text"
+                className="ec-input"
+                placeholder="Or paste image URL"
+                value={bannerImage}
+                onChange={(e) => {
+                  setBannerImage(e.target.value);
+                  setBannerFile(null);
+                  setBannerPreview(e.target.value);
+                }}
+              />
+            </div>
+            {(bannerPreview || bannerImage) && (
+              <div className="mb-4 rounded-2xl overflow-hidden border border-[#e2e8f0]">
+                <img
+                  src={bannerPreview || bannerImage}
+                  alt="Banner preview"
+                  className="w-full object-cover"
+                />
               </div>
             )}
 
