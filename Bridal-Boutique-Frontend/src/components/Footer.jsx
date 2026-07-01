@@ -28,12 +28,10 @@ function Footer() {
             <img
               src={botikLogo}
               alt="BOTIK"
-              className="w-[135px]"
+              className="w-[185px]"
             />
 
-            <p className="mt-[2px] text-[12px] tracking-[8px] uppercase text-black">
-              FASHION
-            </p>
+        
 
             <p className="mt-8 w-[215px] text-[12px] leading-[18px] text-[#111111]">
               A Social Impact Enterprise run by ex-servicemen.
@@ -156,7 +154,7 @@ function Footer() {
 
                 <Mail size={15} strokeWidth={2} />
 
-                <span>info@botikfashion.in</span>
+                <span>info@padmavathicollections.in</span>
 
               </div>
 

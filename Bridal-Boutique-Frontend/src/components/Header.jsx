@@ -55,12 +55,8 @@ function Header() {
             <img
               src={botikLogo}
               alt="BOTIK"
-              className="w-[120px] md:w-[145px]"
+              className="w-[120px] md:w-[185px]"
             />
-
-            <span className="text-[10px] md:text-[12px] tracking-[6px] md:tracking-[8px] uppercase">
-              FASHION
-            </span>
 
           </div>
 
