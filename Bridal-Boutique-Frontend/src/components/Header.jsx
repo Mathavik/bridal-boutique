@@ -63,10 +63,6 @@ function Header() {
               />
             </Link>
 
-            <span className="text-[10px] md:text-[12px] tracking-[6px] md:tracking-[8px] uppercase">
-              FASHION
-            </span>
-
           </div>
 
           {/* RIGHT */}
