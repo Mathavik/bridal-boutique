@@ -11,31 +11,61 @@ export default function ProductDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
-  const { guestId, refreshCounts, incrementCartCount, incrementWishlistCount } = useStore();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const { guestId, refreshCounts, cartItems,incrementCartCount, incrementWishlistCount } = useStore();
 
   useEffect(() => {
     const fetchProduct = async () => {
-      const response = await axios.get(`${API_BASE}/product/get_by_id.php?id=${id}`);
-      if (response.data?.status) {
-        setProduct(response.data.data);
+      setLoading(true);
+      setError("");
+      setProduct(null);
+
+      if (!id) {
+        setError("Product ID is missing.");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await axios.get(`${API_BASE}/product/get_by_id.php?id=${id}`);
+        if (response.data?.status) {
+          setProduct(response.data.data);
+        } else {
+          setError(response.data?.message || "Product not found.");
+        }
+      } catch (fetchError) {
+        console.error("Failed to load product:", fetchError);
+        setError("Unable to load product details. Please try again.");
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchProduct();
   }, [id]);
 
-  const addToCart = async () => {
+ // In ProductDetails.jsx
+const addToCart = async () => {
+  try {
     const response = await axios.post(`${API_BASE}/cart/save.php`, {
       guest_id: guestId(),
       product_id: product.id,
       quantity: 1,
       price: product.offer_price || product.price,
     });
+    await refreshCounts();
     if (response.data?.status) {
-      incrementCartCount(1);
-      await refreshCounts();
+      alert(`${product.product_name} added to cart successfully!`);
+    } else {
+      alert(response.data?.message || "Unable to add to cart");
     }
-  };
+  } catch (error) {
+    console.error("Add to cart failed:", error);
+    await refreshCounts();
+    alert("Add to cart failed. Please try again.");
+  }
+};
 
   const addToWishlist = async () => {
     const response = await axios.post(`${API_BASE}/wishlist/save.php`, {
@@ -48,8 +78,16 @@ export default function ProductDetails() {
     }
   };
 
-  if (!product) {
+  if (loading) {
     return <div className="min-h-screen flex items-center justify-center pt-28">Loading product...</div>;
+  }
+
+  if (error) {
+    return <div className="min-h-screen flex items-center justify-center pt-28 text-center px-4 text-red-600">{error}</div>;
+  }
+
+  if (!product) {
+    return <div className="min-h-screen flex items-center justify-center pt-28">Product not found.</div>;
   }
 
   const gallery = product.image_gallery_json ? JSON.parse(product.image_gallery_json) : [];

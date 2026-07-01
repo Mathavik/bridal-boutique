@@ -1,22 +1,32 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import axios from "axios";
-import { Heart, ShoppingBag } from "lucide-react";
-import { formatCurrency, getDiscountPercent } from "../utils/formatters";
 import { useStore } from "../contexts/StoreContext";
+import ProductCard from "../components/ProductCard";
 
 const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
 
-const resolveImageUrl = (src) => {
-  if (!src) return "";
-  return src.startsWith("http") ? src : `${API_BASE}/${src}`;
-};
-
 export default function BridalLehenga() {
+  const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { guestId, refreshCounts, wishlistItems, incrementCartCount, incrementWishlistCount } = useStore();
+  const { guestId, cartItems, refreshCounts, wishlistItems, incrementCartCount, incrementWishlistCount } = useStore();
   const location = useLocation();
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await axios.get(`${API_BASE}/category/get_active_category.php`);
+        if (response.data?.status) {
+          setCategories(response.data.data || []);
+        }
+      } catch (error) {
+        console.error("Failed to load categories:", error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -53,15 +63,15 @@ export default function BridalLehenga() {
         quantity: 1,
         price: product.offer_price || product.price,
       });
+      await refreshCounts();
       if (response.data?.status) {
-        incrementCartCount(1);
-        await refreshCounts();
         alert("Added to cart");
       } else {
         alert(response.data?.message || "Unable to add to cart");
       }
     } catch (error) {
       console.error("Add to cart failed:", error);
+      await refreshCounts();
       alert("Add to cart failed. Please try again.");
     }
   };
@@ -100,6 +110,7 @@ export default function BridalLehenga() {
           <p className="text-gray-600 mt-2">Discover handcrafted bridal wear curated from our latest collection.</p>
         </div>
 
+
         {loading ? (
           <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
             {Array.from({ length: 6 }).map((_, index) => (
@@ -109,38 +120,14 @@ export default function BridalLehenga() {
         ) : (
           <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
             {products.map((product) => (
-              <div key={product.id} className="bg-white rounded-xl shadow-sm overflow-hidden">
-                <Link to={`/product/${product.id}`}>
-                  <img src={resolveImageUrl(product.image || "") || "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0"} alt={product.product_name} className="w-full h-80 object-cover" />
-                </Link>
-                <div className="p-5">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">{product.product_name}</h3>
-                    <span className="text-sm text-[#a97c50]">{product.brand || "Padmavathi Collection"}</span>
-                  </div>
-                  <p className="text-sm text-gray-600 mt-2 line-clamp-2">{product.short_description}</p>
-                  <div className="mt-3 flex items-center gap-2 text-sm text-gray-500">
-                    <span>Sizes: {product.available_sizes || "Custom"}</span>
-                  </div>
-                  <div className="mt-4 flex items-center gap-3">
-                    <span className="font-semibold">{formatCurrency(product.offer_price || product.price)}</span>
-                    <span className="line-through text-gray-400">{formatCurrency(product.price)}</span>
-                    <span className="text-[#a97c50]">{getDiscountPercent(product.price, product.offer_price)}% off</span>
-                  </div>
-                  <div className="mt-3 text-sm text-gray-500">Rating: 4.8 • Stock: {product.stock_quantity > 0 ? "In Stock" : "Out of Stock"}</div>
-                  <div className="mt-5 flex gap-2">
-                    <button onClick={() => addToCart(product)} className="flex-1 flex items-center justify-center gap-2 rounded-md bg-[#181818] px-3 py-2 text-white">
-                      <ShoppingBag size={16} /> Add to Cart
-                    </button>
-                    <button
-                      onClick={() => addToWishlist(product)}
-                      className={`rounded-md border p-2 ${isWishlisted(product) ? "border-red-200 bg-red-50" : "border-gray-200"}`}
-                    >
-                      <Heart size={16} className={isWishlisted(product) ? "text-red-600" : "text-gray-600"} />
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <ProductCard
+                key={product.id}
+                product={product}
+                onNavigate={() => window.location.assign(`/product/${product.id}`)}
+                onAddToCart={() => addToCart(product)}
+                onAddToWishlist={() => addToWishlist(product)}
+                isWishlisted={isWishlisted(product)}
+              />
             ))}
           </div>
         )}

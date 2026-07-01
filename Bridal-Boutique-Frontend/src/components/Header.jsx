@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Menu,
   Search,
@@ -7,8 +7,9 @@ import {
   ShoppingBag,
   X,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import axios from "axios";
+
 
 const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
 
@@ -18,18 +19,27 @@ import { useAuth } from "../contexts/AuthContext";
 
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [categories, setCategories] = useState([]);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [allCategories, setAllCategories] = useState([]);
+  const dropdownRef = useRef(null);
   const { cartCount, wishlistCount } = useStore();
   const { user, logout } = useAuth();
+  const location = useLocation();
+
+  const params = new URLSearchParams(location.search);
+  const activeCategoryId = params.get("category_id") || "";
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const params = new URLSearchParams(window.location.search);
-        const companyId = params.get("company_id") || "47";
-        const response = await axios.get(`${API_BASE}/category/get_active_category.php?company_id=${companyId}`);
+        const companyId = params.get("company_id");
+        let url = `${API_BASE}/category/get_active_category.php`;
+        if (companyId) {
+          url += `?company_id=${companyId}`;
+        }
+        const response = await axios.get(url);
         if (response.data?.status) {
-          setCategories(response.data.data || []);
+          setAllCategories(response.data.data || []);
         }
       } catch (error) {
         console.error("Error loading categories:", error);
@@ -37,6 +47,19 @@ function Header() {
     };
 
     fetchCategories();
+  }, [location.search]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
   return (
@@ -50,10 +73,32 @@ function Header() {
 
             {/* Desktop Shop Button */}
 
-            <button className="hidden lg:flex items-center gap-2 border border-[#D8D8D8] rounded-md px-4 h-[40px] text-[14px] font-medium hover:bg-gray-50 transition">
-              <Menu size={15} />
-              <span>Shop All</span>
-            </button>
+            <div className="relative hidden lg:flex" ref={dropdownRef}>
+              <button
+                onClick={() => setDropdownOpen((prev) => !prev)}
+                className="flex items-center gap-2 border border-[#D8D8D8] rounded-md px-4 h-[40px] text-[14px] font-medium hover:bg-gray-50 transition"
+              >
+                <Menu size={15} />
+                <span>Shop All</span>
+              </button>
+
+              <div
+                className={`absolute left-0 top-[calc(100%_+_8px)] z-40 w-[240px] rounded-2xl border border-[#e5e7eb] bg-white shadow-lg transition-opacity duration-200 ${dropdownOpen ? "opacity-100 visible" : "opacity-0 invisible"}`}
+              >
+                <div className="max-h-[360px] overflow-y-auto py-2">
+                  {allCategories.map((category) => (
+                    <Link
+                      key={category.id}
+                      to={`/bridal-lehenga?category_id=${category.id}`}
+                      className={`block w-full px-4 py-3 text-left text-sm text-[#181818] hover:bg-[#f8f7f2] ${activeCategoryId === String(category.id) ? "font-semibold text-[#a97c50]" : ""}`}
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      {category.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
 
             {/* Mobile Menu */}
 
@@ -67,11 +112,11 @@ function Header() {
             {/* Desktop Navigation */}
 
             <nav className="hidden lg:flex items-center gap-7 text-[14px] font-medium text-[#181818]">
-              {categories.slice(0, 3).map((category) => (
+              {allCategories.slice(0, 3).map((category) => (
                 <Link
                   key={category.id}
                   to={`/bridal-lehenga?category_id=${category.id}`}
-                  className="hover:text-[#a97c50]"
+                  className={`hover:text-[#a97c50] ${activeCategoryId === String(category.id) ? "text-[#a97c50] font-semibold" : ""}`}
                 >
                   {category.name}
                 </Link>
@@ -198,17 +243,17 @@ function Header() {
 
           </div>
 
+
         </div>
 
         {/* Menu */}
 
         <nav className="px-5 flex flex-col">
-          {categories.slice(0, 4).map((category) => (
+          {allCategories.slice(0, 4).map((category) => (
             <Link
               key={category.id}
               to={`/bridal-lehenga?category_id=${category.id}`}
-              className="py-4 border-b font-medium"
-              onClick={() => setMenuOpen(false)}
+              className={`py-4 border-b font-medium ${activeCategoryId === String(category.id) ? "text-[#a97c50] font-semibold" : ""}`}
             >
               {category.name}
             </Link>

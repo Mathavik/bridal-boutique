@@ -20,9 +20,12 @@ if (!$guest_id || !$product_id) {
 }
 
 $existing = mysqli_query($conn, "SELECT id FROM wishlist WHERE guest_id='$guest_id' AND product_id=$product_id");
-if (mysqli_num_rows($existing) === 0) {
-    mysqli_query($conn, "INSERT INTO wishlist (guest_id, product_id) VALUES ('$guest_id', $product_id)");
+if (mysqli_num_rows($existing) > 0) {
+    echo json_encode(["status" => false, "message" => "This product is already in your wishlist."]);
+    exit;
 }
+
+mysqli_query($conn, "INSERT INTO wishlist (guest_id, product_id) VALUES ('$guest_id', $product_id)");
 
 echo json_encode(["status" => true, "message" => "Wishlist updated"]);
 ?>

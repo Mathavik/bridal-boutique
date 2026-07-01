@@ -16,6 +16,10 @@ export default function Wishlist() {
   const [items, setItems] = useState(wishlistItems);
 
   useEffect(() => {
+    refreshCounts();
+  }, [refreshCounts]);
+
+  useEffect(() => {
     setItems(wishlistItems);
   }, [wishlistItems]);
 
@@ -31,10 +35,13 @@ export default function Wishlist() {
       guest_id: guestId(),
       product_id: product.product_id,
       quantity: 1,
-      price: product.offer_price || product.price,
+      price: product.price,
     });
     if (response.data?.status) {
       await removeItem(product.id);
+      await refreshCounts();
+    } else {
+      alert(response.data?.message || "Unable to move item to cart");
       await refreshCounts();
     }
   };

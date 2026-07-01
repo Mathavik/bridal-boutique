@@ -19,6 +19,17 @@ if (!$id) {
     exit;
 }
 
-mysqli_query($conn, "UPDATE cart SET quantity=$quantity WHERE id=$id");
+if ($quantity <= 0) {
+    mysqli_query($conn, "DELETE FROM cart WHERE id=$id");
+    echo json_encode(["status" => true, "message" => "Item removed"]);
+    exit;
+}
+
+$result = mysqli_query($conn, "UPDATE cart SET quantity=$quantity WHERE id=$id");
+if (!$result) {
+    echo json_encode(["status" => false, "message" => "Unable to update cart item"]);
+    exit;
+}
+
 echo json_encode(["status" => true, "message" => "Cart updated"]);
 ?>

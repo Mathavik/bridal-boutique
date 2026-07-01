@@ -12,8 +12,12 @@ const resolveImageUrl = (src) => {
 };
 
 export default function Cart() {
-  const { guestId, cartItems, refreshCounts } = useStore();
+  const { cartItems, refreshCounts } = useStore();
   const [items, setItems] = useState(cartItems);
+
+  useEffect(() => {
+    refreshCounts();
+  }, [refreshCounts]);
 
   useEffect(() => {
     setItems(cartItems);

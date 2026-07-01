@@ -17,7 +17,7 @@ if (!$guest_id) {
     exit;
 }
 
-$result = mysqli_query($conn, "SELECT w.*, p.product_name, p.image, p.offer_price, p.price FROM wishlist w LEFT JOIN products p ON w.product_id = p.id WHERE w.guest_id='$guest_id' ORDER BY w.id DESC");
+$result = mysqli_query($conn, "SELECT w.*, p.product_name, p.image, p.price FROM wishlist w LEFT JOIN products p ON w.product_id = p.id WHERE w.guest_id='$guest_id' ORDER BY w.id DESC");
 $data = [];
 while ($row = mysqli_fetch_assoc($result)) {
     $data[] = $row;

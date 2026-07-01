@@ -21,39 +21,34 @@ export function StoreProvider({ children }) {
 
   const guestId = () => guestIdValue;
 
-  const refreshCounts = async () => {
-    const id = guestIdValue;
-    let cartItemsData = null;
-    let wishlistItemsData = null;
+  // In StoreContext.js, update the refreshCounts function to force re-render
 
-    try {
-      const cartRes = await axios.get(`http://localhost/bridal-boutique/Bridal-Boutique-backend/api/cart/get.php?guest_id=${id}`);
-      if (cartRes.data?.status) {
-        cartItemsData = cartRes.data.data || [];
-      }
-    } catch (error) {
-      console.error("Cart count refresh failed:", error);
+const refreshCounts = async () => {
+  const id = guestIdValue;
+  
+  try {
+    const cartRes = await axios.get(`http://localhost/bridal-boutique/Bridal-Boutique-backend/api/cart/get.php?guest_id=${id}`);
+    if (cartRes.data?.status) {
+      const items = cartRes.data.data || [];
+      setCartItems(items);
+      const totalCount = items.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+      setCartCount(totalCount);
     }
+  } catch (error) {
+    console.error("Cart count refresh failed:", error);
+  }
 
-    try {
-      const wishlistRes = await axios.get(`http://localhost/bridal-boutique/Bridal-Boutique-backend/api/wishlist/get.php?guest_id=${id}`);
-      if (wishlistRes.data?.status) {
-        wishlistItemsData = wishlistRes.data.data || [];
-      }
-    } catch (error) {
-      console.error("Wishlist count refresh failed:", error);
+  try {
+    const wishlistRes = await axios.get(`http://localhost/bridal-boutique/Bridal-Boutique-backend/api/wishlist/get.php?guest_id=${id}`);
+    if (wishlistRes.data?.status) {
+      const items = wishlistRes.data.data || [];
+      setWishlistItems(items);
+      setWishlistCount(items.length);
     }
-
-    if (cartItemsData !== null) {
-      setCartItems(cartItemsData);
-      setCartCount(cartItemsData.reduce((sum, item) => sum + Number(item.quantity || 0), 0));
-    }
-
-    if (wishlistItemsData !== null) {
-      setWishlistItems(wishlistItemsData);
-      setWishlistCount(wishlistItemsData.length);
-    }
-  };
+  } catch (error) {
+    console.error("Wishlist count refresh failed:", error);
+  }
+};
 
   const changeCartCount = (delta = 1) => {
     setCartCount((prev) => Math.max(0, prev + delta));
