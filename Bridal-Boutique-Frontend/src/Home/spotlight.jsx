@@ -76,11 +76,17 @@ const Spotlight = () => {
             <div className="grid gap-4 sm:grid-cols-2">
               {featuredProducts.map((product) => (
                 <div key={product.id} className="rounded-[28px] overflow-hidden border border-[#efe2d0] bg-white shadow-sm">
-                  <img
-                    src={resolveImageUrl(product.image || "") || "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0"}
-                    alt={product.product_name}
-                    className="h-72 w-full object-cover"
-                  />
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/bridal-lehenga?category_id=${featuredCategory?.id || ''}&product_id=${product.id}`)}
+                    className="block w-full overflow-hidden"
+                  >
+                    <img
+                      src={resolveImageUrl(product.image || "") || "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0"}
+                      alt={product.product_name}
+                      className="h-72 w-full object-cover transition duration-200 hover:scale-[1.01]"
+                    />
+                  </button>
                   <div className="p-4">
                     <p className="text-xs uppercase tracking-[3px] text-[#a97c50]">{featuredCategory?.name || "Lehenga"}</p>
                     <h4 className="mt-2 text-lg font-semibold text-[#181818]">{product.product_name}</h4>
@@ -165,11 +171,17 @@ const Spotlight = () => {
             <div className="grid gap-4 sm:grid-rows-2">
               {gownProducts.map((product) => (
                 <div key={product.id} className="rounded-[28px] overflow-hidden border border-[#efe2d0] bg-white shadow-sm">
-                  <img
-                    src={resolveImageUrl(product.image || "") || "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0"}
-                    alt={product.product_name}
-                    className="h-48 w-full object-cover"
-                  />
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/bridal-lehenga?category_id=${secondaryCategory?.id || ''}&product_id=${product.id}`)}
+                    className="block w-full overflow-hidden"
+                  >
+                    <img
+                      src={resolveImageUrl(product.image || "") || "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0"}
+                      alt={product.product_name}
+                      className="h-48 w-full object-cover transition duration-200 hover:scale-[1.01]"
+                    />
+                  </button>
                   <div className="p-4">
                     <p className="text-xs uppercase tracking-[3px] text-[#a97c50]">{secondaryCategory?.name || "Gowns"}</p>
                     <h4 className="mt-2 text-lg font-semibold text-[#181818]">{product.product_name}</h4>
