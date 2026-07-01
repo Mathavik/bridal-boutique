@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Heart, ShoppingBag, Share2, Truck, RotateCcw } from "lucide-react";
 import { formatCurrency, getDiscountPercent } from "../utils/formatters";
@@ -9,6 +9,7 @@ const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
 
 export default function ProductDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const { guestId, refreshCounts } = useStore();
 
@@ -76,7 +77,7 @@ export default function ProductDetails() {
           <div className="mt-4 text-sm text-gray-500">SKU: {product.sku || "N/A"} • Brand: {product.brand || "BOTIK"}</div>
           <div className="mt-6 flex flex-wrap gap-3">
             <button onClick={addToCart} className="flex items-center gap-2 rounded-md bg-[#181818] px-4 py-3 text-white"><ShoppingBag size={16} /> Add to Cart</button>
-            <button className="flex items-center gap-2 rounded-md border border-gray-300 px-4 py-3">Buy Now</button>
+            <button onClick={() => navigate(`/payment?product_id=${product.id}`)} className="flex items-center gap-2 rounded-md border border-gray-300 px-4 py-3">Buy Now</button>
             <button onClick={addToWishlist} className="flex items-center gap-2 rounded-md border border-gray-300 px-4 py-3"><Heart size={16} /> Wishlist</button>
             <button className="flex items-center gap-2 rounded-md border border-gray-300 px-4 py-3"><Share2 size={16} /> Share</button>
           </div>

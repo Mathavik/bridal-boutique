@@ -11,10 +11,12 @@ import { Link } from "react-router-dom";
 
 import botikLogo from "../assets/Botik.png";
 import { useStore } from "../contexts/StoreContext";
+import { useAuth } from "../contexts/AuthContext";
 
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { cartCount, wishlistCount } = useStore();
+  const { user, logout } = useAuth();
 
   return (
     <>
@@ -89,10 +91,18 @@ function Header() {
               className="md:hidden cursor-pointer"
             />
 
-            <User
-              size={22}
-              className="cursor-pointer"
-            />
+            {user ? (
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-[#181818]">Hi, {user.name}</span>
+                <button onClick={logout} className="text-sm font-medium text-[#181818] hover:text-[#a97c50]">
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <Link to="/login">
+                <User size={22} className="cursor-pointer" />
+              </Link>
+            )}
 
             <Link to="/wishlist" className="relative">
               <Heart size={22} className="cursor-pointer" />
@@ -203,12 +213,17 @@ function Header() {
 
           <div className="grid grid-cols-3">
 
-            <button className="flex flex-col items-center py-4 gap-2">
-              <User size={22} />
-              <span className="text-xs">
-                Account
-              </span>
-            </button>
+            {user ? (
+              <button onClick={logout} className="flex flex-col items-center py-4 gap-2">
+                <User size={22} />
+                <span className="text-xs">Logout</span>
+              </button>
+            ) : (
+              <Link to="/login" className="flex flex-col items-center py-4 gap-2">
+                <User size={22} />
+                <span className="text-xs">Login</span>
+              </Link>
+            )}
 
             <Link to="/wishlist" className="flex flex-col items-center py-4 gap-2">
               <Heart size={22} />

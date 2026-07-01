@@ -38,5 +38,31 @@ foreach ($items as $item) {
 }
 
 mysqli_query($conn, "DELETE FROM cart WHERE guest_id='$guest_id'");
+
+// Send order confirmation email
+require_once __DIR__ . '/../../PHPMailer/src/Exception.php';
+require_once __DIR__ . '/../../PHPMailer/src/PHPMailer.php';
+require_once __DIR__ . '/../../PHPMailer/src/SMTP.php';
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+try {
+    $mail = new PHPMailer(true);
+    $mail->isMail();
+    $mail->setFrom('no-reply@bridal-boutique.local', 'Bridal Boutique');
+    $mail->addAddress($email, $customer_name);
+    $mail->isHTML(true);
+    $mail->Subject = 'Order Confirmed – Dispatch in 2 Days';
+    $mail->Body = "<p>Dear " . htmlspecialchars($customer_name) . ",</p>" .
+        "<p>Thank you for your purchase. Your order (#" . $order_id . ") has been confirmed.</p>" .
+        "<p>We will dispatch your order within 2 days and send you another update once it ships.</p>" .
+        "<p>Order total: ₹" . number_format($total, 2) . "</p>" .
+        "<p>Shipping Address:<br>" . nl2br(htmlspecialchars($shipping_address)) . "</p>" .
+        "<p>Regards,<br>Bridal Boutique Team</p>";
+    $mail->send();
+} catch (Exception $e) {
+    // Email failure is not fatal for checkout
+}
+
 echo json_encode(["status" => true, "message" => "Order placed", "order_id" => $order_id]);
 ?>

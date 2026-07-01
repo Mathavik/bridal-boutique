@@ -7,6 +7,9 @@ import ProductDetails from "./pages/ProductDetails";
 import Cart from "./pages/Cart";
 import Wishlist from "./pages/Wishlist";
 import Checkout from "./pages/Checkout";
+import Payment from "./pages/Payment";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 import OrderConfirmation from "./pages/OrderConfirmation";
 
 export default function App() {
@@ -20,6 +23,9 @@ export default function App() {
         <Route path="/cart" element={<Cart />} />
         <Route path="/wishlist" element={<Wishlist />} />
         <Route path="/checkout" element={<Checkout />} />
+        <Route path="/payment" element={<Payment />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         <Route path="/order-confirmation" element={<OrderConfirmation />} />
       </Routes>
       <Footer />
