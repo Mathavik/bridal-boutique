@@ -199,6 +199,10 @@ export default function ProductDetails() {
             )}
           </div>
 
+          <div className="mt-2 text-sm text-gray-600">
+            Total: <span className="font-semibold">{formatCurrency(product.price * quantity)}</span>
+          </div>
+
           {/* Quantity Selector */}
           <div className="mt-4 flex items-center gap-4">
             <span className="text-sm font-medium text-gray-700">Quantity:</span>

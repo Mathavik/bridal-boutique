@@ -17,6 +17,7 @@ import {
   AlertCircle,
   ArrowLeft
 } from "lucide-react";
+import html2pdf from "html2pdf.js";
 import { formatCurrency } from "../utils/formatters";
 
 const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend";
@@ -61,40 +62,32 @@ export default function InvoicePage() {
   };
 
   const handleDownload = () => {
-    // Create a printable version
-    const printWindow = window.open('', '_blank');
-    const content = document.getElementById('invoice-content').innerHTML;
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Invoice #${invoice?.invoice_no}</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 40px; }
-            .invoice-container { max-width: 800px; margin: 0 auto; }
-            .header { display: flex; justify-content: space-between; border-bottom: 2px solid #a97c50; padding-bottom: 20px; margin-bottom: 20px; }
-            .company-name { font-size: 24px; font-weight: bold; color: #a97c50; }
-            .invoice-title { font-size: 20px; font-weight: bold; }
-            .details { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-            .table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-            .table th { background: #f8f7f2; padding: 10px; text-align: left; border-bottom: 2px solid #a97c50; }
-            .table td { padding: 10px; border-bottom: 1px solid #ddd; }
-            .total { text-align: right; font-size: 18px; font-weight: bold; margin-top: 20px; }
-            .footer { margin-top: 40px; text-align: center; color: #999; font-size: 12px; border-top: 1px solid #ddd; padding-top: 20px; }
-            .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-            .status-paid { background: #d4edda; color: #155724; }
-            .status-pending { background: #fff3cd; color: #856404; }
-            .status-partial { background: #fff3cd; color: #856404; }
-          </style>
-        </head>
-        <body>
-          ${content}
-          <script>
-            window.onload = function() { window.print(); }
-          <\/script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
+    const element = document.getElementById('invoice-content');
+    if (!element) return;
+
+    const width = element.scrollWidth;
+    const height = element.scrollHeight;
+    const opt = {
+      margin: 10,
+      filename: `invoice-${invoice?.invoice_no || 'download'}.pdf`,
+      image: { type: 'jpeg', quality: 1 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        windowWidth: width,
+        width,
+        height,
+        backgroundColor: '#ffffff',
+      },
+      jsPDF: {
+        unit: 'px',
+        format: [width, height],
+        orientation: 'portrait',
+      },
+      pagebreak: { mode: ['css', 'legacy'] },
+    };
+
+    html2pdf().set(opt).from(element).save();
   };
 
   if (loading) {
@@ -124,15 +117,18 @@ export default function InvoicePage() {
   }
 
   const getStatusBadge = (status) => {
+    const normalized = String(status || "").toLowerCase();
     const statusMap = {
       paid: { color: "bg-green-100 text-green-700", icon: <CheckCircle size={16} /> },
       pending: { color: "bg-yellow-100 text-yellow-700", icon: <Clock size={16} /> },
       partial: { color: "bg-orange-100 text-orange-700", icon: <Clock size={16} /> },
+      online: { color: "bg-blue-100 text-blue-700", icon: <CheckCircle size={16} /> },
     };
-    return statusMap[status] || statusMap.pending;
+    return statusMap[normalized] || { color: "bg-gray-100 text-gray-700", icon: <AlertCircle size={16} /> };
   };
 
   const statusInfo = getStatusBadge(invoice.payment_status);
+  const statusLabel = invoice.payment_status ? invoice.payment_status.charAt(0).toUpperCase() + invoice.payment_status.slice(1) : "N/A";
 
   return (
     <div className="min-h-screen bg-[#f8f7f2] pt-28 px-4 md:px-8 lg:px-12">
@@ -179,7 +175,7 @@ export default function InvoicePage() {
               <div className="flex items-center gap-2 justify-end">
                 <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${statusInfo.color}`}>
                   {statusInfo.icon}
-                  {invoice.payment_status.charAt(0).toUpperCase() + invoice.payment_status.slice(1)}
+                  {invoice.payment_status ? invoice.payment_status.charAt(0).toUpperCase() + invoice.payment_status.slice(1) : "N/A"}
                 </span>
               </div>
               <p className="text-sm text-gray-500 mt-1">
@@ -290,7 +286,7 @@ export default function InvoicePage() {
               <p className="text-gray-500">Payment Status</p>
               <p className={`font-medium capitalize ${statusInfo.color} inline-flex items-center gap-1 px-2 py-0.5 rounded-full`}>
                 {statusInfo.icon}
-                {invoice.payment_status || "N/A"}
+                {statusLabel}
               </p>
             </div>
           </div>
