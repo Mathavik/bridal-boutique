@@ -6,7 +6,7 @@ import ProductCard from "../components/ProductCard";
 
 const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
 
-export default function BridalLehenga() {
+export default function Product() {
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
