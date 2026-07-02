@@ -166,6 +166,8 @@ export default function Payment() {
       gst_no: form.gst_no,
       payment_status: paymentStatus,
       balance_amount: balanceAmount,
+      email: orderData.email || user?.email || '',
+      shipping_address: form.shipping_address,
     };
 
     console.log("Payment payload:", payload);
@@ -190,6 +192,7 @@ export default function Payment() {
               invoice_no: response.data.invoice_no,
               invoice_id: response.data.invoice_id,
               payment_id: response.data.payment_id,
+              order_id: response.data.order_id || 0,
               total_amount: total,
               paid_amount: paidAmount,
               balance_amount: balanceAmount,
