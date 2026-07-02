@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import axios from "axios";
-import { Package, Calendar, Eye, X, Clock, CheckCircle } from "lucide-react";
+import { Package, Calendar, Eye, X, Clock, CheckCircle, FileText } from "lucide-react";
 
 const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend";
 
@@ -20,6 +21,7 @@ const formatDate = (dateString) => {
 
 function OrdersPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -76,6 +78,10 @@ function OrdersPage() {
   const viewOrderDetails = (order) => {
     setSelectedOrder(order);
     setModalOpen(true);
+  };
+
+  const viewInvoice = (orderId) => {
+    navigate(`/invoice/${orderId}`);
   };
 
   const getStatusColor = (status) => {
@@ -177,6 +183,14 @@ function OrdersPage() {
                     View Details
                   </button>
 
+                  <button
+                    onClick={() => viewInvoice(order.id)}
+                    className="flex items-center gap-1 px-4 py-2 text-sm text-blue-600 border border-blue-600 rounded-md hover:bg-blue-600 hover:text-white transition"
+                  >
+                    <FileText size={16} />
+                    View Invoice
+                  </button>
+
                   {(order.status || 'pending') !== "cancelled" && (order.status || 'pending') !== "delivered" && (
                     <button
                       onClick={() => cancelOrder(order.id)}
@@ -274,18 +288,18 @@ function OrdersPage() {
                       className="flex items-center gap-4 border-b pb-3 last:border-0"
                     >
                       <img
-  src={
-    item.image
-      ? `${API_BASE}/api/${item.image}`
-      : "/placeholder.jpg"
-  }
-  alt={item.product_name}
-  className="w-16 h-16 object-cover rounded-md"
-  onError={(e) => {
-    console.log("Image failed:", e.target.src);
-    e.target.src = "/placeholder.jpg";
-  }}
-/>
+                        src={
+                          item.image
+                            ? `${API_BASE}/api/${item.image}`
+                            : "/placeholder.jpg"
+                        }
+                        alt={item.product_name}
+                        className="w-16 h-16 object-cover rounded-md"
+                        onError={(e) => {
+                          console.log("Image failed:", e.target.src);
+                          e.target.src = "/placeholder.jpg";
+                        }}
+                      />
                       <div className="flex-1">
                         <p className="font-medium text-sm">{item.product_name}</p>
                         <p className="text-sm text-gray-600">
@@ -306,6 +320,16 @@ function OrdersPage() {
                   ₹{parseFloat(selectedOrder.total || 0).toLocaleString()}
                 </span>
               </div>
+
+              <div className="mt-4 flex justify-end">
+                <button
+                  onClick={() => viewInvoice(selectedOrder.id)}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#a97c50] text-white rounded-lg hover:bg-[#8a6540] transition"
+                >
+                  <FileText size={16} />
+                  View Full Invoice
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -314,4 +338,4 @@ function OrdersPage() {
   );
 }
 
-export default OrdersPage;  
+export default OrdersPage;
