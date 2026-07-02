@@ -49,6 +49,9 @@ mysqli_query($conn, "CREATE TABLE IF NOT EXISTS banners (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
 addColumnIfNotExists($conn, 'categories', 'banner_image', 'VARCHAR(500) DEFAULT ""');
+addColumnIfNotExists($conn, 'wishlist', 'size', 'VARCHAR(100) DEFAULT ""');
+addColumnIfNotExists($conn, 'cart', 'size', 'VARCHAR(100) DEFAULT ""');
+addColumnIfNotExists($conn, 'order_items', 'size', 'VARCHAR(100) DEFAULT ""');
 
 mysqli_query($conn, "CREATE TABLE IF NOT EXISTS products (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -127,6 +130,7 @@ mysqli_query($conn, "CREATE TABLE IF NOT EXISTS wishlist (
     id INT AUTO_INCREMENT PRIMARY KEY,
     guest_id VARCHAR(100) NOT NULL,
     product_id INT NOT NULL,
+    size VARCHAR(100) DEFAULT '',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
@@ -136,6 +140,7 @@ mysqli_query($conn, "CREATE TABLE IF NOT EXISTS cart (
     product_id INT NOT NULL,
     quantity INT DEFAULT 1,
     price DECIMAL(10,2) DEFAULT 0.00,
+    size VARCHAR(100) DEFAULT '',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
@@ -159,6 +164,7 @@ mysqli_query($conn, "CREATE TABLE IF NOT EXISTS order_items (
     product_name VARCHAR(255) DEFAULT '',
     price DECIMAL(10,2) DEFAULT 0.00,
     quantity INT DEFAULT 1,
+    size VARCHAR(100) DEFAULT '',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 

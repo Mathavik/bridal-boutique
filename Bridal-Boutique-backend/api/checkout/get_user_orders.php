@@ -57,17 +57,17 @@ try {
                         oi.product_id,
                         oi.product_name,
                         oi.quantity,
-                        oi.price
+                        oi.price,
+                        oi.size
                       FROM order_items oi
-                      WHERE oi.order_id = " . $row['id'];
-        
+                      WHERE oi.order_id = " . intval($row['id']);
         $itemsResult = mysqli_query($conn, $itemsQuery);
         $items = [];
         
         while ($item = mysqli_fetch_assoc($itemsResult)) {
             // Get product image from products table
             $image = null;
-            $imgQuery = "SELECT image, image_gallery_json FROM products WHERE id = " . $item['product_id'];
+            $imgQuery = "SELECT image, image_gallery_json FROM products WHERE id = " . intval($item['product_id']);
             $imgResult = mysqli_query($conn, $imgQuery);
             if ($imgData = mysqli_fetch_assoc($imgResult)) {
                 if (!empty($imgData['image'])) {
@@ -79,7 +79,7 @@ try {
             }
             
             $item['image'] = $image;
-            $item['total'] = $item['price'] * $item['quantity'];
+            $item['total'] = floatval($item['price']) * intval($item['quantity']);
             $items[] = $item;
         }
         

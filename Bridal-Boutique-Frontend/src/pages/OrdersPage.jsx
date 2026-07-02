@@ -304,6 +304,7 @@ function OrdersPage() {
                         <p className="font-medium text-sm">{item.product_name}</p>
                         <p className="text-sm text-gray-600">
                           Qty: {item.quantity} × ₹{parseFloat(item.price || 0).toLocaleString()}
+                          {item.size ? ` • Size: ${item.size}` : ''}
                         </p>
                         <p className="font-semibold text-[#a97c50] text-sm">
                           ₹{parseFloat(item.total || item.price * item.quantity || 0).toLocaleString()}

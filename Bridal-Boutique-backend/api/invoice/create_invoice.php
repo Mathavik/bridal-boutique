@@ -261,6 +261,7 @@ if (!$conn->query($order_sql)) {
         $product_id = intval($item['product_id']);
         $qty = floatval($item['qty']);
         $price = floatval($item['price']);
+        $size = $conn->real_escape_string(trim($item['size'] ?? ''));
         $product_name = "";
         
         // Get product name
@@ -277,6 +278,7 @@ if (!$conn->query($order_sql)) {
                 product_name,
                 price,
                 quantity,
+                size,
                 created_at
             ) VALUES (
                 '$order_id',
@@ -284,6 +286,7 @@ if (!$conn->query($order_sql)) {
                 '$product_name',
                 '$price',
                 '$qty',
+                '$size',
                 NOW()
             )
         ";

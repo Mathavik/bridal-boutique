@@ -83,6 +83,7 @@ try {
         $product_name = mysqli_real_escape_string($conn, trim($item['product_name'] ?? ''));
         $price = floatval($item['price'] ?? 0);
         $quantity = intval($item['quantity'] ?? 1);
+        $size = mysqli_real_escape_string($conn, trim($item['size'] ?? ''));
         
         if ($product_id > 0 && $product_name) {
             $itemQuery = "INSERT INTO order_items (
@@ -91,6 +92,7 @@ try {
                 product_name, 
                 price, 
                 quantity,
+                size,
                 created_at
             ) VALUES (
                 $order_id, 
@@ -98,6 +100,7 @@ try {
                 '$product_name', 
                 $price, 
                 $quantity,
+                '$size',
                 NOW()
             )";
             

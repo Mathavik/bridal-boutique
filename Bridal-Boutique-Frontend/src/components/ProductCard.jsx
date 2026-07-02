@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from "react";
 import { Heart, ShoppingBag } from "lucide-react";
 import { formatCurrency, getDiscountPercent } from "../utils/formatters";
 
@@ -15,6 +16,24 @@ export default function ProductCard({
   isWishlisted,
   onNavigate,
 }) {
+  const availableSizes = useMemo(() => {
+    if (!product?.available_sizes) return [];
+    return product.available_sizes
+      .split(/[,;|]/)
+      .map((size) => size.trim())
+      .filter(Boolean);
+  }, [product]);
+
+  const [selectedSize, setSelectedSize] = useState(availableSizes[0] || "");
+
+  useEffect(() => {
+    if (availableSizes.length > 0) {
+      setSelectedSize((prev) => prev || availableSizes[0]);
+    } else {
+      setSelectedSize("");
+    }
+  }, [availableSizes]);
+
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden">
       <button
@@ -39,9 +58,24 @@ export default function ProductCard({
           {product.short_description || product.category_name || "Beautiful bridal wear crafted for the moment."}
         </p>
 
-        <div className="mt-3 flex items-center gap-2 text-sm text-gray-500">
-          <span>Sizes: {product.available_sizes || "Custom"}</span>
-        </div>
+        {availableSizes.length > 0 ? (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {availableSizes.map((size) => (
+              <button
+                key={size}
+                type="button"
+                onClick={() => setSelectedSize(size)}
+                className={`rounded-full border px-3 py-1 text-xs transition ${selectedSize === size ? "border-[#a97c50] bg-[#a97c50] text-white" : "border-gray-300 bg-white text-gray-700"}`}
+              >
+                {size}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-3 flex items-center gap-2 text-sm text-gray-500">
+            <span>Sizes: {product.available_sizes || "Custom"}</span>
+          </div>
+        )}
 
         <div className="mt-4 flex items-center gap-3">
           <span className="font-semibold">{formatCurrency(product.offer_price || product.price)}</span>
@@ -59,7 +93,7 @@ export default function ProductCard({
 
         <div className="mt-5 flex gap-2">
           <button
-            onClick={onAddToCart}
+            onClick={() => onAddToCart(product, selectedSize)}
             className="flex-1 flex items-center justify-center gap-2 rounded-md bg-[#181818] px-3 py-2 text-white"
             type="button"
           >
@@ -67,7 +101,7 @@ export default function ProductCard({
           </button>
 
           <button
-            onClick={onAddToWishlist}
+            onClick={() => onAddToWishlist(product, selectedSize)}
             type="button"
             className={`rounded-md border p-2 ${isWishlisted ? "border-red-200 bg-red-50" : "border-gray-200"}`}
           >
