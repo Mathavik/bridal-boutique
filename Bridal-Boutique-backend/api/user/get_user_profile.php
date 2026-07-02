@@ -1,15 +1,16 @@
 <?php
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET');
+header('Access-Control-Allow-Methods: GET, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
-require_once '../config/database.php';
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
 
-$database = new Database();
-$db = $database->getConnection();
+include '../../config/db.php';
 
-// Get user ID from request
 $user_id = isset($_GET['user_id']) ? intval($_GET['user_id']) : 0;
 
 if ($user_id <= 0) {
@@ -20,31 +21,22 @@ if ($user_id <= 0) {
     exit;
 }
 
-try {
-    $query = "SELECT id, name, email, phone, address, created_at, profile_image 
-              FROM users 
-              WHERE id = :user_id";
-    
-    $stmt = $db->prepare($query);
-    $stmt->bindParam(':user_id', $user_id);
-    $stmt->execute();
-    
-    if ($stmt->rowCount() > 0) {
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        echo json_encode([
-            'status' => true,
-            'data' => $user
-        ]);
-    } else {
-        echo json_encode([
-            'status' => false,
-            'message' => 'User not found'
-        ]);
-    }
-} catch (Exception $e) {
+$query = "SELECT id, name, email, phone, address, status, created_at 
+          FROM frontend_users 
+          WHERE id = $user_id";
+
+$result = mysqli_query($conn, $query);
+
+if ($result && mysqli_num_rows($result) > 0) {
+    $user = mysqli_fetch_assoc($result);
+    echo json_encode([
+        'status' => true,
+        'data' => $user
+    ]);
+} else {
     echo json_encode([
         'status' => false,
-        'message' => 'Error fetching user profile: ' . $e->getMessage()
+        'message' => 'User not found'
     ]);
 }
 ?>

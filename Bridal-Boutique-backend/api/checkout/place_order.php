@@ -30,7 +30,7 @@ if (!$customer_name || !$email || !$items || count($items) == 0) {
 
 // If user is logged in, get user details
 if ($user_id > 0) {
-    $checkUser = mysqli_query($conn, "SELECT id, name, email, phone, address FROM users WHERE id = $user_id");
+    $checkUser = mysqli_query($conn, "SELECT id, name, email, phone, address FROM frontend_users WHERE id = $user_id");
     if ($userData = mysqli_fetch_assoc($checkUser)) {
         if (empty($customer_name)) $customer_name = $userData['name'];
         if (empty($email)) $email = $userData['email'];
@@ -50,9 +50,7 @@ $shipping_address = mysqli_real_escape_string($conn, $shipping_address);
 mysqli_begin_transaction($conn);
 
 try {
-    // Insert order - using your existing table structure
-    // For logged-in users, we'll store user_id in guest_id field temporarily
-    // Or you can add user_id column to your orders table
+    // Insert order
     $insertOrder = "INSERT INTO orders (
         guest_id, 
         customer_name, 
@@ -79,7 +77,7 @@ try {
     
     $order_id = mysqli_insert_id($conn);
     
-    // Insert order items - using your existing order_items table structure
+    // Insert order items
     foreach ($items as $item) {
         $product_id = intval($item['product_id'] ?? 0);
         $product_name = mysqli_real_escape_string($conn, trim($item['product_name'] ?? ''));
@@ -109,10 +107,20 @@ try {
         }
     }
     
-    // Clear cart
+    // Clear cart - Check if user_id column exists
     if ($user_id > 0) {
-        mysqli_query($conn, "DELETE FROM cart WHERE user_id = $user_id");
+        // Check if user_id column exists in cart table
+        $checkColumn = mysqli_query($conn, "SHOW COLUMNS FROM cart LIKE 'user_id'");
+        if (mysqli_num_rows($checkColumn) > 0) {
+            // If user_id column exists, delete by user_id
+            mysqli_query($conn, "DELETE FROM cart WHERE user_id = $user_id");
+        } else {
+            // If user_id doesn't exist, use guest_id
+            $guest_id_for_cart = 'user_' . $user_id;
+            mysqli_query($conn, "DELETE FROM cart WHERE guest_id = '$guest_id_for_cart'");
+        }
     } else {
+        // Guest user - delete by guest_id
         mysqli_query($conn, "DELETE FROM cart WHERE guest_id = '$guest_id'");
     }
     
@@ -142,7 +150,7 @@ function sendOrderEmail($email, $customer_name, $order_id, $total, $shipping_add
         require_once __DIR__ . '/../../PHPMailer/src/Exception.php';
         require_once __DIR__ . '/../../PHPMailer/src/PHPMailer.php';
         require_once __DIR__ . '/../../PHPMailer/src/SMTP.php';
-      
+       
         
         $mail = new PHPMailer(true);
         $mail->isMail();

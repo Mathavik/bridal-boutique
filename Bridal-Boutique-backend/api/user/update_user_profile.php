@@ -1,66 +1,97 @@
 <?php
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, PUT');
+header('Access-Control-Allow-Methods: POST, PUT, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
-require_once '../config/database.php';
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
 
-$database = new Database();
-$db = $database->getConnection();
+include '../../config/db.php';
 
-$data = json_decode(file_get_contents('php://input'), true);
+$data = json_decode(file_get_contents("php://input"), true);
 
 $user_id = isset($data['user_id']) ? intval($data['user_id']) : 0;
 $name = isset($data['name']) ? trim($data['name']) : '';
 $phone = isset($data['phone']) ? trim($data['phone']) : '';
 $address = isset($data['address']) ? trim($data['address']) : '';
 
-if ($user_id <= 0 || empty($name)) {
+// Validation
+if ($user_id <= 0) {
     echo json_encode([
         'status' => false,
-        'message' => 'User ID and name are required'
+        'message' => 'Invalid user ID'
     ]);
     exit;
 }
 
-try {
-    $query = "UPDATE users 
-              SET name = :name, 
-                  phone = :phone, 
-                  address = :address 
-              WHERE id = :user_id";
-    
-    $stmt = $db->prepare($query);
-    $stmt->bindParam(':name', $name);
-    $stmt->bindParam(':phone', $phone);
-    $stmt->bindParam(':address', $address);
-    $stmt->bindParam(':user_id', $user_id);
-    
-    if ($stmt->execute()) {
-        // Get updated user data
-        $getUserQuery = "SELECT id, name, email, phone, address, created_at, profile_image 
-                         FROM users WHERE id = :user_id";
-        $getStmt = $db->prepare($getUserQuery);
-        $getStmt->bindParam(':user_id', $user_id);
-        $getStmt->execute();
-        $user = $getStmt->fetch(PDO::FETCH_ASSOC);
-        
-        echo json_encode([
-            'status' => true,
-            'message' => 'Profile updated successfully',
-            'data' => $user
-        ]);
-    } else {
-        echo json_encode([
-            'status' => false,
-            'message' => 'Failed to update profile'
-        ]);
-    }
-} catch (Exception $e) {
+if (empty($name)) {
     echo json_encode([
         'status' => false,
-        'message' => 'Error updating profile: ' . $e->getMessage()
+        'message' => 'Name is required'
+    ]);
+    exit;
+}
+
+// Validate phone number if provided
+if (!empty($phone)) {
+    $phoneClean = preg_replace('/[^0-9]/', '', $phone);
+    if (strlen($phoneClean) !== 10) {
+        echo json_encode([
+            'status' => false,
+            'message' => 'Please enter a valid 10-digit phone number'
+        ]);
+        exit;
+    }
+    $phone = $phoneClean;
+}
+
+// Check if user exists
+$checkUser = mysqli_query($conn, "SELECT id FROM frontend_users WHERE id = $user_id");
+if (!$checkUser || mysqli_num_rows($checkUser) == 0) {
+    echo json_encode([
+        'status' => false,
+        'message' => 'User not found'
+    ]);
+    exit;
+}
+
+// Check if phone number already exists for another user
+if (!empty($phone)) {
+    $checkPhone = mysqli_query($conn, "SELECT id FROM frontend_users WHERE phone = '$phone' AND id != $user_id");
+    if ($checkPhone && mysqli_num_rows($checkPhone) > 0) {
+        echo json_encode([
+            'status' => false,
+            'message' => 'Phone number already registered by another user'
+        ]);
+        exit;
+    }
+}
+
+// Update user profile
+$sql = "UPDATE frontend_users 
+        SET 
+            name = '" . mysqli_real_escape_string($conn, $name) . "',
+            phone = '" . mysqli_real_escape_string($conn, $phone) . "',
+            address = '" . mysqli_real_escape_string($conn, $address) . "'
+        WHERE id = $user_id";
+
+if (mysqli_query($conn, $sql)) {
+    // Get updated user data
+    $getUser = mysqli_query($conn, "SELECT id, name, email, phone, address, status, created_at FROM frontend_users WHERE id = $user_id");
+    $userData = mysqli_fetch_assoc($getUser);
+    
+    echo json_encode([
+        'status' => true,
+        'message' => 'Profile updated successfully',
+        'data' => $userData
+    ]);
+} else {
+    echo json_encode([
+        'status' => false,
+        'message' => 'Failed to update profile: ' . mysqli_error($conn)
     ]);
 }
 ?>

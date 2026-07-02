@@ -32,10 +32,16 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const register = async (name, email, password) => {
+  const register = async (name, email, phone, address, password) => {
     setLoading(true);
     try {
-      const response = await axios.post(`${API_BASE}/auth/user_register.php`, { name, email, password });
+      const response = await axios.post(`${API_BASE}/auth/user_register.php`, { 
+        name, 
+        email, 
+        phone, 
+        address, 
+        password 
+      });
       return response.data;
     } finally {
       setLoading(false);

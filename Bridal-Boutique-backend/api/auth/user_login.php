@@ -38,5 +38,15 @@ if (!password_verify($password, $user['password'])) {
     exit;
 }
 
-echo json_encode(["status" => true, "message" => "Login successful", "data" => ["id" => $user['id'], "name" => $user['name'], "email" => $user['email']]]);
+echo json_encode([
+    "status" => true, 
+    "message" => "Login successful", 
+    "data" => [
+        "id" => $user['id'], 
+        "name" => $user['name'], 
+        "email" => $user['email'],
+        "phone" => $user['phone'],
+        "address" => $user['address']
+    ]
+]);
 ?>
