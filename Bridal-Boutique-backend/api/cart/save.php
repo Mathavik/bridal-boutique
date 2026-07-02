@@ -12,22 +12,33 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 include __DIR__ . '/../../config/db.php';
 $data = json_decode(file_get_contents("php://input"), true) ?: [];
 $guest_id = trim($data['guest_id'] ?? '');
+$user_id = isset($data['user_id']) ? intval($data['user_id']) : 0;
 $product_id = intval($data['product_id'] ?? 0);
 $quantity = intval($data['quantity'] ?? 1);
 $price = floatval($data['price'] ?? 0);
 
-if (!$guest_id || !$product_id) {
-    echo json_encode(["status" => false, "message" => "Guest ID and product are required"]);
+if (!$product_id) {
+    echo json_encode(["status" => false, "message" => "Product ID is required"]);
     exit;
 }
 
-$existing = mysqli_query($conn, "SELECT id FROM cart WHERE guest_id='$guest_id' AND product_id=$product_id");
+// If user is logged in, use user_id as identifier
+if ($user_id > 0) {
+    $identifier = 'user_' . $user_id;
+} else if ($guest_id) {
+    $identifier = $guest_id;
+} else {
+    echo json_encode(["status" => false, "message" => "Guest ID or User ID is required"]);
+    exit;
+}
+
+$existing = mysqli_query($conn, "SELECT id FROM cart WHERE guest_id='$identifier' AND product_id=$product_id");
 if (mysqli_num_rows($existing) > 0) {
     echo json_encode(["status" => false, "message" => "This product is already in your cart."]);
     exit;
 }
 
-mysqli_query($conn, "INSERT INTO cart (guest_id, product_id, quantity, price) VALUES ('$guest_id', $product_id, $quantity, $price)");
+mysqli_query($conn, "INSERT INTO cart (guest_id, product_id, quantity, price) VALUES ('$identifier', $product_id, $quantity, $price)");
 
 echo json_encode(["status" => true, "message" => "Cart updated"]);
 ?>
