@@ -46,7 +46,8 @@ export default function Checkout() {
         product_id: item.product_id || item.id,
         product_name: item.product_name || item.name,
         price: Number(item.price),
-        quantity: Number(item.quantity)
+        quantity: Number(item.quantity),
+        size: item.size || ""
       }));
       const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       return { items, subtotal };

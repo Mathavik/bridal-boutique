@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Heart, ShoppingBag, Share2, Truck, RotateCcw } from "lucide-react";
@@ -16,6 +16,7 @@ export default function ProductDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [quantity, setQuantity] = useState(1);
+  const [selectedSize, setSelectedSize] = useState("");
   const { guestId, refreshCounts, cartItems, incrementCartCount, incrementWishlistCount } = useStore();
   const { user } = useAuth();
 
@@ -49,10 +50,36 @@ export default function ProductDetails() {
     fetchProduct();
   }, [id]);
 
+  const availableSizes = useMemo(() => {
+    if (!product?.available_sizes) return [];
+    return product.available_sizes
+      .split(/[,;|]/)
+      .map((size) => size.trim())
+      .filter(Boolean);
+  }, [product]);
+
+  useEffect(() => {
+    if (availableSizes.length > 0 && !selectedSize) {
+      setSelectedSize(availableSizes[0]);
+    }
+  }, [availableSizes, selectedSize]);
+
+  const validateSize = () => {
+    if (availableSizes.length > 0 && !selectedSize) {
+      showToast('Please select a size', 'error');
+      return false;
+    }
+    return true;
+  };
+
   const addToCart = async () => {
     if (!user) {
       showToast('Please log in to add items to cart', 'error');
       setTimeout(() => navigate('/login'), 500);
+      return;
+    }
+
+    if (!validateSize()) {
       return;
     }
 
@@ -62,6 +89,7 @@ export default function ProductDetails() {
         product_id: product.id,
         quantity: quantity,
         price: product.price,
+        size: selectedSize,
       });
       await refreshCounts();
       if (response.data?.status) {
@@ -83,10 +111,15 @@ export default function ProductDetails() {
       return;
     }
 
+    if (!validateSize()) {
+      return;
+    }
+
     try {
       const response = await axios.post(`${API_BASE}/wishlist/save.php`, {
         guest_id: guestId(),
         product_id: product.id,
+        size: selectedSize,
       });
       if (response.data?.status) {
         incrementWishlistCount(1);
@@ -114,6 +147,7 @@ export default function ProductDetails() {
       product_name: product.product_name,
       price: Number(product.price),
       quantity: quantity,
+      size: selectedSize,
     };
 
     // Navigate to checkout with product data
@@ -202,6 +236,24 @@ export default function ProductDetails() {
           <div className="mt-2 text-sm text-gray-600">
             Total: <span className="font-semibold">{formatCurrency(product.price * quantity)}</span>
           </div>
+
+          {availableSizes.length > 0 && (
+            <div className="mt-4">
+              <span className="text-sm font-medium text-gray-700">Select Size:</span>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {availableSizes.map((size) => (
+                  <button
+                    key={size}
+                    type="button"
+                    onClick={() => setSelectedSize(size)}
+                    className={`rounded-full border px-4 py-2 text-sm transition ${selectedSize === size ? "border-[#a97c50] bg-[#a97c50] text-white" : "border-gray-300 bg-white text-gray-700"}`}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Quantity Selector */}
           <div className="mt-4 flex items-center gap-4">

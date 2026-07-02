@@ -232,6 +232,7 @@ export default function InvoicePage() {
                     <tr key={index} className="border-b border-gray-100">
                       <td className="px-4 py-3 text-sm text-gray-600">{index + 1}</td>
                       <td className="px-4 py-3 text-sm font-medium text-[#181818]">{item.product_name}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600">{item.size || "-"}</td>
                       <td className="px-4 py-3 text-sm text-right text-gray-600">{item.qty || item.quantity}</td>
                       <td className="px-4 py-3 text-sm text-right text-gray-600">₹{parseFloat(item.price).toLocaleString()}</td>
                       <td className="px-4 py-3 text-sm text-right font-semibold text-[#a97c50]">
@@ -241,7 +242,7 @@ export default function InvoicePage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="5" className="px-4 py-6 text-center text-gray-500">No items found</td>
+                    <td colSpan="6" className="px-4 py-6 text-center text-gray-500">No items found</td>
                   </tr>
                 )}
               </tbody>

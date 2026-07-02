@@ -36,6 +36,7 @@ export default function Wishlist() {
       product_id: product.product_id,
       quantity: 1,
       price: product.price,
+      size: product.size || "",
     });
     if (response.data?.status) {
       await removeItem(product.id);
@@ -55,6 +56,7 @@ export default function Wishlist() {
             <div key={item.id} className="rounded-xl bg-white p-4 shadow-sm">
               <img src={resolveImageUrl(item.image || "") || "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0"} alt={item.product_name} className="h-56 w-full rounded-lg object-cover" />
               <h3 className="mt-4 font-semibold">{item.product_name}</h3>
+              {item.size && <p className="text-xs text-gray-500">Size: {item.size}</p>}
               <p className="text-sm text-gray-500">{formatCurrency(item.offer_price || item.price)}</p>
               <div className="mt-4 flex gap-2">
                 <button onClick={() => moveToCart(item)} className="flex-1 rounded-md bg-[#181818] px-3 py-2 text-white">Move to Cart</button>

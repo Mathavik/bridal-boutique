@@ -16,6 +16,7 @@ $user_id = isset($data['user_id']) ? intval($data['user_id']) : 0;
 $product_id = intval($data['product_id'] ?? 0);
 $quantity = intval($data['quantity'] ?? 1);
 $price = floatval($data['price'] ?? 0);
+$size = mysqli_real_escape_string($conn, trim($data['size'] ?? ''));
 
 if (!$product_id) {
     echo json_encode(["status" => false, "message" => "Product ID is required"]);
@@ -32,13 +33,13 @@ if ($user_id > 0) {
     exit;
 }
 
-$existing = mysqli_query($conn, "SELECT id FROM cart WHERE guest_id='$identifier' AND product_id=$product_id");
+$existing = mysqli_query($conn, "SELECT id FROM cart WHERE guest_id='$identifier' AND product_id=$product_id AND size='$size'");
 if (mysqli_num_rows($existing) > 0) {
     echo json_encode(["status" => false, "message" => "This product is already in your cart."]);
     exit;
 }
 
-mysqli_query($conn, "INSERT INTO cart (guest_id, product_id, quantity, price) VALUES ('$identifier', $product_id, $quantity, $price)");
+mysqli_query($conn, "INSERT INTO cart (guest_id, product_id, quantity, price, size) VALUES ('$identifier', $product_id, $quantity, $price, '$size')");
 
 echo json_encode(["status" => true, "message" => "Cart updated"]);
 ?>

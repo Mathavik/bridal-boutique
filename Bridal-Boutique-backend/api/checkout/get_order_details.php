@@ -48,7 +48,8 @@ try {
                     oi.product_id,
                     oi.product_name,
                     oi.quantity,
-                    oi.price
+                    oi.price,
+                    oi.size
                   FROM order_items oi
                   WHERE oi.order_id = $order_id";
     

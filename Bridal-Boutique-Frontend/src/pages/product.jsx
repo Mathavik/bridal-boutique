@@ -59,12 +59,23 @@ export default function Product() {
     fetchProducts();
   }, [location.search]);
 
-  const addToCart = async (product) => {
+  const getDefaultSize = (product) => {
+    if (!product?.available_sizes) return "";
+    const sizes = product.available_sizes
+      .split(/[,;|]/)
+      .map((size) => size.trim())
+      .filter(Boolean);
+    return sizes.length > 0 ? sizes[0] : "";
+  };
+
+  const addToCart = async (product, size = "") => {
     if (!user) {
       showToast('Please log in to add items to cart', 'error');
       setTimeout(() => navigate('/login'), 500);
       return;
     }
+
+    const selectedSize = size || getDefaultSize(product);
 
     try {
       const response = await axios.post(`${API_BASE}/cart/save.php`, {
@@ -72,6 +83,7 @@ export default function Product() {
         product_id: product.id,
         quantity: 1,
         price: product.offer_price || product.price,
+        size: selectedSize,
       });
       await refreshCounts();
       if (response.data?.status) {
@@ -93,17 +105,20 @@ export default function Product() {
 
   const isWishlisted = (product) => wishlistIds.has(product.id);
 
-  const addToWishlist = async (product) => {
+  const addToWishlist = async (product, size = "") => {
     if (!user) {
       showToast('Please log in to add items to wishlist', 'error');
       setTimeout(() => navigate('/login'), 500);
       return;
     }
 
+    const selectedSize = size || getDefaultSize(product);
+
     try {
       const response = await axios.post(`${API_BASE}/wishlist/save.php`, {
         guest_id: guestId(),
         product_id: product.id,
+        size: selectedSize,
       });
       if (response.data?.status) {
         incrementWishlistCount(1);
@@ -140,8 +155,8 @@ export default function Product() {
                 key={product.id}
                 product={product}
                 onNavigate={() => window.location.assign(`/product/${product.id}`)}
-                onAddToCart={() => addToCart(product)}
-                onAddToWishlist={() => addToWishlist(product)}
+                onAddToCart={(prod, size) => addToCart(prod, size)}
+                onAddToWishlist={(prod, size) => addToWishlist(prod, size)}
                 isWishlisted={isWishlisted(product)}
               />
             ))}

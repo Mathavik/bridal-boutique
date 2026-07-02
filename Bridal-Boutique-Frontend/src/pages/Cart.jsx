@@ -127,6 +127,11 @@ export default function Cart() {
                       <p className="text-sm text-gray-500">
                         {formatCurrency(item.price)}
                       </p>
+                      {item.size && (
+                        <span className="inline-flex items-center rounded-full bg-[#f0f0f0] px-3 py-1 text-xs font-medium text-gray-700 mt-2">
+                          {item.size}
+                        </span>
+                      )}
                     </div>
                   </div>
 

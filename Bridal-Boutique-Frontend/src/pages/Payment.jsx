@@ -146,6 +146,7 @@ export default function Payment() {
       product_id: item.product_id,
       qty: item.quantity,
       price: item.price,
+      size: item.size || "",
     }));
 
     // Prepare payload for invoice creation
