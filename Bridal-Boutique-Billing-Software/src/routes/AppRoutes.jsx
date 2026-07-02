@@ -39,6 +39,7 @@ import AdminForm from "../pages/Admin/AdminForm";
 import AdminList from "../pages/Admin/AdminList";
 import EditAdmin from "../pages/Admin/EditAdmin";
 import CompanyRequest from "../pages/CompanyRequests/CompanyRequest";
+import BannerPage from "../pages/banner/BannerPage";
 
 export default function AppRoutes() {
   return (
@@ -104,7 +105,7 @@ export default function AppRoutes() {
             <Route path="/category/add" element={<CategoryForm />} />
           <Route path="/category" element={<CategoryList/>} />
           <Route path="/category/edit/:id" element={<EditCategory/>} />
-
+          <Route path="/banner" element={<BannerPage />} />
 
 <Route path="/tax" element={<TaxList />} />
 <Route path="/tax/add" element={<TaxForm />} />
