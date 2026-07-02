@@ -4,6 +4,8 @@ import axios from "axios";
 import { Heart, ShoppingBag, Share2, Truck, RotateCcw } from "lucide-react";
 import { formatCurrency, getDiscountPercent } from "../utils/formatters";
 import { useStore } from "../contexts/StoreContext";
+import { useAuth } from "../contexts/AuthContext";
+import { showToast } from "../utils/toast";
 
 const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
 
@@ -14,6 +16,7 @@ export default function ProductDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const { guestId, refreshCounts, cartItems,incrementCartCount, incrementWishlistCount } = useStore();
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -46,6 +49,12 @@ export default function ProductDetails() {
   }, [id]);
 
 const addToCart = async () => {
+  if (!user) {
+    showToast('Please log in to add items to cart', 'error');
+    setTimeout(() => navigate('/login'), 500);
+    return;
+  }
+
   try {
     const response = await axios.post(`${API_BASE}/cart/save.php`, {
       guest_id: guestId(),
@@ -55,26 +64,49 @@ const addToCart = async () => {
     });
     await refreshCounts();
     if (response.data?.status) {
-      alert(`${product.product_name} added to cart successfully!`);
+      showToast(`${product.product_name} added to cart successfully`, 'success');
     } else {
-      alert(response.data?.message || "Unable to add to cart");
+      showToast(response.data?.message || "Unable to add to cart", 'error');
     }
   } catch (error) {
     console.error("Add to cart failed:", error);
     await refreshCounts();
-    alert("Add to cart failed. Please try again.");
+    showToast("Add to cart failed. Please try again.", 'error');
   }
 };
 
   const addToWishlist = async () => {
-    const response = await axios.post(`${API_BASE}/wishlist/save.php`, {
-      guest_id: guestId(),
-      product_id: product.id,
-    });
-    if (response.data?.status) {
-      incrementWishlistCount(1);
-      await refreshCounts();
+    if (!user) {
+      showToast('Please log in to add items to wishlist', 'error');
+      setTimeout(() => navigate('/login'), 500);
+      return;
     }
+
+    try {
+      const response = await axios.post(`${API_BASE}/wishlist/save.php`, {
+        guest_id: guestId(),
+        product_id: product.id,
+      });
+      if (response.data?.status) {
+        incrementWishlistCount(1);
+        await refreshCounts();
+        showToast('Added to wishlist successfully', 'success');
+      } else {
+        showToast(response.data?.message || 'Unable to add to wishlist', 'error');
+      }
+    } catch (error) {
+      console.error("Add to wishlist failed:", error);
+      showToast('Add to wishlist failed. Please try again.', 'error');
+    }
+  };
+
+  const handleBuyNow = () => {
+    if (!user) {
+      showToast('Please log in to proceed to payment', 'error');
+      setTimeout(() => navigate('/login'), 500);
+      return;
+    }
+    navigate(`/payment?product_id=${product.id}`);
   };
 
   if (loading) {
@@ -145,7 +177,7 @@ const addToCart = async () => {
           <div className="mt-4 text-sm text-gray-500">SKU: {product.product_code || "N/A"} • Barcode: {product.barcode || "N/A"}</div>
           <div className="mt-6 flex flex-wrap gap-3">
             <button onClick={addToCart} className="flex items-center gap-2 rounded-md bg-[#181818] px-4 py-3 text-white"><ShoppingBag size={16} /> Add to Cart</button>
-            <button onClick={() => navigate(`/payment?product_id=${product.id}`)} className="flex items-center gap-2 rounded-md border border-gray-300 px-4 py-3">Buy Now</button>
+            <button onClick={handleBuyNow} className="flex items-center gap-2 rounded-md border border-gray-300 px-4 py-3">Buy Now</button>
             <button onClick={addToWishlist} className="flex items-center gap-2 rounded-md border border-gray-300 px-4 py-3"><Heart size={16} /> Wishlist</button>
             <button className="flex items-center gap-2 rounded-md border border-gray-300 px-4 py-3"><Share2 size={16} /> Share</button>
           </div>

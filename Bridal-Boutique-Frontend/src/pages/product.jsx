@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useStore } from "../contexts/StoreContext";
+import { useAuth } from "../contexts/AuthContext";
 import ProductCard from "../components/ProductCard";
+import { showToast } from "../utils/toast";
 
 const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
 
@@ -11,7 +13,9 @@ export default function Product() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const { guestId, cartItems, refreshCounts, wishlistItems, incrementCartCount, incrementWishlistCount } = useStore();
+  const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -56,6 +60,12 @@ export default function Product() {
   }, [location.search]);
 
   const addToCart = async (product) => {
+    if (!user) {
+      showToast('Please log in to add items to cart', 'error');
+      setTimeout(() => navigate('/login'), 500);
+      return;
+    }
+
     try {
       const response = await axios.post(`${API_BASE}/cart/save.php`, {
         guest_id: guestId(),
@@ -65,14 +75,14 @@ export default function Product() {
       });
       await refreshCounts();
       if (response.data?.status) {
-        alert("Added to cart");
+        showToast('Added to cart successfully', 'success');
       } else {
-        alert(response.data?.message || "Unable to add to cart");
+        showToast(response.data?.message || 'Unable to add to cart', 'error');
       }
     } catch (error) {
       console.error("Add to cart failed:", error);
       await refreshCounts();
-      alert("Add to cart failed. Please try again.");
+      showToast('Add to cart failed. Please try again.', 'error');
     }
   };
 
@@ -84,6 +94,12 @@ export default function Product() {
   const isWishlisted = (product) => wishlistIds.has(product.id);
 
   const addToWishlist = async (product) => {
+    if (!user) {
+      showToast('Please log in to add items to wishlist', 'error');
+      setTimeout(() => navigate('/login'), 500);
+      return;
+    }
+
     try {
       const response = await axios.post(`${API_BASE}/wishlist/save.php`, {
         guest_id: guestId(),
@@ -92,13 +108,13 @@ export default function Product() {
       if (response.data?.status) {
         incrementWishlistCount(1);
         await refreshCounts();
-        alert("Added to wishlist");
+        showToast('Added to wishlist successfully', 'success');
       } else {
-        alert(response.data?.message || "Unable to add to wishlist");
+        showToast(response.data?.message || 'Unable to add to wishlist', 'error');
       }
     } catch (error) {
       console.error("Add to wishlist failed:", error);
-      alert("Add to wishlist failed. Please try again.");
+      showToast('Add to wishlist failed. Please try again.', 'error');
     }
   };
 
