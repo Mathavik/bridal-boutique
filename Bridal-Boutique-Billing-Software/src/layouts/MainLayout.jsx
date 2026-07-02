@@ -14,6 +14,7 @@ import {
   LogOut,
   CreditCard,
   Users
+  Image
 } from "lucide-react";
 
 export default function MainLayout() {
@@ -40,6 +41,8 @@ export default function MainLayout() {
           { name: "Company", path: "/company", icon: <Building2 size={20} /> },
           { name: "Category", path: "/category", icon: <Package size={20} /> },
           { name: "Products", path: "/products", icon: <Package size={20} /> },
+          { name: "Banner", path: "/banner", icon: <Image size={20} /> },
+          // { name: "Billing", path: "/billing", icon: <ReceiptText size={20} /> },
           { name: "Reports", path: "/reports", icon: <BarChart3 size={20} /> },
           { name: "Cashiers", path: "/cashier", icon: <Building2 size={20} /> },
           { name: "Customer", path: "/customer", icon: <User size={20} /> },

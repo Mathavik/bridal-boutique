@@ -39,6 +39,15 @@ mysqli_query($conn, "CREATE TABLE IF NOT EXISTS categories (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+mysqli_query($conn, "CREATE TABLE IF NOT EXISTS banners (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    banner_title VARCHAR(255) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    image VARCHAR(500) NOT NULL,
+    status VARCHAR(50) DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
 addColumnIfNotExists($conn, 'categories', 'banner_image', 'VARCHAR(500) DEFAULT ""');
 
 mysqli_query($conn, "CREATE TABLE IF NOT EXISTS products (

@@ -39,6 +39,7 @@ import AdminForm from "../pages/Admin/AdminForm";
 import AdminList from "../pages/Admin/AdminList";
 import EditAdmin from "../pages/Admin/EditAdmin";
 import CompanyRequest from "../pages/CompanyRequests/CompanyRequest";
+import BannerPage from "../pages/banner/BannerPage";
 
 // ✅ Import Users Pages
 import UserForm from "../pages/users/UserForm";
@@ -128,6 +129,11 @@ export default function AppRoutes() {
           <Route path="/admin" element={<AdminList />} />
           <Route path="/admin/add" element={<AdminForm />} />
           <Route path="/admin/edit/:id" element={<EditAdmin />} />
+          <Route path="/cashier/edit/:id" element={<EditCashier/>} />
+            <Route path="/category/add" element={<CategoryForm />} />
+          <Route path="/category" element={<CategoryList/>} />
+          <Route path="/category/edit/:id" element={<EditCategory/>} />
+          <Route path="/banner" element={<BannerPage />} />
 
           {/* Requests */}
           <Route path="/cashier-requests" element={<PendingCashierRequests />} />
