@@ -30,7 +30,10 @@ $payment_method = $conn->real_escape_string($data['payment_method'] ?? 'cash');
 $payment_type   = $conn->real_escape_string($data['payment_type'] ?? 'cash');
 $gst_type       = $conn->real_escape_string($data['gst_type'] ?? 'without_gst');
 $gst_no         = $conn->real_escape_string($data['gst_no'] ?? '');
+$payment_status = $conn->real_escape_string($data['payment_status'] ?? 'pending');
+$balance_amount = floatval($data['balance_amount'] ?? 0);
 $invoice_no     = "INV-" . time();
+$order_no       = "ORD-" . time();
 
 /* ── VALIDATION ── */
 if (empty($customer_name) && empty($customer_phone)) {
@@ -58,7 +61,7 @@ if ($payment_type == "credit") {
     $effective_total = $total_amount;
     $final_paid      = 0;
     $balance_amount  = $total_amount;
-    $payment_status  = "not_paid";
+    $payment_status  = "pending";
     $advance_delta   = 0;
 } else {
     $advance_balance = 0.0;
@@ -185,6 +188,7 @@ if (!$conn->query($pay_sql)) {
     echo json_encode(["status" => false, "message" => "Payment insert failed: " . $conn->error]);
     exit;
 }
+$payment_id = $conn->insert_id;
 
 /* ── DEDUCT STOCK ── */
 foreach ($products as $item) {
@@ -215,7 +219,77 @@ if ($customer_id > 0) {
         UPDATE customers SET pending_amount = '$total_pending'
         WHERE id = '$customer_id'
     ");
-}  // ← இந்த } முன்னாடி இல்லாம போச்சு — அதுதான் CORS error!
+}
+
+/* ── INSERT INTO ORDERS TABLE ── */
+// Create guest_id from customer_id or use 'guest_' prefix
+$guest_id = $customer_id > 0 ? 'user_' . $customer_id : 'guest_' . time();
+
+// Insert order into orders table
+$order_sql = "
+    INSERT INTO orders (
+        guest_id,
+        customer_name,
+        email,
+        mobile,
+        shipping_address,
+        total,
+        payment_status,
+        status,
+        created_at
+    ) VALUES (
+        '$guest_id',
+        '$customer_name',
+        '" . $conn->real_escape_string($data['email'] ?? '') . "',
+        '$customer_phone',
+        '" . $conn->real_escape_string($data['shipping_address'] ?? '') . "',
+        '$total_amount',
+        '$payment_status',
+        'pending',
+        NOW()
+    )
+";
+
+if (!$conn->query($order_sql)) {
+    // Log error but don't fail the invoice creation
+    error_log("Failed to create order: " . $conn->error);
+} else {
+    $order_id = $conn->insert_id;
+    
+    // Insert order items
+    foreach ($products as $item) {
+        $product_id = intval($item['product_id']);
+        $qty = floatval($item['qty']);
+        $price = floatval($item['price']);
+        $product_name = "";
+        
+        // Get product name
+        $prodQuery = $conn->query("SELECT product_name FROM products WHERE id = $product_id");
+        if ($prodQuery && $prodQuery->num_rows > 0) {
+            $prodData = $prodQuery->fetch_assoc();
+            $product_name = $conn->real_escape_string($prodData['product_name']);
+        }
+        
+        $item_sql = "
+            INSERT INTO order_items (
+                order_id,
+                product_id,
+                product_name,
+                price,
+                quantity,
+                created_at
+            ) VALUES (
+                '$order_id',
+                '$product_id',
+                '$product_name',
+                '$price',
+                '$qty',
+                NOW()
+            )
+        ";
+        $conn->query($item_sql);
+    }
+}
 
 /* ── LAST INVOICE ── */
 $last_invoice = null;
@@ -240,6 +314,8 @@ echo json_encode([
     "status"         => true,
     "invoice_no"     => $invoice_no,
     "invoice_id"     => $invoice_id,
+    "payment_id"     => $payment_id ?? 0,
+    "order_id"       => $order_id ?? 0,
     "advance_used"   => $advance_used  ?? 0,
     "advance_delta"  => $advance_delta ?? 0,
     "balance_amount" => $balance_amount,

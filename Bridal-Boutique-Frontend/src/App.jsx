@@ -14,6 +14,8 @@ import OrderConfirmation from "./pages/OrderConfirmation";
 import ProfilePage from "./pages/ProfilePage";
 import OrdersPage from "./pages/OrdersPage";
 import ScrollToTop from "./components/ScrollToTop";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import InvoicePage from "./pages/InvoicePage";
 
 export default function App() {
   return (
@@ -33,6 +35,9 @@ export default function App() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/orders" element={<OrdersPage />} />
         <Route path="/order-confirmation" element={<OrderConfirmation />} />
+        <Route path="/payment-success" element={<PaymentSuccess />} />
+        <Route path="/invoice/:id" element={<InvoicePage />} />
+
       </Routes>
       <Footer />
     </BrowserRouter>

@@ -54,7 +54,7 @@ export default function ProductCard({
         </div>
 
         <div className="mt-3 text-sm text-gray-500">
-          Rating: 4.8 • Stock: {product.stock_quantity > 0 ? "In Stock" : "Out of Stock"}
+          Rating: 4.8 • Stock: {product.stock > 0 ? `${product.stock} in stock` : "Out of Stock"}
         </div>
 
         <div className="mt-5 flex gap-2">

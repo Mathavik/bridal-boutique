@@ -18,7 +18,7 @@ if ($user_id <= 0) {
 }
 
 try {
-    // Get orders for the user
+    // Get orders for the user with invoice data
     $query = "SELECT 
                 o.id, 
                 o.guest_id,
@@ -29,8 +29,18 @@ try {
                 o.total,
                 o.payment_status,
                 o.created_at,
-                o.status
+                o.status,
+                o.invoice_id,
+                i.invoice_no,
+                i.sub_total,
+                i.gst_total,
+                i.total_amount as invoice_total,
+                i.paid_amount as invoice_paid,
+                i.balance_amount,
+                i.payment_method,
+                i.payment_status as invoice_payment_status
               FROM orders o
+              LEFT JOIN invoices i ON o.invoice_id = i.id
               WHERE o.guest_id = 'user_$user_id'
               ORDER BY o.created_at DESC";
     
@@ -60,12 +70,9 @@ try {
             $imgQuery = "SELECT image, image_gallery_json FROM products WHERE id = " . $item['product_id'];
             $imgResult = mysqli_query($conn, $imgQuery);
             if ($imgData = mysqli_fetch_assoc($imgResult)) {
-                // First try to get image from 'image' column
                 if (!empty($imgData['image'])) {
                     $image = $imgData['image'];
-                } 
-                // If no image, try to get first image from gallery
-                else if (!empty($imgData['image_gallery_json'])) {
+                } else if (!empty($imgData['image_gallery_json'])) {
                     $gallery = json_decode($imgData['image_gallery_json'], true);
                     $image = !empty($gallery) && is_array($gallery) ? $gallery[0] : null;
                 }
@@ -77,7 +84,6 @@ try {
         }
         
         $row['items'] = $items;
-        // Use status from database if available, otherwise default to 'pending'
         $row['status'] = !empty($row['status']) ? $row['status'] : 'pending';
         $orders[] = $row;
     }
