@@ -20,7 +20,7 @@ const Spotlight = () => {
       const params = new URLSearchParams(window.location.search);
       const companyId = params.get("company_id");
 
-      const bannerUrl = `${API_BASE}/banner/get_banner.php?banner_title=spotlight`;
+      const bannerUrl = `${API_BASE}/banner/get_banner.php?banner_title=IN THE SPOTLIGHT`;
       let productUrl = `${API_BASE}/product/get.php?limit=2`;
       if (companyId) {
         productUrl += `&company_id=${companyId}`;
