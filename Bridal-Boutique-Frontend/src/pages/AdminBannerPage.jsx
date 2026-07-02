@@ -15,6 +15,8 @@ export default function AdminBannerPage() {
     image: null,
   });
   const [previewUrl, setPreviewUrl] = useState("");
+  const [banners, setBanners] = useState([]);
+  const [bannersLoading, setBannersLoading] = useState(true);
   const [categoryLoading, setCategoryLoading] = useState(true);
   const [categoryError, setCategoryError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -22,6 +24,21 @@ export default function AdminBannerPage() {
   const [success, setSuccess] = useState("");
 
   useEffect(() => {
+    // fetch banners for admin table
+    const fetchBanners = async () => {
+      setBannersLoading(true);
+      try {
+        const res = await axios.get(`${API_BASE}/banner/get_banners.php`);
+        setBanners(res?.data?.data || []);
+      } catch (err) {
+        console.error("Failed to load banners", err);
+      } finally {
+        setBannersLoading(false);
+      }
+    };
+
+    fetchBanners();
+
     const fetchCategories = async () => {
       setCategoryLoading(true);
       setCategoryError("");
@@ -75,20 +92,35 @@ export default function AdminBannerPage() {
 
     try {
       const payload = new FormData();
-      payload.append("banner_title", "spotlight");
+      // use selected category name as banner_title (group) so frontend can pick correct banner by category
+      const bannerGroup = formData.banner_title?.trim() || selectedCategoryName || "IN THE SPOTLIGHT";
+      payload.append("banner_title", bannerGroup);
       payload.append("title", formData.title.trim());
       payload.append("description", formData.description.trim());
       payload.append("category_id", formData.category_id);
       payload.append("category_name", selectedCategoryName);
       payload.append("image", formData.image);
-
-      const response = await axios.post(`${API_BASE}/banner/add_banner.php`, payload, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      let response;
+      if (formData.id) {
+        // update
+        payload.append("id", formData.id);
+        // only append image if a file was selected
+        if (formData.image instanceof File) {
+          payload.append("image", formData.image);
+        }
+        response = await axios.post(`${API_BASE}/banner/update_banner.php`, payload, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      } else {
+        response = await axios.post(`${API_BASE}/banner/add_banner.php`, payload, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      }
 
       if (response?.data?.success) {
-        setSuccess("Banner saved successfully.");
+        setSuccess(formData.id ? "Banner updated successfully." : "Banner saved successfully.");
         setFormData({
+          id: undefined,
           title: "",
           description: "",
           category_id: formData.category_id,
@@ -96,6 +128,9 @@ export default function AdminBannerPage() {
           image: null,
         });
         setPreviewUrl("");
+        // refresh list
+        const res = await axios.get(`${API_BASE}/banner/get_banners.php`);
+        setBanners(res?.data?.data || []);
       } else {
         setError(response?.data?.message || "Unable to save banner.");
       }
@@ -103,6 +138,36 @@ export default function AdminBannerPage() {
       setError(err?.response?.data?.message || "Network error while saving banner.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleEdit = (banner) => {
+    setFormData((prev) => ({
+      ...prev,
+      id: banner.id,
+      title: banner.title || "",
+      description: banner.description || "",
+      category_id: banner.category_id || prev.category_id,
+      category_name: banner.category_name || prev.category_name,
+      image: null,
+      banner_title: banner.banner_title || "",
+    }));
+    setPreviewUrl(banner.image || "");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm("Are you sure you want to delete this banner?")) return;
+    try {
+      const res = await axios.post(`${API_BASE}/banner/delete_banner.php`, { id });
+      if (res?.data?.success) {
+        setBanners((prev) => prev.filter((b) => String(b.id) !== String(id)));
+        setSuccess("Banner deleted.");
+      } else {
+        setError(res?.data?.message || "Unable to delete banner.");
+      }
+    } catch (err) {
+      setError("Network error while deleting banner.");
     }
   };
 
@@ -204,6 +269,51 @@ export default function AdminBannerPage() {
             </button>
           </div>
         </form>
+        
+        <div className="mt-10">
+          <h2 className="mb-4 text-xl font-semibold">Existing Banners</h2>
+          {bannersLoading ? (
+            <div>Loading banners...</div>
+          ) : (
+            <div className="overflow-x-auto rounded-lg border">
+              <table className="w-full table-auto text-left">
+                <thead className="bg-gray-50 text-sm">
+                  <tr>
+                    <th className="px-4 py-3">Preview</th>
+                    <th className="px-4 py-3">Banner Title</th>
+                    <th className="px-4 py-3">Title</th>
+                    <th className="px-4 py-3">Category</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="text-sm">
+                  {banners.length === 0 ? (
+                    <tr><td colSpan="6" className="px-4 py-6 text-center">No banners found</td></tr>
+                  ) : (
+                    banners.map((b) => (
+                      <tr key={b.id} className="border-t">
+                        <td className="px-4 py-3 align-top w-36">
+                          {b.image ? <img src={b.image} alt={b.title} className="h-20 w-full object-cover rounded" /> : <div className="h-20 w-full rounded bg-gray-100"></div>}
+                        </td>
+                        <td className="px-4 py-3 align-top">{b.banner_title}</td>
+                        <td className="px-4 py-3 align-top">{b.title}</td>
+                        <td className="px-4 py-3 align-top">{b.category_name}</td>
+                        <td className="px-4 py-3 align-top">{b.status}</td>
+                        <td className="px-4 py-3 align-top">
+                          <div className="flex gap-2">
+                            <button onClick={() => handleEdit(b)} className="rounded-md bg-blue-600 px-3 py-1 text-white">Edit</button>
+                            <button onClick={() => handleDelete(b.id)} className="rounded-md bg-red-600 px-3 py-1 text-white">Delete</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

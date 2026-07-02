@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import api from "../../services/api";
 import { ImagePlus, UploadCloud, Sparkles } from "lucide-react";
 
@@ -10,6 +10,9 @@ export default function BannerPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
   const fileInputRef = useRef(null);
+  const [banners, setBanners] = useState([]);
+  const [bannersLoading, setBannersLoading] = useState(true);
+  const [editingId, setEditingId] = useState(null);
 
   const handleImageChange = (e) => {
     console.log("Banner image change event:", e.target.files);
@@ -47,14 +50,15 @@ export default function BannerPage() {
     const formData = new FormData();
     formData.append("banner_title", bannerTitle.trim());
     formData.append("title", title.trim());
-    formData.append("image", imageFile);
+    if (imageFile instanceof File) formData.append("image", imageFile);
+    if (editingId) formData.append("id", editingId);
 
     for (const [key, value] of formData.entries()) {
       console.log("FormData entry:", key, value);
     }
 
     try {
-      const res = await api.post("banner/add_banner.php", formData);
+      const res = await api.post(editingId ? "banner/update_banner.php" : "banner/add_banner.php", formData);
       console.log("Banner upload response:", res);
 
       if (res.data?.success) {
@@ -66,6 +70,9 @@ export default function BannerPage() {
         if (fileInputRef.current) {
           fileInputRef.current.value = "";
         }
+        setEditingId(null);
+        // refresh list
+        fetchBanners();
       } else {
         setMessage({ type: "error", text: res.data?.message || "Unable to save banner." });
         console.error("Banner upload failed response:", res.data);
@@ -75,6 +82,47 @@ export default function BannerPage() {
       setMessage({ type: "error", text: "Server error while saving banner." });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchBanners = async () => {
+    setBannersLoading(true);
+    try {
+      const res = await api.get("banner/get_banners.php");
+      setBanners(res.data?.data || []);
+    } catch (err) {
+      console.error("Failed to fetch banners", err);
+    } finally {
+      setBannersLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBanners();
+  }, []);
+
+  const handleEdit = (b) => {
+    setEditingId(b.id);
+    setBannerTitle(b.banner_title || "");
+    setTitle(b.title || "");
+    setPreview(b.image || "");
+    setImageFile(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm("Delete this banner?")) return;
+    try {
+      const res = await api.post("banner/delete_banner.php", { id });
+      if (res.data?.success) {
+        setMessage({ type: "success", text: res.data.message || "Banner deleted." });
+        setBanners((prev) => prev.filter((x) => String(x.id) !== String(id)));
+      } else {
+        setMessage({ type: "error", text: res.data?.message || "Unable to delete banner." });
+      }
+    } catch (err) {
+      console.error(err);
+      setMessage({ type: "error", text: "Network error while deleting." });
     }
   };
 
@@ -176,6 +224,51 @@ export default function BannerPage() {
               )}
             </div>
           </div>
+        </div>
+        
+        <div className="mt-8">
+          <h2 className="mb-4 text-lg font-semibold">Existing Banners</h2>
+          {bannersLoading ? (
+            <div>Loading banners...</div>
+          ) : (
+            <div className="overflow-x-auto rounded-lg border">
+              <table className="w-full table-auto text-left">
+                <thead className="bg-gray-50 text-sm">
+                  <tr>
+                    <th className="px-4 py-3">Preview</th>
+                    <th className="px-4 py-3">Banner Title</th>
+                    <th className="px-4 py-3">Title</th>
+                    <th className="px-4 py-3">Category</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="text-sm">
+                  {banners.length === 0 ? (
+                    <tr><td colSpan={6} className="px-4 py-6 text-center">No banners found</td></tr>
+                  ) : (
+                    banners.map((b) => (
+                      <tr key={b.id} className="border-t">
+                        <td className="px-4 py-3 align-top w-36">
+                          {b.image ? <img src={b.image} alt={b.title} className="h-20 w-full object-cover rounded" /> : <div className="h-20 w-full rounded bg-gray-100"></div>}
+                        </td>
+                        <td className="px-4 py-3 align-top">{b.banner_title}</td>
+                        <td className="px-4 py-3 align-top">{b.title}</td>
+                        <td className="px-4 py-3 align-top">{b.category_name}</td>
+                        <td className="px-4 py-3 align-top">{b.status}</td>
+                        <td className="px-4 py-3 align-top">
+                          <div className="flex gap-2">
+                            <button onClick={() => handleEdit(b)} className="rounded-md bg-blue-600 px-3 py-1 text-white">Edit</button>
+                            <button onClick={() => handleDelete(b.id)} className="rounded-md bg-red-600 px-3 py-1 text-white">Delete</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </div>
