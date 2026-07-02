@@ -44,8 +44,17 @@ export default function EditProduct() {
   const [gstLoading, setGstLoading] = useState(true);
   const [barcodeKey, setBarcodeKey] = useState(0);
   const { toasts, show, remove } = useToast();
-const [productCompanyId, setProductCompanyId] = useState("");
-
+  const [productCompanyId, setProductCompanyId] = useState("");
+  
+  // Media states
+  const [existingImages, setExistingImages] = useState([]);
+  const [newGalleryFiles, setNewGalleryFiles] = useState([]);
+  const [galleryPreviews, setGalleryPreviews] = useState([]);
+  const [existingVideo, setExistingVideo] = useState("");
+  const [newVideoFile, setNewVideoFile] = useState(null);
+  const [videoPreview, setVideoPreview] = useState("");
+  const [videoURL, setVideoURL] = useState("");
+  const [hasVideo, setHasVideo] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
@@ -66,153 +75,177 @@ const [productCompanyId, setProductCompanyId] = useState("");
 
   const set = (field, val) => setForm((p) => ({ ...p, [field]: val }));
 
-const getCompanyId = () => {
-  const user = JSON.parse(localStorage.getItem("user"));
-  return Number(user?.company_id);
-};
+  const BACKEND_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend";
 
+  const resolveImageUrl = (src) => {
+    if (!src) return "";
+    if (src.startsWith("http")) return src;
+    if (src.startsWith("uploads/")) {
+      return `${BACKEND_BASE}/${src}`;
+    }
+    return `${BACKEND_BASE}/uploads/${src}`;
+  };
 
-  const fetchCompanyGST = async () => {
-    setGstLoading(true);
+  const resolveVideoUrl = (src) => {
+    if (!src) return "";
+    if (src.startsWith("http")) return src;
+    if (src.startsWith("uploads/")) {
+      return `${BACKEND_BASE}/${src}`;
+    }
+    return `${BACKEND_BASE}/uploads/${src}`;
+  };
+
+  const getCompanyId = () => {
+    const user = JSON.parse(localStorage.getItem("user"));
+    return Number(user?.company_id);
+  };
+
+  const fetchCompanyGSTByCompanyId = async(company_id) => {
     try {
-      const company_id = getCompanyId();
-      if (!company_id) return;
       const res = await api.post("/company/get_company_by_id.php", { id: company_id });
-      if (res.data.status) {
+      if(res.data.status){
         const company = res.data.data;
-        if (company.gst_type === "with_gst") {
-          setGstEnabled(true);
-        } else {
-          setGstEnabled(false);
-          set("gst", "");
-        }
+        setGstEnabled(company.gst_type === "with_gst");
       }
-    } catch (err) {
-      console.error("GST fetch error:", err);
-      setGstEnabled(false);
+    } catch(err){
+      console.log(err);
     } finally {
       setGstLoading(false);
     }
   };
 
-  const fetchCompanyGSTByCompanyId = async(company_id) => {
-
-  try {
-
-    const res = await api.post(
-      "/company/get_company_by_id.php",
-      {
-        id: company_id
+  const fetchCategoriesByCompany = async(company_id) => {
+    try {
+      const res = await api.get(`/category/get_all.php?company_id=${company_id}`);
+      if(res.data.status){
+        setCategories(res.data.data);
       }
-    );
-
-    if(res.data.status){
-
-      const company = res.data.data;
-
-      setGstEnabled(
-        company.gst_type === "with_gst"
-      );
-
+    } catch(err){
+      console.log(err);
     }
+  };
 
-  } catch(err){
+  const fetchProduct = async () => {
+    setFetching(true);
+    try {
+      const res = await api.get(`/product/get_by_id.php?id=${id}`);
+      if(res.data.status){
+        const p = res.data.data;
+        setProductCompanyId(p.company_id);
+        await fetchCategoriesByCompany(p.company_id);
+        await fetchCompanyGSTByCompanyId(p.company_id);
 
-    console.log(err);
+        setForm({
+          name: p.product_name || "",
+          product_code: p.product_code || "",
+          price: p.price || "",
+          stock: p.stock || "",
+          gst: p.gst_percentage || "",
+          barcode: p.barcode || "",
+          category_id: String(p.category_id || ""),
+          unit: p.unit || "",
+          description: p.short_description || "",
+          fabric: p.fabric || "",
+          embroidery: p.embroidery || "",
+          color: p.color || "",
+          available_sizes: p.available_sizes || "",
+          occasion: p.occasion || "",
+        });
 
-  } finally {
+        // Set existing images
+        let galleryImages = [];
+        if (p.image_gallery_json) {
+          try {
+            const cleanJson = p.image_gallery_json.replace(/\\\\/g, "").replace(/\\\"/g, '"').replace(/\\\//g, "/");
+            galleryImages = JSON.parse(cleanJson);
+          } catch (e) {
+            console.warn("Failed to parse image gallery JSON:", e);
+          }
+        }
+        if (p.image) {
+          setExistingImages([p.image, ...galleryImages]);
+        } else {
+          setExistingImages(galleryImages);
+        }
 
-    setGstLoading(false);
-
-  }
-
-};
-
-const fetchProduct = async () => {
-
-  setFetching(true);
-
-  try {
-
-    const res = await api.get(
-      `/product/get_by_id.php?id=${id}`
-    );
-
-
-    if(res.data.status){
-
-
-   const p = res.data.data;
-
-   setProductCompanyId(p.company_id);
-
-   await fetchCategoriesByCompany(p.company_id);
-
-   await fetchCompanyGSTByCompanyId(p.company_id);
-
-      setForm({
-        name: p.product_name,
-        product_code: p.product_code || "",
-        price: p.price,
-        stock: p.stock,
-        gst: p.gst_percentage || "",
-        barcode: p.barcode || "",
-        category_id: String(p.category_id),
-        unit: p.unit || "",
-        description: p.short_description || "",
-        fabric: p.fabric || "",
-        embroidery: p.embroidery || "",
-        color: p.color || "",
-        available_sizes: p.available_sizes || "",
-        occasion: p.occasion || "",
-      });
-
+        // Set existing video
+        if (p.video_url) {
+          setExistingVideo(p.video_url);
+          setVideoURL(p.video_url);
+          setHasVideo(true);
+        } else {
+          setHasVideo(false);
+        }
+      }
+    } catch(err){
+      console.log(err);
+    } finally {
+      setFetching(false);
     }
+  };
 
-  } catch(err){
-
-    console.log(err);
-
-  } finally {
-
-    setFetching(false);
-
-  }
-
-};
-
-useEffect(() => {
-
-  fetchProduct();
-
-}, [id]);
-
-const fetchCategoriesByCompany = async(company_id) => {
-
-  try {
-
-    const res = await api.get(
-      `/category/get_all.php?company_id=${company_id}`
-    );
-
-    if(res.data.status){
-
-      setCategories(res.data.data);
-
-    }
-
-  } catch(err){
-
-    console.log(err);
-
-  }
-
-};
+  useEffect(() => {
+    fetchProduct();
+  }, [id]);
 
   const generateBarcode = () => {
     const code = "PRD" + Math.floor(100000 + Math.random() * 900000);
     setForm(p => ({ ...p, barcode: code }));
     setBarcodeKey(k => k + 1);
+  };
+
+  const readFileAsDataUrl = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+  const handleGalleryFilesChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    setNewGalleryFiles(files);
+    setGalleryPreviews(files.map((file) => URL.createObjectURL(file)));
+  };
+
+  const handleRemoveExistingImage = (index) => {
+    setExistingImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleRemoveNewImage = (index) => {
+    setNewGalleryFiles(prev => prev.filter((_, i) => i !== index));
+    setGalleryPreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleVideoFileChange = (e) => {
+    const file = e.target.files?.[0] || null;
+    setNewVideoFile(file);
+    setVideoPreview(file ? URL.createObjectURL(file) : "");
+    if (file) {
+      setExistingVideo("");
+      setHasVideo(false);
+    }
+  };
+
+  const handleClearVideo = () => {
+    setNewVideoFile(null);
+    setVideoPreview("");
+    setExistingVideo("");
+    setVideoURL("");
+    setHasVideo(false);
+  };
+
+  const handleVideoURLChange = (e) => {
+    const url = e.target.value;
+    setVideoURL(url);
+    if (url) {
+      setNewVideoFile(null);
+      setVideoPreview("");
+      setExistingVideo("");
+      setHasVideo(true);
+    } else {
+      setHasVideo(false);
+    }
   };
 
   const handleUpdate = async () => {
@@ -222,7 +255,7 @@ const fetchCategoriesByCompany = async(company_id) => {
     if (isNaN(Number(form.price)) || Number(form.price) < 0) { show("warn", "Invalid Price", "Please enter a valid price."); return; }
     if (!form.stock)          { show("warn", "Missing Field", "Stock quantity is required."); return; }
     if (isNaN(Number(form.stock)) || Number(form.stock) < 0) { show("warn", "Invalid Stock", "Please enter a valid stock quantity."); return; }
-    // if (!form.unit.trim())    { show("warn", "Missing Field", "Unit is required (e.g. kg, litre, piece)."); return; }
+    if (!form.unit.trim())    { show("warn", "Missing Field", "Unit is required (e.g. kg, litre, piece)."); return; }
     if (gstEnabled && !form.gst) { show("warn", "Missing Field", "GST percentage is required."); return; }
     if (gstEnabled && (isNaN(Number(form.gst)) || Number(form.gst) < 0 || Number(form.gst) > 100)) {
       show("warn", "Invalid GST", "Please enter a valid GST percentage (0–100).");
@@ -231,6 +264,37 @@ const fetchCategoriesByCompany = async(company_id) => {
 
     setLoading(true);
     try {
+      let galleryData = [];
+      let firstImageData = "";
+      let videoData = "";
+
+      // Handle new gallery images
+      if (newGalleryFiles.length > 0) {
+        try {
+          galleryData = await Promise.all(
+            newGalleryFiles.map((file) => readFileAsDataUrl(file))
+          );
+        } catch (err) {
+          console.error(err);
+          show("error", "Upload failed", "Unable to read selected images.");
+          setLoading(false);
+          return;
+        }
+        firstImageData = galleryData[0] || "";
+      }
+
+      // Handle new video
+      if (newVideoFile) {
+        try {
+          videoData = await readFileAsDataUrl(newVideoFile);
+        } catch (err) {
+          console.error(err);
+          show("error", "Upload failed", "Unable to read selected video.");
+          setLoading(false);
+          return;
+        }
+      }
+
       const res = await api.post("/product/update.php", {
         id,
         product_name: form.name,
@@ -249,9 +313,17 @@ const fetchCategoriesByCompany = async(company_id) => {
         color: form.color,
         available_sizes: form.available_sizes,
         occasion: form.occasion,
+        image: firstImageData,
+        gallery_images: galleryData,
+        existing_images: existingImages,
+        video_file: videoData,
+        video_url: videoURL,
+        existing_video: existingVideo,
+        remove_video: videoURL === "" && !newVideoFile && !existingVideo ? true : false,
       });
+
       if (res.data.status) {
-        show("success", "Product Updated!", `"${form.name}" saved successfully.`);
+        show("success", "Product Updated!", `"${form.name}" updated successfully.`);
         setTimeout(() => navigate("/products"), 1800);
       } else {
         show("error", "Update Failed", res.data.message || "Something went wrong.");
@@ -351,7 +423,6 @@ const fetchCategoriesByCompany = async(company_id) => {
           color:#94a3b8; margin-bottom:6px;
         }
 
-        /* Skeleton */
         .ep-skel {
           height:46px; border-radius:12px;
           background:linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%);
@@ -396,7 +467,6 @@ const fetchCategoriesByCompany = async(company_id) => {
         }
         .ep-input-wrap:focus-within .ep-prefix { border-right-color:#bfdbfe; background:#eff6ff; color:#3b82f6; }
 
-        /* GST disabled notice */
         .ep-gst-disabled {
           display:flex; align-items:center; gap:8px;
           padding:10px 14px; border-radius:12px;
@@ -404,7 +474,6 @@ const fetchCategoriesByCompany = async(company_id) => {
           font-size:12.5px; color:#94a3b8; font-weight:500;
         }
 
-        /* GST badge */
         .ep-gst-badge {
           display:inline-flex; align-items:center; gap:5px;
           padding:3px 10px; border-radius:100px;
@@ -473,11 +542,9 @@ const fetchCategoriesByCompany = async(company_id) => {
         }
         @keyframes spin{to{transform:rotate(360deg)}}
 
-        /* GST field animation */
         .ep-gst-field { animation:epFadeIn 0.3s ease both; }
         @keyframes epFadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
 
-        /* ── Toast ── */
         .ep-toast {
           pointer-events:auto; display:flex; align-items:center; gap:11px;
           min-width:280px; max-width:360px; padding:12px 15px; border-radius:15px;
@@ -509,6 +576,88 @@ const fetchCategoriesByCompany = async(company_id) => {
         .ep-toast-error   .ep-toast-bar{background:#fb7185;}
         .ep-toast-warn    .ep-toast-bar{background:#fbbf24;}
         @keyframes epShrink{from{width:100%}to{width:0%}}
+
+        .ep-media-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+          gap: 10px;
+          margin-top: 10px;
+        }
+        .ep-media-thumb {
+          position: relative;
+          border-radius: 8px;
+          overflow: hidden;
+          border: 1px solid #e2e8f0;
+        }
+        .ep-media-thumb img {
+          width: 100%;
+          height: 100px;
+          object-fit: cover;
+        }
+        .ep-media-remove {
+          position: absolute;
+          top: 4px;
+          right: 4px;
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          background: rgba(255,0,0,0.8);
+          color: white;
+          border: none;
+          cursor: pointer;
+          font-size: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .ep-video-preview {
+          margin-top: 10px;
+          position: relative;
+        }
+        .ep-video-preview video {
+          width: 100%;
+          border-radius: 8px;
+          max-height: 200px;
+        }
+        .ep-existing-label {
+          font-size: 12px;
+          color: #64748b;
+          margin-bottom: 6px;
+          display: block;
+        }
+        .ep-video-thumbnail {
+          background: linear-gradient(135deg, #1a1a2e, #16213e);
+          border-radius: 8px;
+          padding: 40px 20px;
+          text-align: center;
+          color: white;
+          min-height: 150px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+        }
+        .ep-video-thumbnail .play-icon {
+          width: 60px;
+          height: 60px;
+          background: rgba(169, 124, 80, 0.3);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 12px;
+          border: 2px solid #a97c50;
+        }
+        .ep-video-thumbnail .play-icon svg {
+          width: 28px;
+          height: 28px;
+          color: #a97c50;
+          margin-left: 4px;
+        }
+        .ep-video-thumbnail p {
+          color: rgba(255,255,255,0.7);
+          font-size: 13px;
+        }
       `}</style>
 
       <ToastPortal toasts={toasts} remove={remove} />
@@ -520,7 +669,6 @@ const fetchCategoriesByCompany = async(company_id) => {
         <div className="ep-card">
           <div className="ep-stripe" />
 
-          {/* Header */}
           <div className="ep-header">
             <div className="ep-header-icon">✏️</div>
             <div className="ep-header-text">
@@ -534,11 +682,7 @@ const fetchCategoriesByCompany = async(company_id) => {
           </div>
 
           <div className="ep-body">
-
-            {/* ── Basic Info ── */}
             <p className="ep-section">Basic Info</p>
-
-            
 
             <div className="ep-field">
               <label className="ep-label">Product Name <span style={{color:"#ef4444"}}>*</span></label>
@@ -554,24 +698,17 @@ const fetchCategoriesByCompany = async(company_id) => {
             </div>
 
             <div className="ep-field">
-  <label className="ep-label">
-    Product Code
-  </label>
-
-  <div className="ep-input-wrap">
-    <span className="ep-input-icon">🔢</span>
-
-    <input
-      className="ep-input"
-      placeholder="e.g. PRD001"
-      value={form.product_code}
-      onChange={e =>
-        set("product_code", e.target.value)
-      }
-    />
-  </div>
-</div>
-
+              <label className="ep-label">Product Code</label>
+              <div className="ep-input-wrap">
+                <span className="ep-input-icon">🔢</span>
+                <input
+                  className="ep-input"
+                  placeholder="e.g. PRD001"
+                  value={form.product_code}
+                  onChange={e => set("product_code", e.target.value)}
+                />
+              </div>
+            </div>
 
             <div className="ep-field">
               <label className="ep-label">Category <span style={{color:"#ef4444"}}>*</span></label>
@@ -683,6 +820,147 @@ const fetchCategoriesByCompany = async(company_id) => {
               }
             </div>
 
+            {/* ── Media ── */}
+            <p className="ep-section" style={{marginTop:"1.25rem"}}>📷 Media</p>
+
+            {/* Existing Images */}
+            {existingImages.length > 0 && (
+              <div className="ep-field">
+                <label className="ep-label">Existing Images ({existingImages.length})</label>
+                <div className="ep-media-grid">
+                  {existingImages.map((img, index) => (
+                    <div key={index} className="ep-media-thumb">
+                      <img src={resolveImageUrl(img)} alt={`existing-${index}`} />
+                      <button
+                        type="button"
+                        className="ep-media-remove"
+                        onClick={() => handleRemoveExistingImage(index)}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Add New Images */}
+            <div className="ep-field">
+              <label className="ep-label">Add New Images</label>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleGalleryFilesChange}
+              />
+              {galleryPreviews.length > 0 && (
+                <div className="ep-media-grid">
+                  {galleryPreviews.map((src, index) => (
+                    <div key={index} className="ep-media-thumb">
+                      <img src={src} alt={`preview-${index}`} />
+                      <button
+                        type="button"
+                        className="ep-media-remove"
+                        onClick={() => handleRemoveNewImage(index)}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* ── Video Section ── */}
+            <div className="ep-field">
+              <label className="ep-label">🎬 Product Video</label>
+              
+              {/* Show current video if exists */}
+              {hasVideo && !newVideoFile && !videoPreview && existingVideo && (
+                <div className="ep-video-preview" style={{ marginBottom: "12px" }}>
+                  <span className="ep-existing-label">Current Video</span>
+                  <div style={{ position: "relative", background: "#000", borderRadius: "8px", overflow: "hidden" }}>
+                    <video
+                      src={resolveVideoUrl(existingVideo)}
+                      controls
+                      style={{ width: "100%", maxHeight: "300px" }}
+                    />
+                    <button
+                      type="button"
+                      className="ep-media-remove"
+                      style={{ top: "8px", right: "8px", background: "rgba(255,0,0,0.9)" }}
+                      onClick={() => {
+                        setExistingVideo("");
+                        setVideoURL("");
+                        setHasVideo(false);
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Show new video preview */}
+              {videoPreview && (
+                <div className="ep-video-preview" style={{ marginBottom: "12px" }}>
+                  <span className="ep-existing-label">New Video</span>
+                  <div style={{ position: "relative", background: "#000", borderRadius: "8px", overflow: "hidden" }}>
+                    <video
+                      src={videoPreview}
+                      controls
+                      style={{ width: "100%", maxHeight: "300px" }}
+                    />
+                    <button
+                      type="button"
+                      className="ep-media-remove"
+                      style={{ top: "8px", right: "8px", background: "rgba(255,0,0,0.9)" }}
+                      onClick={handleClearVideo}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* No video message */}
+              {!hasVideo && !videoPreview && !newVideoFile && (
+                <div className="ep-gst-disabled" style={{ padding: "20px", textAlign: "center", marginBottom: "12px" }}>
+                  <span>🎬</span>
+                  <span>No video uploaded for this product</span>
+                </div>
+              )}
+
+              {/* Upload new video */}
+              <div style={{ marginTop: "8px" }}>
+                <label style={{ display: "block", marginBottom: "4px", fontSize: "12px", color: "#64748b", fontWeight: "600" }}>
+                  Upload New Video
+                </label>
+                <input
+                  type="file"
+                  accept="video/*"
+                  onChange={handleVideoFileChange}
+                  style={{ width: "100%", padding: "8px 0" }}
+                />
+              </div>
+            </div>
+
+            {/* Video URL */}
+            <div className="ep-field">
+              <label className="ep-label">Video URL (Remote)</label>
+              <div className="ep-input-wrap">
+                <input
+                  className="ep-input"
+                  placeholder="Paste remote video URL (e.g., https://example.com/video.mp4)"
+                  value={videoURL}
+                  onChange={handleVideoURLChange}
+                />
+              </div>
+              <p style={{ fontSize: "11px", color: "#94a3b8", marginTop: "4px" }}>
+                💡 Paste a direct video URL from YouTube, Vimeo, or other hosting service
+              </p>
+            </div>
+
             {/* ── Pricing & Stock ── */}
             <p className="ep-section" style={{marginTop:"1.25rem"}}>Pricing & Stock</p>
 
@@ -729,7 +1007,7 @@ const fetchCategoriesByCompany = async(company_id) => {
               }
             </div>
 
-            {/* ── GST (conditional) ── */}
+            {/* ── GST ── */}
             <div className="ep-field">
               <label className="ep-label">
                 GST
