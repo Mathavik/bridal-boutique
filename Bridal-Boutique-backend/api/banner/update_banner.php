@@ -11,16 +11,47 @@ $title = trim($_POST['title'] ?? '');
 $description = trim($_POST['description'] ?? '');
 $category_id = intval($_POST['category_id'] ?? 0);
 $category_name = trim($_POST['category_name'] ?? '');
-$status = trim($_POST['status'] ?? 'active');
+$status = trim($_POST['status'] ?? '');
 
-if ($id <= 0 || $title === '' || $description === '' || $category_id <= 0) {
-    echo json_encode(["success" => false, "message" => "Invalid banner update request."]);
+if ($id <= 0) {
+    echo json_encode(["success" => false, "message" => "Invalid banner id."]);
     exit;
 }
 
-$setParts = ["title = ?", "description = ?", "category_id = ?", "status = ?"];
-$params = [$title, $description, $category_id, $status];
-$types = "ssis";
+$setParts = [];
+$params = [];
+$types = "";
+
+// Only add fields that are present in the request
+if ($title !== '') {
+    $setParts[] = "title = ?";
+    $params[] = $title;
+    $types .= "s";
+}
+
+if ($description !== '') {
+    $setParts[] = "description = ?";
+    $params[] = $description;
+    $types .= "s";
+}
+
+if ($category_id > 0) {
+    $setParts[] = "category_id = ?";
+    $params[] = $category_id;
+    $types .= "i";
+}
+
+if ($status !== '') {
+    $setParts[] = "status = ?";
+    $params[] = $status;
+    $types .= "s";
+}
+
+if ($category_name !== '') {
+    $setParts[] = "category_name = ?";
+    $params[] = $category_name;
+    $types .= "s";
+}
 
 if (!empty($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
     $imageFile = $_FILES['image'];
@@ -49,11 +80,10 @@ if (!empty($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
     $params[] = "uploads/banners/" . $filename;
     $types .= "s";
 }
-
-if ($category_name !== '') {
-    $setParts[] = "category_name = ?";
-    $params[] = $category_name;
-    $types .= "s";
+// if nothing to update
+if (count($setParts) === 0) {
+    echo json_encode(["success" => false, "message" => "No fields to update."]);
+    exit;
 }
 
 $params[] = $id;

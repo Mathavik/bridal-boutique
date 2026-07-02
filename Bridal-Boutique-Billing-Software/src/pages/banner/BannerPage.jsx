@@ -39,8 +39,13 @@ export default function BannerPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!bannerTitle.trim() || !title.trim() || !imageFile) {
-      setMessage({ type: "error", text: "Please fill all fields and choose an image." });
+    // bannerTitle (group) is required. subtitle/title is optional. Image required for create; optional for edit.
+    if (!bannerTitle.trim()) {
+      setMessage({ type: "error", text: "Please provide a Banner Title (group)." });
+      return;
+    }
+    if (!editingId && !imageFile) {
+      setMessage({ type: "error", text: "Please choose an image for the banner." });
       return;
     }
 
@@ -158,13 +163,14 @@ export default function BannerPage() {
           <form onSubmit={handleSubmit} className="rounded-[24px] border border-slate-200 bg-slate-50 p-5">
             <div className="mb-4">
               <label className="mb-2 block text-sm font-semibold text-slate-700">Banner Title</label>
-              <input
-                type="text"
-                value={bannerTitle}
-                onChange={(e) => setBannerTitle(e.target.value)}
-                placeholder="e.g. Home Banner"
-                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none ring-0 focus:border-blue-500"
-              />
+                      <input
+                        type="text"
+                        value={bannerTitle}
+                        onChange={(e) => setBannerTitle(e.target.value)}
+                        placeholder="e.g. Home Banner"
+                        className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none ring-0 focus:border-blue-500"
+                        disabled={!!editingId}
+                      />
             </div>
 
             <div className="mb-4">

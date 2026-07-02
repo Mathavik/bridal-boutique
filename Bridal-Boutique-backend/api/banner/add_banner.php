@@ -10,11 +10,12 @@ include __DIR__ . '/../../config/db.php';
 $banner_title = trim($_POST['banner_title'] ?? '');
 $title = trim($_POST['title'] ?? '');
 
-if ($banner_title === '' || $title === '') {
+// Require banner_title (group/name). The banner heading/title is optional (subtitle).
+if ($banner_title === '') {
     echo json_encode([
         "success" => false,
-        "message" => "banner_title and title are required.",
-        "debug" => "missing_title_or_banner_title"
+        "message" => "banner_title is required.",
+        "debug" => "missing_banner_title"
     ]);
     exit;
 }
