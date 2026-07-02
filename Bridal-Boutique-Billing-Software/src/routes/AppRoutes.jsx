@@ -40,12 +40,16 @@ import AdminList from "../pages/Admin/AdminList";
 import EditAdmin from "../pages/Admin/EditAdmin";
 import CompanyRequest from "../pages/CompanyRequests/CompanyRequest";
 
+// ✅ Import Users Pages
+import UserForm from "../pages/users/UserForm";
+import UserList from "../pages/users/UserList";
+import EditUser from "../pages/users/EditUser";
+
 export default function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
-
-          {/* 🔓 Public */}
+        {/* 🔓 Public */}
         <Route
           path="/"
           element={
@@ -56,9 +60,9 @@ export default function AppRoutes() {
         />
 
         <Route path="/register" element={<Register />} />
-                <Route path="/registercompany" element={<RegisterCompany />} />
-
-<Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/registercompany" element={<RegisterCompany />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        
         {/* 🔐 Protected */}
         <Route
           path="/dashboard"
@@ -70,51 +74,67 @@ export default function AppRoutes() {
         >
           <Route index element={<Dashboard />} />
         </Route>
-        {/* <Route path="/" element={<Login />} /> */}
-        {/* <Route path="/Register" element={<Register />} /> */}
-        
 
         <Route element={<MainLayout />}>
-          {/* <Route path="/dashboard" element={<Dashboard />} /> */}
+          {/* Products */}
           <Route path="/products" element={<ProductList />} />
           <Route path="/products/add" element={<ProductForm />} />
           <Route path="/products/edit/:id" element={<EditProduct />} />
+          
+          {/* Billing & Invoice */}
           <Route path="/billing" element={<Billing />} />
-          <Route path="/invoice/:invoiceNo" element={<Invoice/>} />
+          <Route path="/invoice/:invoiceNo" element={<Invoice />} />
+          <Route path="/invoice" element={<Invoice />} />
+          
+          {/* Settings */}
           <Route path="/settings" element={<Settings />} />
+          
+          {/* Company */}
           <Route path="/company" element={<CompanyList />} />
           <Route path="/company/add" element={<CompanyForm />} />
           <Route path="/company/edit/:id" element={<EditCompany />} />
+          
+          {/* Customer */}
           <Route path="/customer" element={<CustomerList />} />
           <Route path="/customer/add" element={<CustomerForm />} />
           <Route path="/customer/edit/:id" element={<EditCustomer />} />
 
+          {/* ✅ Users - Ecommerce Users */}
+          <Route path="/users" element={<UserList />} />
+          <Route path="/users/add" element={<UserForm />} />
+          <Route path="/users/edit/:id" element={<EditUser />} />
 
-          <Route path="/invoice" element={<Invoice />} />
+          {/* Reports */}
           <Route path="/reports" element={<Reports />} />
-          
-          <Route path="/cashier/add" element={<CashierForm />} />
+          <Route path="/payment-pending" element={<PaymentPending />} />
+          <Route path="/paymentpending-history" element={<PaymentPendingHistory />} />
+          <Route path="/credit-settings" element={<CreditSettings />} />
+
+          {/* Cashier */}
           <Route path="/cashier" element={<CashierList />} />
-         <Route path="/profile" element={<Profile />} />
-<Route path="/payment-pending" element={<PaymentPending />} />
-<Route path="/paymentpending-history" element={<PaymentPendingHistory />} />
-<Route path="/credit-settings" element={<CreditSettings />} />
+          <Route path="/cashier/add" element={<CashierForm />} />
+          <Route path="/cashier/edit/:id" element={<EditCashier />} />
+          
+          {/* Category */}
+          <Route path="/category" element={<CategoryList />} />
+          <Route path="/category/add" element={<CategoryForm />} />
+          <Route path="/category/edit/:id" element={<EditCategory />} />
 
-          <Route path="/cashier/edit/:id" element={<EditCashier/>} />
-            <Route path="/category/add" element={<CategoryForm />} />
-          <Route path="/category" element={<CategoryList/>} />
-          <Route path="/category/edit/:id" element={<EditCategory/>} />
+          {/* Tax */}
+          <Route path="/tax" element={<TaxList />} />
+          <Route path="/tax/add" element={<TaxForm />} />
 
+          {/* Admin */}
+          <Route path="/admin" element={<AdminList />} />
+          <Route path="/admin/add" element={<AdminForm />} />
+          <Route path="/admin/edit/:id" element={<EditAdmin />} />
 
-<Route path="/tax" element={<TaxList />} />
-<Route path="/tax/add" element={<TaxForm />} />
-
-<Route path="/cashier-requests" element={<PendingCashierRequests />}
-/>
-      <Route path="/admin/add" element={<AdminForm />} />
-      <Route path="/admin" element={<AdminList />} />
-      <Route path="/admin/edit/:id" element={<EditAdmin />} />
-      <Route path="/company-requests" element={<CompanyRequest />} />
+          {/* Requests */}
+          <Route path="/cashier-requests" element={<PendingCashierRequests />} />
+          <Route path="/company-requests" element={<CompanyRequest />} />
+          
+          {/* Profile */}
+          <Route path="/profile" element={<Profile />} />
         </Route>
       </Routes>
     </BrowserRouter>

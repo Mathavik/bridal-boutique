@@ -18,7 +18,7 @@ if ($user_id <= 0) {
 }
 
 try {
-    // Get orders for the user with invoice data
+    // Get orders for the user with tracking info
     $query = "SELECT 
                 o.id, 
                 o.guest_id,
@@ -31,6 +31,10 @@ try {
                 o.created_at,
                 o.status,
                 o.invoice_id,
+                o.tracking_id,
+                o.shipped_at,
+                o.delivered_at,
+                o.tracking_status,
                 i.invoice_no,
                 i.sub_total,
                 i.gst_total,

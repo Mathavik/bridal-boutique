@@ -2,12 +2,25 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import axios from "axios";
-import { Package, Calendar, Eye, X, Clock, CheckCircle, FileText } from "lucide-react";
+import { 
+  Package, 
+  Calendar, 
+  Eye, 
+  X, 
+  Clock, 
+  CheckCircle, 
+  FileText, 
+  Truck, 
+  Copy, 
+  Check,
+  ShoppingBag
+} from "lucide-react";
 
 const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend";
 
 // Helper function to format date without date-fns
 const formatDate = (dateString) => {
+  if (!dateString) return "N/A";
   const date = new Date(dateString);
   const options = { 
     year: 'numeric', 
@@ -26,6 +39,7 @@ function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [copiedId, setCopiedId] = useState(null);
 
   useEffect(() => {
     if (user) {
@@ -84,11 +98,19 @@ function OrdersPage() {
     navigate(`/invoice/${orderId}`);
   };
 
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(text);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
   const getStatusColor = (status) => {
     const colors = {
       pending: "bg-yellow-100 text-yellow-800",
       processing: "bg-blue-100 text-blue-800",
-      shipped: "bg-purple-100 text-purple-800",
+      confirmed: "bg-blue-100 text-blue-800",
+      packed: "bg-purple-100 text-purple-800",
+      shipped: "bg-indigo-100 text-indigo-800",
       delivered: "bg-green-100 text-green-800",
       cancelled: "bg-red-100 text-red-800",
     };
@@ -99,7 +121,9 @@ function OrdersPage() {
     const icons = {
       pending: <Clock size={16} />,
       processing: <Package size={16} />,
-      shipped: <Package size={16} />,
+      confirmed: <CheckCircle size={16} />,
+      packed: <Package size={16} />,
+      shipped: <Truck size={16} />,
       delivered: <CheckCircle size={16} />,
       cancelled: <X size={16} />,
     };
@@ -126,7 +150,7 @@ function OrdersPage() {
         </div>
       ) : orders.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-lg shadow-md">
-          <Package size={64} className="mx-auto text-gray-300 mb-4" />
+          <ShoppingBag size={64} className="mx-auto text-gray-300 mb-4" />
           <p className="text-gray-600 text-lg">No orders yet</p>
           <p className="text-gray-400">Start shopping to see your orders here</p>
         </div>
@@ -135,7 +159,7 @@ function OrdersPage() {
           {orders.map((order) => (
             <div
               key={order.id}
-              className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition"
+              className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition border border-gray-100"
             >
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="flex-1 min-w-[200px]">
@@ -160,6 +184,14 @@ function OrdersPage() {
                     >
                       {order.payment_status === "paid" ? "Paid" : "Pending"}
                     </span>
+                    
+                    {/* ✅ Courier ID Badge */}
+                    {order.tracking_id && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
+                        <Truck size={12} />
+                        {order.tracking_id}
+                      </span>
+                    )}
                   </div>
 
                   <div className="space-y-1 text-sm text-gray-600">
@@ -171,13 +203,19 @@ function OrdersPage() {
                     <p className="font-semibold text-[#a97c50]">
                       ₹{parseFloat(order.total || 0).toLocaleString()}
                     </p>
+                    {order.tracking_id && order.shipped_at && (
+                      <p className="text-xs text-gray-400 flex items-center gap-1">
+                        <Truck size={12} />
+                        Shipped on: {formatDate(order.shipped_at)}
+                      </p>
+                    )}
                   </div>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => viewOrderDetails(order)}
-                    className="flex items-center gap-1 px-4 py-2 text-sm text-[#a97c50] border border-[#a97c50] rounded-md hover:bg-[#a97c50] hover:text-white transition"
+                    className="flex items-center gap-1 px-4 py-2 text-sm text-[#a97c50] border border-[#a97c50] rounded-lg hover:bg-[#a97c50] hover:text-white transition"
                   >
                     <Eye size={16} />
                     View Details
@@ -185,7 +223,7 @@ function OrdersPage() {
 
                   <button
                     onClick={() => viewInvoice(order.id)}
-                    className="flex items-center gap-1 px-4 py-2 text-sm text-blue-600 border border-blue-600 rounded-md hover:bg-blue-600 hover:text-white transition"
+                    className="flex items-center gap-1 px-4 py-2 text-sm text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition"
                   >
                     <FileText size={16} />
                     View Invoice
@@ -194,7 +232,7 @@ function OrdersPage() {
                   {(order.status || 'pending') !== "cancelled" && (order.status || 'pending') !== "delivered" && (
                     <button
                       onClick={() => cancelOrder(order.id)}
-                      className="flex items-center gap-1 px-4 py-2 text-sm text-red-600 border border-red-600 rounded-md hover:bg-red-600 hover:text-white transition"
+                      className="flex items-center gap-1 px-4 py-2 text-sm text-red-600 border border-red-600 rounded-lg hover:bg-red-600 hover:text-white transition"
                     >
                       <X size={16} />
                       Cancel
@@ -253,25 +291,60 @@ function OrdersPage() {
                   <span className="text-gray-600">Date:</span>
                   <span>{formatDate(selectedOrder.created_at)}</span>
                 </div>
-                <div className="flex justify-between">
+                
+                {/* ✅ Tracking ID in Modal */}
+                {selectedOrder.tracking_id && (
+                  <div className="flex justify-between items-center py-1">
+                    <span className="text-gray-600">Tracking ID:</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-medium text-[#a97c50] bg-gray-50 px-3 py-1 rounded-lg">
+                        {selectedOrder.tracking_id}
+                      </span>
+                      <button
+                        onClick={() => copyToClipboard(selectedOrder.tracking_id)}
+                        className="p-1.5 text-gray-400 hover:text-[#a97c50] transition rounded-lg hover:bg-gray-100"
+                      >
+                        {copiedId === selectedOrder.tracking_id ? (
+                          <Check size={16} className="text-green-600" />
+                        ) : (
+                          <Copy size={16} />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {selectedOrder.shipped_at && (
+                  <div className="flex justify-between py-1">
+                    <span className="text-gray-600">Shipped Date:</span>
+                    <span className="font-medium">{formatDate(selectedOrder.shipped_at)}</span>
+                  </div>
+                )}
+                {selectedOrder.delivered_at && (
+                  <div className="flex justify-between py-1">
+                    <span className="text-gray-600">Delivered Date:</span>
+                    <span className="font-medium">{formatDate(selectedOrder.delivered_at)}</span>
+                  </div>
+                )}
+                
+                <div className="flex justify-between py-1">
                   <span className="text-gray-600">Customer:</span>
                   <span className="text-right max-w-[60%]">
                     {selectedOrder.customer_name}
                   </span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between py-1">
                   <span className="text-gray-600">Email:</span>
                   <span className="text-right max-w-[60%]">
                     {selectedOrder.email}
                   </span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between py-1">
                   <span className="text-gray-600">Mobile:</span>
                   <span className="text-right max-w-[60%]">
                     {selectedOrder.mobile}
                   </span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between py-1">
                   <span className="text-gray-600">Shipping Address:</span>
                   <span className="text-right max-w-[60%]">
                     {selectedOrder.shipping_address}
@@ -321,7 +394,20 @@ function OrdersPage() {
                 </span>
               </div>
 
-              <div className="mt-4 flex justify-end">
+              <div className="mt-4 flex flex-wrap justify-end gap-2">
+                {selectedOrder.tracking_id && (
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(selectedOrder.tracking_id);
+                      setCopiedId(selectedOrder.tracking_id);
+                      setTimeout(() => setCopiedId(null), 2000);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+                  >
+                    <Copy size={16} />
+                    Copy Tracking ID
+                  </button>
+                )}
                 <button
                   onClick={() => viewInvoice(selectedOrder.id)}
                   className="flex items-center gap-2 px-4 py-2 bg-[#a97c50] text-white rounded-lg hover:bg-[#8a6540] transition"
