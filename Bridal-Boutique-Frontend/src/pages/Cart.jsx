@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { formatCurrency } from "../utils/formatters";
 import { useStore } from "../contexts/StoreContext";
+import { useAuth } from "../contexts/AuthContext";
+import { showToast } from "../utils/toast";
 
 const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
 
@@ -13,6 +15,8 @@ const resolveImageUrl = (src) => {
 
 export default function Cart() {
   const { cartItems, refreshCounts } = useStore();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [items, setItems] = useState(cartItems);
 
   useEffect(() => {
@@ -32,6 +36,15 @@ export default function Cart() {
   const removeItem = async (id) => {
     await axios.delete(`${API_BASE}/cart/delete.php?id=${id}`);
     await refreshCounts();
+  };
+
+  const handleCheckout = () => {
+    if (!user) {
+      showToast('Please log in to proceed to checkout', 'error');
+      setTimeout(() => navigate('/login'), 500);
+      return;
+    }
+    navigate('/checkout');
   };
 
   const subtotal = useMemo(() => items.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1), 0), [items]);
@@ -69,8 +82,8 @@ export default function Cart() {
             <div className="flex justify-between"><span>Shipping</span><span>Free</span></div>
             <div className="flex justify-between font-semibold text-black"><span>Total</span><span>{formatCurrency(subtotal)}</span></div>
           </div>
-          <Link to="/checkout" className="mt-6 block w-full rounded-md bg-[#181818] px-4 py-3 text-center text-white">Proceed to Checkout</Link>
           <Link to="/bridal-lehenga" className="mt-3 block text-center text-sm text-[#a97c50]">Continue Shopping</Link>
+          <button onClick={handleCheckout} className="mt-6 block w-full rounded-md bg-[#181818] px-4 py-3 text-center text-white hover:bg-black transition">Proceed to Checkout</button>
         </div>
       </div>
     </div>

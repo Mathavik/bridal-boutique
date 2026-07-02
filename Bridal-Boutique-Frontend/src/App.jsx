@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Header from "./components/Header";
 import Home from "./Home/Home";
 import Footer from "./components/Footer";
-import BridalLehenga from "./pages/BridalLehenga";
+import Product from "./pages/product";
 import ProductDetails from "./pages/ProductDetails";
 import Cart from "./pages/Cart";
 import Wishlist from "./pages/Wishlist";
@@ -13,14 +13,16 @@ import Register from "./pages/Register";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import ProfilePage from "./pages/ProfilePage";
 import OrdersPage from "./pages/OrdersPage";
+import ScrollToTop from "./components/ScrollToTop";
 
 export default function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Header />
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/bridal-lehenga" element={<BridalLehenga />} />
+        <Route path="/bridal-lehenga" element={<Product />} />
         <Route path="/product/:id" element={<ProductDetails />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/wishlist" element={<Wishlist />} />

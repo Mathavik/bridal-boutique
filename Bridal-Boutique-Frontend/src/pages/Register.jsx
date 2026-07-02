@@ -21,9 +21,16 @@ export default function Register() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
+    
+    if (!name || !email || !password) {
+      setError("Please fill in all fields");
+      return;
+    }
+
     const response = await register(name, email, password);
     if (response.status) {
-      navigate(redirect, { replace: true });
+      // Navigate to login page after successful registration
+      navigate("/login", { replace: true });
     } else {
       setError(response.message || "Registration failed");
     }
