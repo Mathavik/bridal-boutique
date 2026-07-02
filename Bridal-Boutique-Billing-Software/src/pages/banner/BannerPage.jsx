@@ -115,21 +115,21 @@ export default function BannerPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm("Delete this banner?")) return;
-    try {
-      const res = await api.post("banner/delete_banner.php", { id });
-      if (res.data?.success) {
-        setMessage({ type: "success", text: res.data.message || "Banner deleted." });
-        setBanners((prev) => prev.filter((x) => String(x.id) !== String(id)));
-      } else {
-        setMessage({ type: "error", text: res.data?.message || "Unable to delete banner." });
-      }
-    } catch (err) {
-      console.error(err);
-      setMessage({ type: "error", text: "Network error while deleting." });
-    }
-  };
+//   const handleDelete = async (id) => {
+//     if (!confirm("Delete this banner?")) return;
+//     try {
+//       const res = await api.post("banner/delete_banner.php", { id });
+//       if (res.data?.success) {
+//         setMessage({ type: "success", text: res.data.message || "Banner deleted." });
+//         setBanners((prev) => prev.filter((x) => String(x.id) !== String(id)));
+//       } else {
+//         setMessage({ type: "error", text: res.data?.message || "Unable to delete banner." });
+//       }
+//     } catch (err) {
+//       console.error(err);
+//       setMessage({ type: "error", text: "Network error while deleting." });
+//     }
+//   };
 
   return (
     <div className="min-h-screen bg-[#f0f4ff] p-4 md:p-6">
@@ -265,7 +265,7 @@ export default function BannerPage() {
                         <td className="px-4 py-3 align-top">
                           <div className="flex gap-2">
                             <button onClick={() => handleEdit(b)} className="rounded-md bg-blue-600 px-3 py-1 text-white">Edit</button>
-                            <button onClick={() => handleDelete(b.id)} className="rounded-md bg-red-600 px-3 py-1 text-white">Delete</button>
+                            {/* <button onClick={() => handleDelete(b.id)} className="rounded-md bg-red-600 px-3 py-1 text-white">Delete</button> */}
                           </div>
                         </td>
                       </tr>
