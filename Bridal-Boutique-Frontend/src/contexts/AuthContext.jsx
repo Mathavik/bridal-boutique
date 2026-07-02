@@ -44,8 +44,33 @@ export function AuthProvider({ children }) {
 
   const logout = () => setUser(null);
 
+  const updateProfile = async (userData) => {
+    setLoading(true);
+    try {
+      const response = await axios.post(`${API_BASE}/user/update_user_profile.php`, {
+        user_id: user.id,
+        name: userData.name,
+        phone: userData.phone,
+        address: userData.address
+      });
+      if (response.data?.status) {
+        setUser(response.data.data);
+      }
+      return response.data;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const value = useMemo(
-    () => ({ user, loading, login, register, logout }),
+    () => ({ 
+      user, 
+      loading, 
+      login, 
+      register, 
+      logout,
+      updateProfile 
+    }),
     [user, loading]
   );
 

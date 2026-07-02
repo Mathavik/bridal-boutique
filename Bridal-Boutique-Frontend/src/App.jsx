@@ -11,6 +11,8 @@ import Payment from "./pages/Payment";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import OrderConfirmation from "./pages/OrderConfirmation";
+import ProfilePage from "./pages/ProfilePage";
+import OrdersPage from "./pages/OrdersPage";
 
 export default function App() {
   return (
@@ -26,6 +28,8 @@ export default function App() {
         <Route path="/payment" element={<Payment />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/orders" element={<OrdersPage />} />
         <Route path="/order-confirmation" element={<OrderConfirmation />} />
       </Routes>
       <Footer />
