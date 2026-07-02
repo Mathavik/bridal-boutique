@@ -20,7 +20,9 @@ const Spotlight = () => {
       const params = new URLSearchParams(window.location.search);
       const companyId = params.get("company_id");
 
-      const bannerUrl = `${API_BASE}/banner/get_banner.php?banner_title=IN THE SPOTLIGHT`;
+      // allow overriding the banner by query param 'banner_title' or 'category'
+      const bannerTitleParam = params.get("banner_title") || params.get("category") || "IN THE SPOTLIGHT";
+      const bannerUrl = `${API_BASE}/banner/get_banner.php?banner_title=${encodeURIComponent(bannerTitleParam)}`;
       let productUrl = `${API_BASE}/product/get.php?limit=2`;
       if (companyId) {
         productUrl += `&company_id=${companyId}`;
@@ -57,7 +59,19 @@ const Spotlight = () => {
     return `${API_BASE}/${path}`;
   };
 
-  const bannerImage = bannerData?.image || "https://images.unsplash.com/photo-1512436991641-6745cdb1723f";
+  // Resolve assets that may be returned as full URLs or relative paths
+  const resolveAsset = (path) => {
+    if (!path) return "";
+    if (path.startsWith("http")) return path;
+    // Use origin so relative paths like 'uploads/banners/..' resolve correctly
+    return `${window.location.origin}/${path.replace(/^\/+/, "")}`;
+  };
+
+  // debug: inspect banner response when troubleshooting missing images
+  // eslint-disable-next-line no-console
+  console.log("spotlight bannerData:", bannerData);
+
+  const bannerImage = resolveAsset(bannerData?.image) || "https://images.unsplash.com/photo-1512436991641-6745cdb1723f";
   const bannerHeading = bannerData?.title || "Crafted For Celebration";
   const bannerSubtitle = bannerData?.banner_title || "Beautiful bridal style inspired by our latest banner collection.";
   const bannerLink = `/bridal-lehenga`;

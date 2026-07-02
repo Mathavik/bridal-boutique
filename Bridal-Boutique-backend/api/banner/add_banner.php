@@ -96,7 +96,8 @@ if (!$executed) {
 }
 
 $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || ($_SERVER['SERVER_PORT'] ?? '') == 443 ? 'https' : 'http';
-$apiBaseUrl = $scheme . '://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['SCRIPT_NAME'], 2);
+// dirname(..., 3) moves up to the project root (Bridal-Boutique-backend), so uploads path resolves correctly
+$apiBaseUrl = $scheme . '://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['SCRIPT_NAME'], 3);
 $imageUrl = rtrim($apiBaseUrl, '/') . '/' . ltrim($imagePath, '/');
 
 mysqli_stmt_close($stmt);

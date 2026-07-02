@@ -33,7 +33,8 @@ $result = mysqli_stmt_get_result($stmt);
 
 if ($result && ($banner = mysqli_fetch_assoc($result))) {
     $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || ($_SERVER['SERVER_PORT'] ?? '') == 443 ? 'https' : 'http';
-    $apiBaseUrl = $scheme . '://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['SCRIPT_NAME'], 2);
+    // dirname(..., 3) moves up to the project root (Bridal-Boutique-backend), so uploads path resolves correctly
+    $apiBaseUrl = $scheme . '://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['SCRIPT_NAME'], 3);
     $banner['image'] = rtrim($apiBaseUrl, '/') . '/' . ltrim($banner['image'], '/');
 
     echo json_encode([
