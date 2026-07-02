@@ -45,14 +45,13 @@ export default function ProductDetails() {
     fetchProduct();
   }, [id]);
 
- // In ProductDetails.jsx
 const addToCart = async () => {
   try {
     const response = await axios.post(`${API_BASE}/cart/save.php`, {
       guest_id: guestId(),
       product_id: product.id,
       quantity: 1,
-      price: product.offer_price || product.price,
+      price: product.price,
     });
     await refreshCounts();
     if (response.data?.status) {
@@ -90,8 +89,33 @@ const addToCart = async () => {
     return <div className="min-h-screen flex items-center justify-center pt-28">Product not found.</div>;
   }
 
-  const gallery = product.image_gallery_json ? JSON.parse(product.image_gallery_json) : [];
-  const images = [product.image, ...gallery].filter(Boolean);
+  const convertImagePath = (imagePath) => {
+    if (!imagePath) return "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f";
+    if (imagePath.startsWith("http")) return imagePath;
+    // Convert backslashes to forward slashes
+    let cleanPath = imagePath.replace(/\\/g, "/");
+    // Remove leading 'uploads/' if it exists (it's already in the API_BASE path)
+    if (cleanPath.startsWith("uploads/")) {
+      cleanPath = cleanPath.substring(8); // Remove 'uploads/'
+    }
+    return `${API_BASE}/uploads/${cleanPath}`;
+  };
+
+  let gallery = [];
+  if (product.image_gallery_json) {
+    try {
+      // Remove extra backslashes from the JSON string before parsing
+      const cleanJson = product.image_gallery_json.replace(/\\\\/g, "").replace(/\\\"/g, '"').replace(/\\\//g, "/");
+      gallery = JSON.parse(cleanJson);
+    } catch (e) {
+      console.warn("Failed to parse image gallery JSON:", e);
+      gallery = [];
+    }
+  }
+
+  const images = [product.image, ...gallery]
+    .filter(Boolean)
+    .map(convertImagePath);
 
   return (
     <div className="min-h-screen bg-[#f8f7f2] pt-28 px-4 md:px-8 lg:px-12">
@@ -110,11 +134,15 @@ const addToCart = async () => {
           <h1 className="text-3xl font-semibold mt-2">{product.product_name}</h1>
           <p className="text-gray-600 mt-3">{product.short_description}</p>
           <div className="mt-4 flex items-center gap-3">
-            <span className="text-2xl font-semibold">{formatCurrency(product.offer_price || product.price)}</span>
-            <span className="line-through text-gray-400">{formatCurrency(product.price)}</span>
-            <span className="text-[#a97c50]">{getDiscountPercent(product.price, product.offer_price)}% off</span>
+            <span className="text-2xl font-semibold">{formatCurrency(product.price)}</span>
+            {product.original_price && (
+              <>
+                <span className="line-through text-gray-400">{formatCurrency(product.original_price)}</span>
+                <span className="text-[#a97c50]">{getDiscountPercent(product.original_price, product.price)}% off</span>
+              </>
+            )}
           </div>
-          <div className="mt-4 text-sm text-gray-500">SKU: {product.sku || "N/A"} • Brand: {product.brand || "BOTIK"}</div>
+          <div className="mt-4 text-sm text-gray-500">SKU: {product.product_code || "N/A"} • Barcode: {product.barcode || "N/A"}</div>
           <div className="mt-6 flex flex-wrap gap-3">
             <button onClick={addToCart} className="flex items-center gap-2 rounded-md bg-[#181818] px-4 py-3 text-white"><ShoppingBag size={16} /> Add to Cart</button>
             <button onClick={() => navigate(`/payment?product_id=${product.id}`)} className="flex items-center gap-2 rounded-md border border-gray-300 px-4 py-3">Buy Now</button>
@@ -125,12 +153,14 @@ const addToCart = async () => {
           <div className="mt-8 rounded-xl border border-gray-200 bg-white p-5">
             <h2 className="font-semibold text-lg">Product Details</h2>
             <div className="mt-4 grid md:grid-cols-2 gap-3 text-sm text-gray-700">
-              <div><span className="font-medium">Fabric:</span> {product.fabric}</div>
-              <div><span className="font-medium">Material:</span> {product.material}</div>
-              <div><span className="font-medium">Pattern:</span> {product.pattern}</div>
-              <div><span className="font-medium">Color:</span> {product.color}</div>
-              <div><span className="font-medium">Sizes:</span> {product.available_sizes}</div>
-              <div><span className="font-medium">Occasion:</span> {product.occasion}</div>
+              {product.fabric && <div><span className="font-medium">Fabric:</span> {product.fabric}</div>}
+              {product.material && <div><span className="font-medium">Material:</span> {product.material}</div>}
+              {product.embroidery && <div><span className="font-medium">Embroidery:</span> {product.embroidery}</div>}
+              {product.color && <div><span className="font-medium">Color:</span> {product.color}</div>}
+              {product.available_sizes && <div><span className="font-medium">Sizes:</span> {product.available_sizes}</div>}
+              {product.occasion && <div><span className="font-medium">Occasion:</span> {product.occasion}</div>}
+              {product.unit && <div><span className="font-medium">Unit:</span> {product.unit}</div>}
+              {product.gst_percentage && <div><span className="font-medium">GST:</span> {product.gst_percentage}%</div>}
             </div>
           </div>
 

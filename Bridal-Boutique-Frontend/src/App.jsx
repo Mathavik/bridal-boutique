@@ -11,10 +11,12 @@ import Payment from "./pages/Payment";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import OrderConfirmation from "./pages/OrderConfirmation";
+import ScrollToTop from "./components/ScrollToTop";
 
 export default function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Header />
       <Routes>
         <Route path="/" element={<Home />} />
