@@ -15,7 +15,8 @@ export default function ProductDetails() {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const { guestId, refreshCounts, cartItems,incrementCartCount, incrementWishlistCount } = useStore();
+  const [quantity, setQuantity] = useState(1);
+  const { guestId, refreshCounts, cartItems, incrementCartCount, incrementWishlistCount } = useStore();
   const { user } = useAuth();
 
   useEffect(() => {
@@ -48,32 +49,32 @@ export default function ProductDetails() {
     fetchProduct();
   }, [id]);
 
-const addToCart = async () => {
-  if (!user) {
-    showToast('Please log in to add items to cart', 'error');
-    setTimeout(() => navigate('/login'), 500);
-    return;
-  }
-
-  try {
-    const response = await axios.post(`${API_BASE}/cart/save.php`, {
-      guest_id: guestId(),
-      product_id: product.id,
-      quantity: 1,
-      price: product.price,
-    });
-    await refreshCounts();
-    if (response.data?.status) {
-      showToast(`${product.product_name} added to cart successfully`, 'success');
-    } else {
-      showToast(response.data?.message || "Unable to add to cart", 'error');
+  const addToCart = async () => {
+    if (!user) {
+      showToast('Please log in to add items to cart', 'error');
+      setTimeout(() => navigate('/login'), 500);
+      return;
     }
-  } catch (error) {
-    console.error("Add to cart failed:", error);
-    await refreshCounts();
-    showToast("Add to cart failed. Please try again.", 'error');
-  }
-};
+
+    try {
+      const response = await axios.post(`${API_BASE}/cart/save.php`, {
+        guest_id: guestId(),
+        product_id: product.id,
+        quantity: quantity,
+        price: product.price,
+      });
+      await refreshCounts();
+      if (response.data?.status) {
+        showToast(`${product.product_name} added to cart successfully`, 'success');
+      } else {
+        showToast(response.data?.message || "Unable to add to cart", 'error');
+      }
+    } catch (error) {
+      console.error("Add to cart failed:", error);
+      await refreshCounts();
+      showToast("Add to cart failed. Please try again.", 'error');
+    }
+  };
 
   const addToWishlist = async () => {
     if (!user) {
@@ -106,7 +107,33 @@ const addToCart = async () => {
       setTimeout(() => navigate('/login'), 500);
       return;
     }
-    navigate(`/payment?product_id=${product.id}`);
+
+    // Prepare product data for checkout
+    const productData = {
+      product_id: product.id,
+      product_name: product.product_name,
+      price: Number(product.price),
+      quantity: quantity,
+    };
+
+    // Navigate to checkout with product data
+    navigate("/checkout", {
+      state: {
+        fromProduct: true,
+        product: productData,
+        customer_name: user.name || "",
+        email: user.email || "",
+        mobile: user.phone || "",
+        shipping_address: user.address || "",
+      }
+    });
+  };
+
+  const incrementQuantity = () => setQuantity(prev => prev + 1);
+  const decrementQuantity = () => {
+    if (quantity > 1) {
+      setQuantity(prev => prev - 1);
+    }
   };
 
   if (loading) {
@@ -124,11 +151,9 @@ const addToCart = async () => {
   const convertImagePath = (imagePath) => {
     if (!imagePath) return "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f";
     if (imagePath.startsWith("http")) return imagePath;
-    // Convert backslashes to forward slashes
     let cleanPath = imagePath.replace(/\\/g, "/");
-    // Remove leading 'uploads/' if it exists (it's already in the API_BASE path)
     if (cleanPath.startsWith("uploads/")) {
-      cleanPath = cleanPath.substring(8); // Remove 'uploads/'
+      cleanPath = cleanPath.substring(8);
     }
     return `${API_BASE}/uploads/${cleanPath}`;
   };
@@ -136,7 +161,6 @@ const addToCart = async () => {
   let gallery = [];
   if (product.image_gallery_json) {
     try {
-      // Remove extra backslashes from the JSON string before parsing
       const cleanJson = product.image_gallery_json.replace(/\\\\/g, "").replace(/\\\"/g, '"').replace(/\\\//g, "/");
       gallery = JSON.parse(cleanJson);
     } catch (e) {
@@ -174,12 +198,43 @@ const addToCart = async () => {
               </>
             )}
           </div>
+
+          {/* Quantity Selector */}
+          <div className="mt-4 flex items-center gap-4">
+            <span className="text-sm font-medium text-gray-700">Quantity:</span>
+            <div className="flex items-center border border-gray-300 rounded-md">
+              <button 
+                onClick={decrementQuantity}
+                className="px-3 py-1 hover:bg-gray-100 transition"
+                disabled={quantity <= 1}
+              >
+                -
+              </button>
+              <span className="px-4 py-1 min-w-[40px] text-center">{quantity}</span>
+              <button 
+                onClick={incrementQuantity}
+                className="px-3 py-1 hover:bg-gray-100 transition"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
           <div className="mt-4 text-sm text-gray-500">SKU: {product.product_code || "N/A"} • Barcode: {product.barcode || "N/A"}</div>
+          
           <div className="mt-6 flex flex-wrap gap-3">
-            <button onClick={addToCart} className="flex items-center gap-2 rounded-md bg-[#181818] px-4 py-3 text-white"><ShoppingBag size={16} /> Add to Cart</button>
-            <button onClick={handleBuyNow} className="flex items-center gap-2 rounded-md border border-gray-300 px-4 py-3">Buy Now</button>
-            <button onClick={addToWishlist} className="flex items-center gap-2 rounded-md border border-gray-300 px-4 py-3"><Heart size={16} /> Wishlist</button>
-            <button className="flex items-center gap-2 rounded-md border border-gray-300 px-4 py-3"><Share2 size={16} /> Share</button>
+            <button onClick={addToCart} className="flex items-center gap-2 rounded-md bg-[#181818] px-4 py-3 text-white hover:bg-[#333] transition">
+              <ShoppingBag size={16} /> Add to Cart
+            </button>
+            <button onClick={handleBuyNow} className="flex items-center gap-2 rounded-md bg-[#a97c50] px-4 py-3 text-white hover:bg-[#8a6540] transition">
+              Buy Now
+            </button>
+            <button onClick={addToWishlist} className="flex items-center gap-2 rounded-md border border-gray-300 px-4 py-3 hover:bg-gray-50 transition">
+              <Heart size={16} /> Wishlist
+            </button>
+            <button className="flex items-center gap-2 rounded-md border border-gray-300 px-4 py-3 hover:bg-gray-50 transition">
+              <Share2 size={16} /> Share
+            </button>
           </div>
 
           <div className="mt-8 rounded-xl border border-gray-200 bg-white p-5">

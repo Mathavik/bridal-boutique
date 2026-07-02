@@ -30,6 +30,8 @@ $payment_method = $conn->real_escape_string($data['payment_method'] ?? 'cash');
 $payment_type   = $conn->real_escape_string($data['payment_type'] ?? 'cash');
 $gst_type       = $conn->real_escape_string($data['gst_type'] ?? 'without_gst');
 $gst_no         = $conn->real_escape_string($data['gst_no'] ?? '');
+$payment_status = $conn->real_escape_string($data['payment_status'] ?? 'pending');
+$balance_amount = floatval($data['balance_amount'] ?? 0);
 $invoice_no     = "INV-" . time();
 
 /* ── VALIDATION ── */
@@ -58,7 +60,7 @@ if ($payment_type == "credit") {
     $effective_total = $total_amount;
     $final_paid      = 0;
     $balance_amount  = $total_amount;
-    $payment_status  = "not_paid";
+    $payment_status  = "pending";
     $advance_delta   = 0;
 } else {
     $advance_balance = 0.0;
@@ -215,7 +217,7 @@ if ($customer_id > 0) {
         UPDATE customers SET pending_amount = '$total_pending'
         WHERE id = '$customer_id'
     ");
-}  // ← இந்த } முன்னாடி இல்லாம போச்சு — அதுதான் CORS error!
+}
 
 /* ── LAST INVOICE ── */
 $last_invoice = null;
@@ -240,6 +242,7 @@ echo json_encode([
     "status"         => true,
     "invoice_no"     => $invoice_no,
     "invoice_id"     => $invoice_id,
+    "payment_id"     => $payment_id ?? 0,
     "advance_used"   => $advance_used  ?? 0,
     "advance_delta"  => $advance_delta ?? 0,
     "balance_amount" => $balance_amount,

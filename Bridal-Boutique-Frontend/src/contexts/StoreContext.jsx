@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 
+const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
 const StoreContext = createContext();
 
 const createGuestId = () => {
@@ -18,46 +19,165 @@ export function StoreProvider({ children }) {
   const [cartItems, setCartItems] = useState([]);
   const [wishlistItems, setWishlistItems] = useState([]);
   const [guestIdValue] = useState(createGuestId);
+  const [loading, setLoading] = useState(false);
 
   const guestId = () => guestIdValue;
 
-  // In StoreContext.js, update the refreshCounts function to force re-render
-
-const refreshCounts = async () => {
-  const id = guestIdValue;
-  
-  try {
-    const cartRes = await axios.get(`http://localhost/bridal-boutique/Bridal-Boutique-backend/api/cart/get.php?guest_id=${id}`);
-    if (cartRes.data?.status) {
-      const items = cartRes.data.data || [];
-      setCartItems(items);
-      const totalCount = items.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
-      setCartCount(totalCount);
+  // Refresh cart and wishlist counts
+  const refreshCounts = async () => {
+    const id = guestIdValue;
+    
+    try {
+      const cartRes = await axios.get(`${API_BASE}/cart/get.php?guest_id=${id}`);
+      if (cartRes.data?.status) {
+        const items = cartRes.data.data || [];
+        setCartItems(items);
+        const totalCount = items.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+        setCartCount(totalCount);
+      }
+    } catch (error) {
+      console.error("Cart count refresh failed:", error);
     }
-  } catch (error) {
-    console.error("Cart count refresh failed:", error);
-  }
 
-  try {
-    const wishlistRes = await axios.get(`http://localhost/bridal-boutique/Bridal-Boutique-backend/api/wishlist/get.php?guest_id=${id}`);
-    if (wishlistRes.data?.status) {
-      const items = wishlistRes.data.data || [];
-      setWishlistItems(items);
-      setWishlistCount(items.length);
+    try {
+      const wishlistRes = await axios.get(`${API_BASE}/wishlist/get.php?guest_id=${id}`);
+      if (wishlistRes.data?.status) {
+        const items = wishlistRes.data.data || [];
+        setWishlistItems(items);
+        setWishlistCount(items.length);
+      }
+    } catch (error) {
+      console.error("Wishlist count refresh failed:", error);
     }
-  } catch (error) {
-    console.error("Wishlist count refresh failed:", error);
-  }
-};
+  };
 
+  // Clear cart function
+  const clearCart = async () => {
+    setLoading(true);
+    try {
+      const id = guestIdValue;
+      // Clear from server
+      await axios.delete(`${API_BASE}/cart/clear.php?guest_id=${id}`);
+      
+      // Clear from state
+      setCartItems([]);
+      setCartCount(0);
+      
+      // Clear from localStorage
+      localStorage.removeItem("bridal_cart");
+      
+      return { status: true, message: "Cart cleared successfully" };
+    } catch (error) {
+      console.error("Error clearing cart:", error);
+      // Even if server fails, clear local state
+      setCartItems([]);
+      setCartCount(0);
+      localStorage.removeItem("bridal_cart");
+      return { status: false, message: "Failed to clear cart" };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Add to cart
+  const addToCart = async (productId, quantity = 1, price = 0) => {
+    try {
+      const id = guestIdValue;
+      const response = await axios.post(`${API_BASE}/cart/add.php`, {
+        guest_id: id,
+        product_id: productId,
+        quantity: quantity,
+        price: price
+      });
+      
+      if (response.data?.status) {
+        await refreshCounts();
+        return { status: true, message: "Added to cart" };
+      } else {
+        return { status: false, message: response.data?.message || "Failed to add to cart" };
+      }
+    } catch (error) {
+      console.error("Add to cart error:", error);
+      return { status: false, message: "Error adding to cart" };
+    }
+  };
+
+  // Remove from cart
+  const removeFromCart = async (cartItemId) => {
+    try {
+      await axios.delete(`${API_BASE}/cart/delete.php?id=${cartItemId}`);
+      await refreshCounts();
+      return { status: true, message: "Removed from cart" };
+    } catch (error) {
+      console.error("Remove from cart error:", error);
+      return { status: false, message: "Failed to remove from cart" };
+    }
+  };
+
+  // Update cart quantity
+  const updateCartQuantity = async (cartItemId, quantity) => {
+    try {
+      await axios.post(`${API_BASE}/cart/update.php`, {
+        id: cartItemId,
+        quantity: quantity
+      });
+      await refreshCounts();
+      return { status: true, message: "Cart updated" };
+    } catch (error) {
+      console.error("Update cart error:", error);
+      return { status: false, message: "Failed to update cart" };
+    }
+  };
+
+  // Add to wishlist
+  const addToWishlist = async (productId) => {
+    try {
+      const id = guestIdValue;
+      const response = await axios.post(`${API_BASE}/wishlist/add.php`, {
+        guest_id: id,
+        product_id: productId
+      });
+      
+      if (response.data?.status) {
+        await refreshCounts();
+        return { status: true, message: "Added to wishlist" };
+      } else {
+        return { status: false, message: response.data?.message || "Failed to add to wishlist" };
+      }
+    } catch (error) {
+      console.error("Add to wishlist error:", error);
+      return { status: false, message: "Error adding to wishlist" };
+    }
+  };
+
+  // Remove from wishlist
+  const removeFromWishlist = async (wishlistItemId) => {
+    try {
+      await axios.delete(`${API_BASE}/wishlist/delete.php?id=${wishlistItemId}`);
+      await refreshCounts();
+      return { status: true, message: "Removed from wishlist" };
+    } catch (error) {
+      console.error("Remove from wishlist error:", error);
+      return { status: false, message: "Failed to remove from wishlist" };
+    }
+  };
+
+  // Check if product is in wishlist
+  const isInWishlist = (productId) => {
+    return wishlistItems.some(item => item.product_id === productId);
+  };
+
+  // Change cart count (for manual updates)
   const changeCartCount = (delta = 1) => {
     setCartCount((prev) => Math.max(0, prev + delta));
   };
 
+  // Change wishlist count (for manual updates)
   const changeWishlistCount = (delta = 1) => {
     setWishlistCount((prev) => Math.max(0, prev + delta));
   };
 
+  // Initial load
   useEffect(() => {
     refreshCounts();
   }, []);
@@ -67,13 +187,21 @@ const refreshCounts = async () => {
     wishlistCount,
     cartItems,
     wishlistItems,
+    loading,
     refreshCounts,
+    clearCart,
+    addToCart,
+    removeFromCart,
+    updateCartQuantity,
+    addToWishlist,
+    removeFromWishlist,
+    isInWishlist,
     changeCartCount,
     changeWishlistCount,
     incrementCartCount: changeCartCount,
     incrementWishlistCount: changeWishlistCount,
     guestId,
-  }), [cartCount, wishlistCount, cartItems, wishlistItems]);
+  }), [cartCount, wishlistCount, cartItems, wishlistItems, loading]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

@@ -127,8 +127,13 @@ try {
     // Commit transaction
     mysqli_commit($conn);
     
-    // Send order confirmation email
-    sendOrderEmail($email, $customer_name, $order_id, $total, $shipping_address, $items);
+    // Send order confirmation email (with error handling)
+    try {
+        sendOrderEmail($email, $customer_name, $order_id, $total, $shipping_address, $items);
+    } catch (Exception $e) {
+        // Email failure is not fatal for checkout
+        error_log("Email sending failed: " . $e->getMessage());
+    }
     
     echo json_encode([
         "status" => true, 
@@ -146,13 +151,23 @@ try {
 
 // Function to send email
 function sendOrderEmail($email, $customer_name, $order_id, $total, $shipping_address, $items) {
+    // Check if PHPMailer files exist
+    $phpmailer_path = __DIR__ . '/../../PHPMailer/src/PHPMailer.php';
+    $smtp_path = __DIR__ . '/../../PHPMailer/src/SMTP.php';
+    $exception_path = __DIR__ . '/../../PHPMailer/src/Exception.php';
+    
+    // If PHPMailer doesn't exist, use simple mail function
+    if (!file_exists($phpmailer_path)) {
+        sendSimpleEmail($email, $customer_name, $order_id, $total, $shipping_address, $items);
+        return;
+    }
+    
     try {
-        require_once __DIR__ . '/../../PHPMailer/src/Exception.php';
-        require_once __DIR__ . '/../../PHPMailer/src/PHPMailer.php';
-        require_once __DIR__ . '/../../PHPMailer/src/SMTP.php';
-       
+        require_once $phpmailer_path;
+        require_once $smtp_path;
+        require_once $exception_path;
         
-        $mail = new PHPMailer(true);
+        $mail = new PHPMailer\PHPMailer\PHPMailer(true);
         $mail->isMail();
         $mail->setFrom('no-reply@bridal-boutique.local', 'Bridal Boutique');
         $mail->addAddress($email, $customer_name);
@@ -220,8 +235,85 @@ function sendOrderEmail($email, $customer_name, $order_id, $total, $shipping_add
         
         $mail->send();
     } catch (Exception $e) {
-        // Email failure is not fatal for checkout
-        error_log("Email sending failed: " . $e->getMessage());
+        // If PHPMailer fails, try simple mail
+        error_log("PHPMailer failed: " . $e->getMessage());
+        sendSimpleEmail($email, $customer_name, $order_id, $total, $shipping_address, $items);
     }
+}
+
+// Fallback function using PHP's mail() function
+function sendSimpleEmail($email, $customer_name, $order_id, $total, $shipping_address, $items) {
+    $subject = "Order Confirmation - #" . $order_id;
+    
+    $itemsHtml = '';
+    foreach ($items as $item) {
+        $productName = htmlspecialchars($item['product_name'] ?? '');
+        $qty = intval($item['quantity'] ?? 1);
+        $price = floatval($item['price'] ?? 0);
+        $totalPrice = $price * $qty;
+        $itemsHtml .= "<tr>
+            <td style='padding: 8px; border-bottom: 1px solid #ddd;'>{$productName}</td>
+            <td style='padding: 8px; border-bottom: 1px solid #ddd; text-align: center;'>{$qty}</td>
+            <td style='padding: 8px; border-bottom: 1px solid #ddd; text-align: right;'>₹" . number_format($price, 2) . "</td>
+            <td style='padding: 8px; border-bottom: 1px solid #ddd; text-align: right;'>₹" . number_format($totalPrice, 2) . "</td>
+        </tr>";
+    }
+    
+    $message = "
+    <html>
+    <head>
+        <title>Order Confirmation</title>
+    </head>
+    <body>
+        <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+            <h2 style='color: #a97c50;'>Order Confirmation</h2>
+            <p>Dear " . htmlspecialchars($customer_name) . ",</p>
+            <p>Thank you for your order! Your payment has been received successfully.</p>
+            
+            <div style='background-color: #f8f7f2; padding: 15px; border-radius: 8px; margin: 20px 0;'>
+                <p><strong>Order Number:</strong> #{$order_id}</p>
+                <p><strong>Order Date:</strong> " . date('F j, Y, g:i a') . "</p>
+                <p><strong>Order Status:</strong> Pending</p>
+            </div>
+            
+            <h3 style='color: #a97c50;'>Order Items</h3>
+            <table style='width: 100%; border-collapse: collapse; margin: 10px 0;'>
+                <thead>
+                    <tr style='background-color: #f8f7f2;'>
+                        <th style='padding: 10px; text-align: left;'>Product</th>
+                        <th style='padding: 10px; text-align: center;'>Qty</th>
+                        <th style='padding: 10px; text-align: right;'>Price</th>
+                        <th style='padding: 10px; text-align: right;'>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {$itemsHtml}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan='3' style='padding: 10px; text-align: right; font-weight: bold;'>Grand Total:</td>
+                        <td style='padding: 10px; text-align: right; font-weight: bold; color: #a97c50;'>₹" . number_format($total, 2) . "</td>
+                    </tr>
+                </tfoot>
+            </table>
+            
+            <div style='margin: 20px 0;'>
+                <h4 style='color: #a97c50;'>Shipping Address</h4>
+                <p style='background-color: #f8f7f2; padding: 10px; border-radius: 4px;'>" . nl2br(htmlspecialchars($shipping_address)) . "</p>
+            </div>
+            
+            <p>We will dispatch your order within 2-3 business days. You will receive another email once your order ships.</p>
+            
+            <p style='margin-top: 30px;'>Regards,<br><strong>Bridal Boutique Team</strong></p>
+        </div>
+    </body>
+    </html>
+    ";
+    
+    $headers = "MIME-Version: 1.0" . "\r\n";
+    $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
+    $headers .= "From: no-reply@bridal-boutique.local" . "\r\n";
+    
+    @mail($email, $subject, $message, $headers);
 }
 ?>

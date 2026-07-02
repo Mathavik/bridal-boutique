@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useStore } from "../contexts/StoreContext";
 import { formatCurrency } from "../utils/formatters";
@@ -8,9 +7,10 @@ import { formatCurrency } from "../utils/formatters";
 const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
 
 export default function Checkout() {
+  const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { cartItems, guestId, clearCart } = useStore();
+  const { cartItems, guestId } = useStore();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [form, setForm] = useState({ 
@@ -20,14 +20,57 @@ export default function Checkout() {
     shipping_address: "" 
   });
 
-  const subtotal = useMemo(() => 
-    cartItems.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1), 0), 
-    [cartItems]
-  );
+  // Check if coming from product details (single product)
+  const fromProduct = location.state?.fromProduct || false;
+  const productData = location.state?.product || null;
+  
+  // Check if coming from cart
+  const fromCart = location.state?.fromCart || false;
 
+  // Determine items and total
+  const { items, subtotal } = useMemo(() => {
+    if (fromProduct && productData) {
+      // Single product from product details
+      return {
+        items: [{
+          product_id: productData.product_id,
+          product_name: productData.product_name,
+          price: productData.price,
+          quantity: productData.quantity || 1
+        }],
+        subtotal: productData.price * (productData.quantity || 1)
+      };
+    } else if (fromCart && cartItems.length > 0) {
+      // Multiple items from cart
+      const items = cartItems.map(item => ({
+        product_id: item.product_id || item.id,
+        product_name: item.product_name || item.name,
+        price: Number(item.price),
+        quantity: Number(item.quantity)
+      }));
+      const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      return { items, subtotal };
+    }
+    return { items: [], subtotal: 0 };
+  }, [fromProduct, productData, fromCart, cartItems]);
+
+  // Pre-fill form data
   useEffect(() => {
+    // If coming from product details, use the data passed
+    if (fromProduct && location.state) {
+      setForm(prev => ({
+        ...prev,
+        customer_name: location.state.customer_name || prev.customer_name || user?.name || "",
+        email: location.state.email || prev.email || user?.email || "",
+        mobile: location.state.mobile || prev.mobile || user?.phone || "",
+        shipping_address: location.state.shipping_address || prev.shipping_address || user?.address || "",
+      }));
+      return;
+    }
+
+    // If user is logged in, fill with user data
     if (user) {
-      setForm((prev) => ({
+      setForm(prev => ({
         ...prev,
         customer_name: prev.customer_name || user.name || "",
         email: prev.email || user.email || "",
@@ -35,14 +78,21 @@ export default function Checkout() {
         shipping_address: prev.shipping_address || user.address || "",
       }));
     }
-  }, [user]);
+  }, [user, fromProduct, location.state]);
 
-  // Redirect if cart is empty
+  // Redirect if no items
   useEffect(() => {
-    if (cartItems.length === 0) {
+    if (!fromProduct && !fromCart) {
+      navigate("/cart");
+      return;
+    }
+    if (!fromProduct && fromCart && cartItems.length === 0) {
       navigate("/cart");
     }
-  }, [cartItems, navigate]);
+    if (fromProduct && !productData) {
+      navigate("/");
+    }
+  }, [fromProduct, fromCart, cartItems, productData, navigate]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -56,65 +106,57 @@ export default function Checkout() {
       return;
     }
 
-    // Prepare order items
-    const orderItems = cartItems.map(item => ({
-      product_id: item.product_id || item.id,
-      product_name: item.product_name || item.name,
-      price: Number(item.price),
-      quantity: Number(item.quantity)
-    }));
-
-    // IMPORTANT: Always send user_id when logged in
-    const payload = {
-      user_id: user ? user.id : 0,  // This is the key fix
-      guest_id: user ? '' : guestId(),  // Only send guest_id if not logged in
-      customer_name: form.customer_name,
-      email: form.email,
-      mobile: form.mobile,
-      shipping_address: form.shipping_address,
-      total: subtotal,
-      items: orderItems,
-    };
-
-    console.log("Sending order payload:", payload);
-
-    try {
-      const response = await axios.post(`${API_BASE}/checkout/place_order.php`, payload);
-
-      console.log("Order response:", response.data);
-
-      if (response.data?.status) {
-        // Clear cart after successful order
-        clearCart();
-        
-        // Navigate to order confirmation
-        navigate("/order-confirmation", { 
-          state: { 
-            orderId: response.data.order_id,
-            orderNumber: response.data.order_id
-          } 
-        });
-      } else {
-        setError(response.data?.message || "Failed to place order. Please try again.");
+    // Navigate to payment page with order data
+    navigate("/payment", {
+      state: {
+        fromCart: fromCart,
+        fromProduct: fromProduct,
+        items: items,
+        subtotal: subtotal,
+        total: subtotal,
+        customer_name: form.customer_name,
+        email: form.email,
+        mobile: form.mobile,
+        shipping_address: form.shipping_address,
+        guest_id: guestId(),
+        user_id: user ? user.id : 0,
       }
-    } catch (error) {
-      console.error("Checkout error:", error);
-      console.error("Error response:", error.response?.data);
-      setError("An error occurred while placing your order. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    });
   };
+
+  // If no items, show loading or redirect
+  if (items.length === 0) {
+    return (
+      <div className="min-h-screen bg-[#f8f7f2] pt-28 px-4 md:px-8 lg:px-12 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">No items to checkout.</p>
+          <button 
+            onClick={() => navigate("/")}
+            className="mt-4 px-6 py-2 bg-[#a97c50] text-white rounded-md hover:bg-[#8a6540] transition"
+          >
+            Continue Shopping
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f8f7f2] pt-28 px-4 md:px-8 lg:px-12">
       <div className="max-w-7xl mx-auto grid lg:grid-cols-[1.2fr_0.8fr] gap-8">
         <form onSubmit={handleSubmit} className="rounded-xl bg-white p-6 shadow-sm">
-          <h1 className="text-2xl font-semibold">Checkout</h1>
+          <h1 className="text-2xl font-semibold">
+            {fromProduct ? "Confirm Order" : "Checkout"}
+          </h1>
+          <p className="mt-2 text-sm text-gray-600">
+            {fromProduct 
+              ? "Review your product and proceed to payment." 
+              : "Review your cart items and proceed to payment."}
+          </p>
           
           {error && (
-            <div className="mt-4 p-3 bg-red-50 text-red-700 rounded-md text-sm">
-              {error}
+            <div className="mt-4 p-3 bg-red-50 text-red-700 rounded-md text-sm border border-red-200">
+              <strong>Error:</strong> {error}
             </div>
           )}
 
@@ -176,10 +218,20 @@ export default function Checkout() {
 
           <button 
             type="submit" 
-            disabled={loading || cartItems.length === 0}
+            disabled={loading || items.length === 0}
             className="mt-6 w-full rounded-md bg-[#181818] px-4 py-3 text-white hover:bg-[#333] transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? "Processing..." : "Place Order"}
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Processing...
+              </span>
+            ) : (
+              "Proceed to Payment"
+            )}
           </button>
         </form>
 
@@ -187,13 +239,13 @@ export default function Checkout() {
           <h2 className="text-xl font-semibold">Order Summary</h2>
           
           <div className="mt-4 space-y-2 text-sm text-gray-600">
-            {cartItems.map((item) => (
-              <div key={item.id} className="flex justify-between">
+            {items.map((item, index) => (
+              <div key={index} className="flex justify-between">
                 <span>
-                  {item.product_name || item.name} × {item.quantity}
+                  {item.product_name} × {item.quantity}
                 </span>
                 <span>
-                  {formatCurrency(Number(item.price || 0) * Number(item.quantity || 1))}
+                  {formatCurrency(item.price * item.quantity)}
                 </span>
               </div>
             ))}
