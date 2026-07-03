@@ -322,9 +322,9 @@ export default function ProductDetails() {
             <button onClick={addToWishlist} className="flex items-center gap-2 rounded-md border border-gray-300 px-4 py-3 hover:bg-gray-50 transition">
               <Heart size={16} /> Wishlist
             </button>
-            <button className="flex items-center gap-2 rounded-md border border-gray-300 px-4 py-3 hover:bg-gray-50 transition">
+            {/* <button className="flex items-center gap-2 rounded-md border border-gray-300 px-4 py-3 hover:bg-gray-50 transition">
               <Share2 size={16} /> Share
-            </button>
+            </button> */}
           </div>
 
           <div className="mt-8 rounded-xl border border-gray-200 bg-white p-5">
@@ -349,13 +349,13 @@ export default function ProductDetails() {
                 <p className="text-sm text-gray-600">Fast delivery across India.</p>
               </div>
             </div>
-            <div className="rounded-xl border border-gray-200 bg-white p-4 flex items-start gap-3">
+            {/* <div className="rounded-xl border border-gray-200 bg-white p-4 flex items-start gap-3">
               <RotateCcw className="mt-1" />
               <div>
                 <h3 className="font-semibold">Returns</h3>
                 <p className="text-sm text-gray-600">Easy return policy within 7 days.</p>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

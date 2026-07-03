@@ -41,6 +41,12 @@ function saveBase64Image($value) {
 $name = trim($data['name'] ?? '');
 $company_id = intval($data['company_id'] ?? 0);
 $banner_image = saveBase64Image(trim($data['banner_image'] ?? ''));
+$status = trim($data['status'] ?? 'active'); // Default to 'active'
+
+// Validate status
+if (!in_array($status, ['active', 'inactive'])) {
+    $status = 'active';
+}
 
 if (!$name || !$company_id) {
     echo json_encode(["status"=>false,"message"=>"Name & Company required"]);
@@ -56,8 +62,9 @@ if (mysqli_num_rows($dup) > 0) {
     exit;
 }
 
-$sql = "INSERT INTO categories (name, company_id, banner_image)
-VALUES ('$name','$company_id','$banner_image')";
+// Insert with status
+$sql = "INSERT INTO categories (name, company_id, banner_image, status)
+VALUES ('$name','$company_id','$banner_image','$status')";
 
 if ($conn->query($sql)) {
     echo json_encode(["status"=>true,"message"=>"Category added"]);
