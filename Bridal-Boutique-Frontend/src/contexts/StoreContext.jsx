@@ -1,5 +1,6 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
+import { useAuth } from "./AuthContext";
 
 const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
 const StoreContext = createContext();
@@ -14,18 +15,51 @@ const createGuestId = () => {
 };
 
 export function StoreProvider({ children }) {
+  const { user } = useAuth();
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
   const [cartItems, setCartItems] = useState([]);
   const [wishlistItems, setWishlistItems] = useState([]);
-  const [guestIdValue] = useState(createGuestId);
+  const [guestIdValue, setGuestIdValue] = useState(createGuestId);
   const [loading, setLoading] = useState(false);
+  const previousUserRef = useRef(user);
 
-  const guestId = () => guestIdValue;
+  const guestId = () => {
+    if (user && user.id) {
+      return `user_${user.id}`;
+    }
+    return guestIdValue;
+  };
+
+  const resetStore = useCallback(() => {
+    setCartItems([]);
+    setWishlistItems([]);
+    setCartCount(0);
+    setWishlistCount(0);
+    setLoading(false);
+    localStorage.removeItem("bridal_cart");
+    localStorage.removeItem("bridal_wishlist");
+
+    const newId = `guest-${Date.now()}`;
+    setGuestIdValue(newId);
+    localStorage.setItem("bridal_guest_id", newId);
+  }, []);
+
+  useEffect(() => {
+    const previousUser = previousUserRef.current;
+
+    if (previousUser && !user) {
+      resetStore();
+    } else if (previousUser && user && previousUser.id !== user.id) {
+      resetStore();
+    }
+
+    previousUserRef.current = user;
+  }, [user, resetStore]);
 
   // Refresh cart and wishlist counts
-  const refreshCounts = async () => {
-    const id = guestIdValue;
+  const refreshCounts = useCallback(async () => {
+    const id = guestId();
     
     try {
       const cartRes = await axios.get(`${API_BASE}/cart/get.php?guest_id=${id}`);
@@ -49,13 +83,17 @@ export function StoreProvider({ children }) {
     } catch (error) {
       console.error("Wishlist count refresh failed:", error);
     }
-  };
+  }, [user, guestIdValue]);
+
+  useEffect(() => {
+    refreshCounts();
+  }, [refreshCounts]);
 
   // Clear cart function
   const clearCart = async () => {
     setLoading(true);
     try {
-      const id = guestIdValue;
+      const id = guestId();
       // Clear from server
       await axios.delete(`${API_BASE}/cart/clear.php?guest_id=${id}`);
       
@@ -82,7 +120,7 @@ export function StoreProvider({ children }) {
   // Add to cart
   const addToCart = async (productId, quantity = 1, price = 0) => {
     try {
-      const id = guestIdValue;
+      const id = guestId();
       const response = await axios.post(`${API_BASE}/cart/add.php`, {
         guest_id: id,
         product_id: productId,
@@ -132,7 +170,7 @@ export function StoreProvider({ children }) {
   // Add to wishlist
   const addToWishlist = async (productId) => {
     try {
-      const id = guestIdValue;
+      const id = guestId();
       const response = await axios.post(`${API_BASE}/wishlist/add.php`, {
         guest_id: id,
         product_id: productId
@@ -177,11 +215,6 @@ export function StoreProvider({ children }) {
     setWishlistCount((prev) => Math.max(0, prev + delta));
   };
 
-  // Initial load
-  useEffect(() => {
-    refreshCounts();
-  }, []);
-
   const value = useMemo(() => ({
     cartCount,
     wishlistCount,
@@ -201,7 +234,8 @@ export function StoreProvider({ children }) {
     incrementCartCount: changeCartCount,
     incrementWishlistCount: changeWishlistCount,
     guestId,
-  }), [cartCount, wishlistCount, cartItems, wishlistItems, loading]);
+    clearStore: resetStore,
+  }), [cartCount, wishlistCount, cartItems, wishlistItems, loading, resetStore]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

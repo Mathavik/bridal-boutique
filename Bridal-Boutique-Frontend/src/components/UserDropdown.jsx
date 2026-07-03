@@ -2,11 +2,13 @@ import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { User, ShoppingBag, Heart, LogOut, Settings } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
+import { useStore } from "../contexts/StoreContext";
 
 function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
   const { user, logout } = useAuth();
+  const { clearStore } = useStore();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -22,6 +24,7 @@ function UserDropdown() {
 
   const handleLogout = () => {
     logout();
+    clearStore();
     setIsOpen(false);
     navigate("/");
   };

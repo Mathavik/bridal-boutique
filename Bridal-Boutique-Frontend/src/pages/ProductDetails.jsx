@@ -108,6 +108,7 @@ export default function ProductDetails() {
         quantity: quantity,
         price: product.price,
         size: selectedSize,
+        gst_percentage: product.gst_percentage || 0, // Pass GST to cart
       });
       await refreshCounts();
       if (response.data?.status) {

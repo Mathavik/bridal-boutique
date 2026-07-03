@@ -48,7 +48,10 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const logout = () => setUser(null);
+  const logout = () => {
+    localStorage.removeItem("botik_user");
+    setUser(null);
+  };
 
   const updateProfile = async (userData) => {
     setLoading(true);
