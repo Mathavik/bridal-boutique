@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Heart, ShoppingBag, Share2, Truck, RotateCcw, AlertTriangle } from "lucide-react";
+import { Heart, ShoppingBag, Truck, ChevronLeft, ChevronRight, Play, AlertTriangle } from "lucide-react";
 import { formatCurrency, getDiscountPercent } from "../utils/formatters";
 import { useStore } from "../contexts/StoreContext";
 import { useAuth } from "../contexts/AuthContext";
@@ -17,9 +17,8 @@ export default function ProductDetails() {
   const [error, setError] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState("");
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [currentMediaType, setCurrentMediaType] = useState('video'); // 'video' or 'image'
-  const { guestId, refreshCounts, incrementWishlistCount } = useStore();
+  const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
+  const { guestId, refreshCounts, wishlistItems, incrementWishlistCount } = useStore();
   const { user } = useAuth();
 
   useEffect(() => {
@@ -74,7 +73,6 @@ export default function ProductDetails() {
   // Stock details calculation
   const isOutOfStock = useMemo(() => {
     if (!product) return true;
-    // Unga API data-la column peyar 'stock' illai endral, 'quantity' ena mathikollavum
     return product.stock === undefined || product.stock === null || Number(product.stock) <= 0;
   }, [product]);
 
@@ -125,8 +123,8 @@ export default function ProductDetails() {
 
   const addToWishlist = async () => {
     if (!user) {
-      showToast('Please log in to add items to wishlist', 'error');
-      setTimeout(() => navigate('/login'), 500);
+      showToast("Please log in to add items to wishlist", "error");
+      setTimeout(() => navigate("/login"), 500);
       return;
     }
 
@@ -135,21 +133,45 @@ export default function ProductDetails() {
     }
 
     try {
-      const response = await axios.post(`${API_BASE}/wishlist/save.php`, {
-        guest_id: guestId(),
-        product_id: product.id,
-        size: selectedSize,
-      });
+      // Check if already in wishlist
+      const existingItem = wishlistItems.find(
+        (item) => item.product_id === product.id
+      );
+
+      if (existingItem) {
+        const response = await axios.delete(
+          `${API_BASE}/wishlist/delete.php?id=${existingItem.id}`
+        );
+
+        if (response.data?.status) {
+          await refreshCounts();
+          showToast("Removed from wishlist", "success");
+        } else {
+          showToast(response.data?.message || "Unable to remove", "error");
+        }
+        return;
+      }
+
+      // Add to wishlist
+      const response = await axios.post(
+        `${API_BASE}/wishlist/save.php`,
+        {
+          guest_id: guestId(),
+          product_id: product.id,
+          size: selectedSize,
+        }
+      );
+
       if (response.data?.status) {
         incrementWishlistCount(1);
         await refreshCounts();
-        showToast('Added to wishlist successfully', 'success');
+        showToast("Added to wishlist", "success");
       } else {
-        showToast(response.data?.message || 'Unable to add to wishlist', 'error');
+        showToast(response.data?.message || "Unable to add", "error");
       }
     } catch (error) {
-      console.error("Add to wishlist failed:", error);
-      showToast('Add to wishlist failed. Please try again.', 'error');
+      console.error(error);
+      showToast("Something went wrong", "error");
     }
   };
 
@@ -186,14 +208,13 @@ export default function ProductDetails() {
   };
 
   const incrementQuantity = () => {
-    // Stock limit-a thandama iruka check panrom
     if (product.stock && quantity >= Number(product.stock)) {
       showToast(`Only ${product.stock} items available in stock`, 'warning');
       return;
     }
     setQuantity(prev => prev + 1);
   };
-  
+
   const decrementQuantity = () => {
     if (quantity > 1) {
       setQuantity(prev => prev - 1);
@@ -201,33 +222,18 @@ export default function ProductDetails() {
   };
 
   const nextMedia = () => {
-    if (hasVideo && currentMediaType === 'video') {
-      // If currently showing video, switch to first image
-      setCurrentMediaType('image');
-      setCurrentImageIndex(0);
-    } else if (images.length > 0) {
-      // Navigate through images
-      const nextIndex = (currentImageIndex + 1) % images.length;
-      setCurrentImageIndex(nextIndex);
-      if (nextIndex === 0 && hasVideo) {
-        // If we've gone through all images, go back to video
-        setCurrentMediaType('video');
-      }
+    if (mediaItems.length > 0) {
+      setCurrentMediaIndex((prev) => (prev + 1) % mediaItems.length);
     }
   };
 
   const prevMedia = () => {
-    if (hasVideo && currentMediaType === 'image' && currentImageIndex === 0) {
-      // If on first image, go back to video
-      setCurrentMediaType('video');
-    } else if (images.length > 0) {
-      // Navigate through images
-      const prevIndex = (currentImageIndex - 1 + images.length) % images.length;
-      setCurrentImageIndex(prevIndex);
-      setCurrentMediaType('image');
+    if (mediaItems.length > 0) {
+      setCurrentMediaIndex((prev) => (prev - 1 + mediaItems.length) % mediaItems.length);
     }
   };
 
+  // Helper functions
   const convertImagePath = (imagePath) => {
     if (!imagePath) return null;
     if (imagePath.startsWith("http")) return imagePath;
@@ -249,87 +255,67 @@ export default function ProductDetails() {
   };
 
   // Parse gallery images
-  let gallery = [];
+  let galleryImages = [];
   if (product?.image_gallery_json) {
     try {
       let cleanJson = product.image_gallery_json;
       if (typeof cleanJson === 'string') {
         cleanJson = cleanJson.replace(/\\\\/g, "").replace(/\\\"/g, '"').replace(/\\\//g, "/");
-        gallery = JSON.parse(cleanJson);
+        galleryImages = JSON.parse(cleanJson);
       } else if (Array.isArray(cleanJson)) {
-        gallery = cleanJson;
+        galleryImages = cleanJson;
       }
     } catch (e) {
       console.warn("Failed to parse image gallery JSON:", e);
-      gallery = [];
+      galleryImages = [];
     }
   }
 
   // Build images array - include main image and gallery images
-  let images = [];
+  let productImages = [];
   
   // Add main image
   if (product?.image) {
-    images.push(product.image);
+    productImages.push(product.image);
   }
   
   // Add gallery images (avoid duplicates)
-  if (gallery.length > 0) {
-    gallery.forEach(img => {
-      if (!images.includes(img)) {
-        images.push(img);
+  if (galleryImages.length > 0) {
+    galleryImages.forEach(img => {
+      if (!productImages.includes(img)) {
+        productImages.push(img);
       }
     });
   }
   
   // Convert all to URLs and remove nulls
-  images = images.filter(Boolean).map(convertImagePath).filter(Boolean);
+  productImages = productImages.filter(Boolean).map(convertImagePath).filter(Boolean);
 
   // If no images, use default
-  if (images.length === 0) {
-    images = ["https://images.unsplash.com/photo-1515886657613-9f3515b0c78f"];
+  if (productImages.length === 0) {
+    productImages = ["https://images.unsplash.com/photo-1515886657613-9f3515b0c78f"];
   }
 
   // Get video URL
   const videoUrl = product?.video_url ? convertVideoPath(product.video_url) : null;
   const hasVideo = !!videoUrl;
 
-  // Get all media items for thumbnail display
-  const getAllMediaItems = () => {
-    const items = [];
-    
-    // Add video as first item if exists
-    if (hasVideo) {
-      items.push({ type: 'video', url: videoUrl, label: 'Video' });
-    }
-    
-    // Add all images
-    images.forEach((img, index) => {
-      items.push({ type: 'image', url: img, label: `Image ${index + 1}` });
-    });
-    
-    return items;
-  };
+  // Build media items array (video first if exists, then images)
+  const mediaItems = [];
+  if (hasVideo) {
+    mediaItems.push({ type: 'video', url: videoUrl });
+  }
+  productImages.forEach((img) => {
+    mediaItems.push({ type: 'image', url: img });
+  });
 
-  const mediaItems = getAllMediaItems();
+  // Get current media item
+  const currentMedia = mediaItems[currentMediaIndex] || mediaItems[0];
 
-  // Get current display item
-  const getCurrentDisplay = () => {
-    if (hasVideo && currentMediaType === 'video') {
-      return { type: 'video', url: videoUrl };
-    }
-    return { type: 'image', url: images[currentImageIndex] || images[0] };
-  };
-
-  const currentDisplay = getCurrentDisplay();
-
-  // Get current index for thumbnail highlighting
-  const getCurrentThumbnailIndex = () => {
-    if (hasVideo && currentMediaType === 'video') {
-      return 0;
-    }
-    return hasVideo ? currentImageIndex + 1 : currentImageIndex;
-  };
+  // Check if product is in wishlist
+  const isWishlisted = wishlistItems.some(
+    (item) => item.product_id === product?.id
+  );
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center pt-28">Loading product...</div>;
@@ -343,69 +329,73 @@ export default function ProductDetails() {
     return <div className="min-h-screen flex items-center justify-center pt-28">Product not found.</div>;
   }
 
-  const convertImagePath = (imagePath) => {
-    if (!imagePath) return "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f";
-    if (imagePath.startsWith("http")) return imagePath;
-    let cleanPath = imagePath.replace(/\\/g, "/");
-    if (cleanPath.startsWith("uploads/")) {
-      cleanPath = cleanPath.substring(8);
-    }
-    return `${API_BASE}/uploads/${cleanPath}`;
-  };
-
-  let gallery = [];
-  if (product.image_gallery_json) {
-    try {
-      const cleanJson = product.image_gallery_json.replace(/\\\\/g, "").replace(/\\\"/g, '"').replace(/\\\//g, "/");
-      gallery = JSON.parse(cleanJson);
-    } catch (e) {
-      console.warn("Failed to parse image gallery JSON:", e);
-      gallery = [];
-    }
-  }
-
-  const images = [product.image, ...gallery].filter(Boolean).map(convertImagePath);
-
   return (
     <div className="min-h-screen bg-[#f8f7f2] pt-28 px-4 md:px-8 lg:px-12">
       <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-10">
         {/* Left Column - Media Gallery */}
         <div>
-          {product.image ? (
-            <img src={images[0]} alt={product.product_name} className="w-full h-[520px] object-cover rounded-xl" />
-          ) : product.video_url ? (
-            <video controls autoPlay muted loop className="w-full h-[520px] object-cover rounded-xl">
-              <source src={`${API_BASE}/${product.video_url}`} type="video/mp4" />
-            </video>
-          ) : (
-            <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f" className="w-full h-[520px] object-cover rounded-xl" alt="Default" />
-          )}
-          <div className="mt-4 grid grid-cols-4 gap-3">
-            {images.map((image, index) => (
-              <img key={index} src={image} alt={`${product.product_name}-${index}`} className="h-24 w-full object-cover rounded-lg" />
-            ))}
+          {/* Main Media Display */}
+          <div className="relative bg-black rounded-xl overflow-hidden">
+            {currentMedia?.type === 'video' ? (
+              <video
+                controls
+                autoPlay
+                muted
+                loop
+                className="w-full h-[520px] object-contain"
+              >
+                <source src={currentMedia.url} type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            ) : (
+              <img
+                src={currentMedia?.url || productImages[0]}
+                alt={product.product_name}
+                className="w-full h-[520px] object-cover"
+              />
+            )}
+
+            {/* Navigation Arrows */}
+            {mediaItems.length > 1 && (
+              <>
+                <button
+                  onClick={prevMedia}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-md transition z-10"
+                >
+                  <ChevronLeft size={20} />
+                </button>
+                <button
+                  onClick={nextMedia}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-md transition z-10"
+                >
+                  <ChevronRight size={20} />
+                </button>
+              </>
+            )}
+
+            {/* Media Type Badge */}
+            {currentMedia?.type === 'video' && (
+              <div className="absolute top-4 left-4 bg-black/70 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
+                <Play size={12} fill="white" /> Video
+              </div>
+            )}
+            
+            {mediaItems.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                {currentMediaIndex + 1} / {mediaItems.length}
+              </div>
+            )}
           </div>
 
-          {/* Thumbnail Gallery - Shows both video and images */}
+          {/* Thumbnail Gallery */}
           {mediaItems.length > 1 && (
             <div className="mt-4 grid grid-cols-6 gap-2">
               {mediaItems.map((item, index) => (
                 <button
                   key={index}
-                  onClick={() => {
-                    if (item.type === 'video') {
-                      setCurrentMediaType('video');
-                      setCurrentImageIndex(0);
-                    } else {
-                      setCurrentMediaType('image');
-                      const imageIndex = hasVideo ? index - 1 : index;
-                      setCurrentImageIndex(imageIndex);
-                    }
-                  }}
+                  onClick={() => setCurrentMediaIndex(index)}
                   className={`relative rounded-lg overflow-hidden border-2 transition ${
-                    (item.type === 'video' && currentMediaType === 'video') ||
-                    (item.type === 'image' && currentMediaType === 'image' && 
-                      (hasVideo ? currentImageIndex === index - 1 : currentImageIndex === index))
+                    currentMediaIndex === index 
                       ? 'border-[#a97c50]' 
                       : 'border-transparent hover:border-gray-300'
                   }`}
@@ -418,7 +408,7 @@ export default function ProductDetails() {
                         muted
                       />
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <Play size={24} className="text-white" fill="white" />
+                        <Play size={20} className="text-white" fill="white" />
                       </div>
                       <div className="absolute bottom-1 left-1 bg-black/70 text-white text-[8px] px-1.5 py-0.5 rounded">
                         Video
@@ -431,9 +421,7 @@ export default function ProductDetails() {
                       className="h-20 w-full object-cover hover:opacity-80 transition"
                     />
                   )}
-                  {(item.type === 'video' && currentMediaType === 'video') ||
-                   (item.type === 'image' && currentMediaType === 'image' && 
-                    (hasVideo ? currentImageIndex === index - 1 : currentImageIndex === index)) && (
+                  {currentMediaIndex === index && (
                     <div className="absolute inset-0 bg-[#a97c50]/10"></div>
                   )}
                 </button>
@@ -446,8 +434,8 @@ export default function ProductDetails() {
         <div>
           <p className="text-sm uppercase tracking-[3px] text-[#a97c50]">{product.category_name}</p>
           <h1 className="text-3xl font-semibold mt-2">{product.product_name}</h1>
-          <p className="text-gray-600 mt-3">{product.short_description}</p>
-          
+          <p className="text-gray-600 mt-3">{product.short_description || product.full_description}</p>
+
           {/* Stock Badges Status Display */}
           <div className="mt-3">
             {isOutOfStock ? (
@@ -487,7 +475,9 @@ export default function ProductDetails() {
                     type="button"
                     onClick={() => setSelectedSize(size)}
                     className={`rounded-full border px-4 py-2 text-sm transition ${
-                      selectedSize === size ? "border-[#a97c50] bg-[#a97c50] text-white" : "border-gray-300 bg-white text-gray-700"
+                      selectedSize === size 
+                        ? "border-[#a97c50] bg-[#a97c50] text-white" 
+                        : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
                     }`}
                   >
                     {size}
@@ -502,19 +492,30 @@ export default function ProductDetails() {
             <div className="mt-4 flex items-center gap-4">
               <span className="text-sm font-medium text-gray-700">Quantity:</span>
               <div className="flex items-center border border-gray-300 rounded-md bg-white">
-                <button onClick={decrementQuantity} className="px-3 py-1 hover:bg-gray-100 transition" disabled={quantity <= 1}>
+                <button 
+                  onClick={decrementQuantity} 
+                  className="px-3 py-1 hover:bg-gray-100 transition" 
+                  disabled={quantity <= 1}
+                >
                   -
                 </button>
                 <span className="px-4 py-1 min-w-[40px] text-center">{quantity}</span>
-                <button onClick={incrementQuantity} className="px-3 py-1 hover:bg-gray-100 transition">
+                <button 
+                  onClick={incrementQuantity} 
+                  className="px-3 py-1 hover:bg-gray-100 transition"
+                  disabled={product.stock && quantity >= Number(product.stock)}
+                >
                   +
                 </button>
               </div>
+              {product.stock && (
+                <span className="text-xs text-gray-500">Max: {product.stock}</span>
+              )}
             </div>
           )}
 
           <div className="mt-4 text-sm text-gray-500">SKU: {product.product_code || "N/A"} • Barcode: {product.barcode || "N/A"}</div>
-          
+
           {/* Action Buttons with Conditional Rendering */}
           <div className="mt-6 flex flex-wrap gap-3">
             {isOutOfStock ? (
@@ -523,16 +524,33 @@ export default function ProductDetails() {
               </div>
             ) : (
               <>
-                <button onClick={addToCart} className="flex items-center gap-2 rounded-md bg-[#181818] px-4 py-3 text-white hover:bg-[#333] transition">
+                <button 
+                  onClick={addToCart} 
+                  className="flex items-center gap-2 rounded-md bg-[#181818] px-4 py-3 text-white hover:bg-[#333] transition"
+                >
                   <ShoppingBag size={16} /> Add to Cart
                 </button>
-                <button onClick={handleBuyNow} className="flex items-center gap-2 rounded-md bg-[#a97c50] px-4 py-3 text-white hover:bg-[#8a6540] transition">
+                <button 
+                  onClick={handleBuyNow} 
+                  className="flex items-center gap-2 rounded-md bg-[#a97c50] px-4 py-3 text-white hover:bg-[#8a6540] transition"
+                >
                   Buy Now
                 </button>
               </>
             )}
-            <button onClick={addToWishlist} className="flex items-center gap-2 rounded-md border border-gray-300 px-4 py-3 bg-white hover:bg-gray-50 transition">
-              <Heart size={16} /> Wishlist
+            <button
+              onClick={addToWishlist}
+              className={`flex items-center gap-2 rounded-md border px-4 py-3 transition ${
+                isWishlisted
+                  ? "bg-red-500 text-white border-red-500 hover:bg-red-600"
+                  : "bg-white border-gray-300 hover:bg-gray-50"
+              }`}
+            >
+              <Heart
+                size={16}
+                fill={isWishlisted ? "currentColor" : "none"}
+              />
+              {isWishlisted ? "Remove Wishlist" : "Wishlist"}
             </button>
           </div>
 
