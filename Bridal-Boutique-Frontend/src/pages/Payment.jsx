@@ -348,7 +348,7 @@ export default function Payment() {
               </div>
 
               {/* Payment Type */}
-              <div className="border-t pt-6">
+              {/* <div className="border-t pt-6">
                 <h3 className="text-lg font-semibold mb-4">Payment Type</h3>
                 <div className="flex gap-6">
                   <label className="flex items-center gap-2 cursor-pointer">
@@ -376,10 +376,10 @@ export default function Payment() {
                     <span className="text-sm font-medium">Credit</span>
                   </label>
                 </div>
-              </div>
+              </div> */}
 
               {/* Paid Amount for Cash Payment */}
-              {form.payment_type === "cash" && (
+              {/* {form.payment_type === "cash" && (
                 <div className="border-t pt-6">
                   <h3 className="text-lg font-semibold mb-4">Payment Amount</h3>
                   <div>
@@ -408,10 +408,10 @@ export default function Payment() {
                     )}
                   </div>
                 </div>
-              )}
+              )} */}
 
               {/* GST Options */}
-              <div className="border-t pt-6">
+              {/* <div className="border-t pt-6">
                 <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                   <FileText size={20} className="text-[#a97c50]" />
                   GST Details
@@ -460,7 +460,7 @@ export default function Payment() {
                     </div>
                   )}
                 </div>
-              </div>
+              </div> */}
 
               {/* Submit Button */}
               <button
