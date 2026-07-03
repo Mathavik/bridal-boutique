@@ -1,64 +1,3 @@
-// import { useState } from "react";
-// import { useNavigate } from "react-router-dom";
-// import api from "../../services/api";
-
-// export default function CategoryForm() {
-//   const navigate = useNavigate();
-
-//   const [name, setName] = useState("");
-
-  
-
-
-//   const handleSubmit = async () => {
-//   const user = JSON.parse(localStorage.getItem("user"));
-//   const company_id = Number(user?.company_id);
-
-//   if (!name || !company_id) {
-//     alert("Name & Company required");
-//     return;
-//   }
-
-//   try {
-//     const res = await api.post("/category/create.php", {
-//       name,
-//       company_id,
-//     });
-
-//     if (res.data.status) {
-//       alert("Category Added ✅");
-//       navigate("/category");
-//     } else {
-//       alert(res.data.message);
-//     }
-//   } catch (err) {
-//     console.error(err);
-//     alert("Server error");
-//   }
-// };
-
-//   return (
-//     <div className="max-w-lg bg-white p-6 rounded shadow">
-//       <h2 className="text-xl font-bold mb-4">Add Category</h2>
-
-//       <input
-//         type="text"
-//         placeholder="Category Name"
-//         className="w-full p-3 border mb-4"
-//         value={name}
-//         onChange={(e) => setName(e.target.value)}
-//       />
-
-//       <button
-//         onClick={handleSubmit}
-//         className="bg-green-600 text-white w-full p-3 rounded"
-//       >
-//         Save Category
-//       </button>
-//     </div>
-//   );
-// }
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
@@ -103,6 +42,7 @@ function ToastPortal({ toasts, remove }) {
 export default function CategoryForm() {
   const navigate = useNavigate();
   const [name, setName] = useState("");
+  const [status, setStatus] = useState("active"); // New status state
   const [bannerImage, setBannerImage] = useState("");
   const [bannerFile, setBannerFile] = useState(null);
   const [bannerPreview, setBannerPreview] = useState("");
@@ -114,56 +54,28 @@ export default function CategoryForm() {
     localStorage.getItem("selected_company_id") || ""
   );
 
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("user"));
+    if(!user?.id) return;
+    loadCompanies(user.id);
+  }, []);
 
-useEffect(() => {
-
-  const user = JSON.parse(
-    localStorage.getItem("user")
-  );
-
-  if(!user?.id) return;
-
-  loadCompanies(user.id);
-
-}, []);
-
-
-const loadCompanies = async(admin_id) => {
-
-  try {
-
-    const res = await api.get(
-      `/company/get_companies_by_admin.php?admin_id=${admin_id}`
-    );
-
-    if(res.data.status){
-
-      setCompanies(res.data.data);
-
-      if(
-        !localStorage.getItem("selected_company_id")
-        &&
-        res.data.data.length > 0
-      ){
-
-        localStorage.setItem(
-          "selected_company_id",
-          res.data.data[0].id
-        );
-
-        setSelectedCompany(
-          res.data.data[0].id
-        );
+  const loadCompanies = async(admin_id) => {
+    try {
+      const res = await api.get(
+        `/company/get_companies_by_admin.php?admin_id=${admin_id}`
+      );
+      if(res.data.status){
+        setCompanies(res.data.data);
+        if(!localStorage.getItem("selected_company_id") && res.data.data.length > 0){
+          localStorage.setItem("selected_company_id", res.data.data[0].id);
+          setSelectedCompany(res.data.data[0].id);
+        }
       }
+    } catch(err){
+      console.log(err);
     }
-
-  } catch(err){
-
-    console.log(err);
-
-  }
-
-};
+  };
 
   const handleChange = (e) => {
     setName(e.target.value);
@@ -192,11 +104,7 @@ const loadCompanies = async(admin_id) => {
   };
 
   const handleSubmit = async () => {
-    // const user = JSON.parse(localStorage.getItem("user"));
-    // const company_id = Number(user?.company_id);
-
-    const company_id =
-Number(selectedCompany);
+    const company_id = Number(selectedCompany);
     if (!name.trim()) {
       show("warn", "Missing field", "Category name is required.");
       return;
@@ -224,6 +132,7 @@ Number(selectedCompany);
         name: name.trim(),
         company_id: company_id,
         banner_image: banner_image_value,
+        status: status, // Include status in payload
       };
 
       const res = await api.post("/category/create.php", payload);
@@ -428,6 +337,40 @@ Number(selectedCompany);
           border-right-color: #bfdbfe;
         }
 
+        /* Status Toggle */
+        .cf-status-group {
+          display: flex;
+          gap: 12px;
+          margin-bottom: 1.75rem;
+        }
+        .cf-status-option {
+          flex: 1;
+          padding: 10px 16px;
+          border-radius: 12px;
+          border: 2px solid #e2e8f0;
+          background: #f8faff;
+          font-family: 'Plus Jakarta Sans', sans-serif;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+          text-align: center;
+        }
+        .cf-status-option.active {
+          border-color: #22c55e;
+          background: #f0fdf4;
+          color: #16a34a;
+        }
+        .cf-status-option.inactive {
+          border-color: #ef4444;
+          background: #fef2f2;
+          color: #dc2626;
+        }
+        .cf-status-option:hover:not(.active):not(.inactive) {
+          border-color: #94a3b8;
+          background: #f1f5f9;
+        }
+
         /* Suggestion chips */
         .cf-chips {
           display: flex;
@@ -630,48 +573,27 @@ Number(selectedCompany);
 
           {/* Body */}
           <div className="cf-body">
+            {/* Select Company */}
+            <div style={{marginBottom:"20px"}}>
+              <label className="cf-label">Select Company</label>
+              <select
+                className="cf-input"
+                value={selectedCompany}
+                onChange={(e)=>{
+                  setSelectedCompany(e.target.value);
+                  localStorage.setItem("selected_company_id", e.target.value);
+                }}
+              >
+                <option value="">Select Company</option>
+                {companies.map((company)=>(
+                  <option key={company.id} value={company.id}>
+                    {company.company_name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-<div style={{marginBottom:"20px"}}>
-
-  <label className="cf-label">
-    Select Company
-  </label>
-
-  <select
-    className="cf-input"
-    value={selectedCompany}
-    onChange={(e)=>{
-
-      setSelectedCompany(
-        e.target.value
-      );
-
-      localStorage.setItem(
-        "selected_company_id",
-        e.target.value
-      );
-
-    }}
-  >
-
-    <option value="">
-      Select Company
-    </option>
-
-    {companies.map((company)=>(
-      <option
-        key={company.id}
-        value={company.id}
-      >
-        {company.company_name}
-      </option>
-    ))}
-
-  </select>
-
-</div>
-
-            {/* Input */}
+            {/* Category Name */}
             <div className="cf-label-row">
               <span className="cf-label">Category Name</span>
               <span className={`cf-char ${charCount > 0 ? "active" : ""}`}>{charCount}/50</span>
@@ -689,6 +611,26 @@ Number(selectedCompany);
               <div className="cf-input-prefix">#</div>
             </div>
 
+            {/* Status Toggle - NEW */}
+            <div className="cf-label-row">
+              <span className="cf-label">Category Status</span>
+            </div>
+            <div className="cf-status-group">
+              <button
+                className={`cf-status-option ${status === 'active' ? 'active' : ''}`}
+                onClick={() => setStatus('active')}
+              >
+                ✅ Active
+              </button>
+              <button
+                className={`cf-status-option ${status === 'inactive' ? 'inactive' : ''}`}
+                onClick={() => setStatus('inactive')}
+              >
+                ❌ Inactive
+              </button>
+            </div>
+
+            {/* Banner Image */}
             <div className="cf-label-row">
               <span className="cf-label">Category Banner Image</span>
               <span className="cf-char">Optional</span>

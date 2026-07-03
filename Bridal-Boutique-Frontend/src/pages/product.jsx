@@ -136,10 +136,7 @@ export default function Product() {
   return (
     <div className="min-h-screen bg-[#f8f7f2] pt-28 px-4 md:px-8 lg:px-12">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-semibold uppercase tracking-[4px]">Bridal Lehenga</h1>
-          <p className="text-gray-600 mt-2">Discover handcrafted bridal wear curated from our latest collection.</p>
-        </div>
+        
 
 
         {loading ? (
