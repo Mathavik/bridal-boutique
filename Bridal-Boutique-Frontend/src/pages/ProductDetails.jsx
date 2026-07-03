@@ -194,6 +194,7 @@ export default function ProductDetails() {
       price: Number(product.price),
       quantity: quantity,
       size: selectedSize,
+      gst_percentage: Number(product.gst_percentage || 0),
     };
 
     navigate("/checkout", {

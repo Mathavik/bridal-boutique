@@ -28,31 +28,33 @@ export default function Checkout() {
   const fromCart = location.state?.fromCart || false;
 
   // Determine items and total
-  const { items, subtotal } = useMemo(() => {
+  const { items, subtotal, gstTotal, total } = useMemo(() => {
     if (fromProduct && productData) {
-      // Single product from product details
-      return {
-        items: [{
-          product_id: productData.product_id,
-          product_name: productData.product_name,
-          price: productData.price,
-          quantity: productData.quantity || 1
-        }],
-        subtotal: productData.price * (productData.quantity || 1)
-      };
+      const items = [{
+        product_id: productData.product_id,
+        product_name: productData.product_name,
+        price: productData.price,
+        quantity: productData.quantity || 1,
+        gst_percentage: productData.gst_percentage || 0,
+        size: productData.size || ""
+      }];
+      const subtotal = productData.price * (productData.quantity || 1);
+      const gstTotal = items.reduce((sum, item) => sum + (item.price * item.quantity * Number(item.gst_percentage || 0)) / 100, 0);
+      return { items, subtotal, gstTotal, total: subtotal + gstTotal };
     } else if (fromCart && cartItems.length > 0) {
-      // Multiple items from cart
       const items = cartItems.map(item => ({
         product_id: item.product_id || item.id,
         product_name: item.product_name || item.name,
         price: Number(item.price),
         quantity: Number(item.quantity),
-        size: item.size || ""
+        size: item.size || "",
+        gst_percentage: Number(item.gst_percentage || item.gst || 0)
       }));
       const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-      return { items, subtotal };
+      const gstTotal = items.reduce((sum, item) => sum + (item.price * item.quantity * Number(item.gst_percentage || 0)) / 100, 0);
+      return { items, subtotal, gstTotal, total: subtotal + gstTotal };
     }
-    return { items: [], subtotal: 0 };
+    return { items: [], subtotal: 0, gstTotal: 0, total: 0 };
   }, [fromProduct, productData, fromCart, cartItems]);
 
   // Pre-fill form data
@@ -114,7 +116,8 @@ export default function Checkout() {
         fromProduct: fromProduct,
         items: items,
         subtotal: subtotal,
-        total: subtotal,
+        gst_total: gstTotal,
+        total: total,
         customer_name: form.customer_name,
         email: form.email,
         mobile: form.mobile,

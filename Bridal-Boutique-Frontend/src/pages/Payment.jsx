@@ -67,8 +67,17 @@ export default function Payment() {
 
   // Calculate totals
   const subtotal = orderData.subtotal || 0;
-  const total = orderData.total || 0;
   const items = orderData.items || [];
+  const gstTotal = useMemo(() => {
+    return items.reduce((sum, item) => {
+      const gstPercent = Number(item.gst_percentage || item.gst || 0);
+      const quantity = Number(item.quantity || 0);
+      const price = Number(item.price || 0);
+      return sum + (price * quantity * gstPercent) / 100;
+    }, 0);
+  }, [items]);
+  const totalWithGst = subtotal + gstTotal;
+  const total = orderData.total || totalWithGst;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -124,20 +133,20 @@ export default function Payment() {
     // Calculate paid amount and status
     let paidAmount = 0;
     let paymentStatus = "pending";
-    let balanceAmount = total;
+    let balanceAmount = totalWithGst;
     
     if (form.payment_type === "credit") {
       paidAmount = 0;
       paymentStatus = "pending";
-      balanceAmount = total;
+      balanceAmount = totalWithGst;
     } else {
-      paidAmount = parseFloat(form.paid_amount) || total;
-      if (paidAmount >= total) {
+      paidAmount = parseFloat(form.paid_amount) || totalWithGst;
+      if (paidAmount >= totalWithGst) {
         paymentStatus = "paid";
         balanceAmount = 0;
       } else {
         paymentStatus = "partial";
-        balanceAmount = total - paidAmount;
+        balanceAmount = totalWithGst - paidAmount;
       }
     }
 
@@ -147,6 +156,7 @@ export default function Payment() {
       qty: item.quantity,
       price: item.price,
       size: item.size || "",
+      gst_percentage: Number(item.gst_percentage || item.gst || 0),
     }));
 
     // Prepare payload for invoice creation
@@ -158,8 +168,8 @@ export default function Payment() {
       cashier_id: user?.id || 0,
       products: products,
       sub_total: subtotal,
-      gst_total: 0,
-      total_amount: total,
+      gst_total: gstTotal,
+      total_amount: totalWithGst,
       paid_amount: paidAmount,
       payment_method: form.payment_method,
       payment_type: form.payment_type,
@@ -497,11 +507,11 @@ export default function Payment() {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">GST</span>
-                <span className="font-medium">₹0.00</span>
+                <span className="font-medium">{formatCurrency(gstTotal)}</span>
               </div>
               <div className="border-t pt-3 flex justify-between font-semibold text-lg">
                 <span>Total</span>
-                <span className="text-[#a97c50]">{formatCurrency(total)}</span>
+                <span className="text-[#a97c50]">{formatCurrency(totalWithGst)}</span>
               </div>
             </div>
 

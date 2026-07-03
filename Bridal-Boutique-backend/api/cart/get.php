@@ -17,7 +17,7 @@ if (!$guest_id) {
     exit;
 }
 
-$result = mysqli_query($conn, "SELECT c.*, p.product_name, p.image, p.price FROM cart c LEFT JOIN products p ON c.product_id = p.id WHERE c.guest_id='$guest_id' ORDER BY c.id DESC");
+$result = mysqli_query($conn, "SELECT c.*, p.product_name, p.image, p.price, p.gst_percentage FROM cart c LEFT JOIN products p ON c.product_id = p.id WHERE c.guest_id='$guest_id' ORDER BY c.id DESC");
 $data = [];
 while ($row = mysqli_fetch_assoc($result)) {
     $data[] = $row;
