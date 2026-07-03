@@ -112,9 +112,9 @@ function ProfilePage() {
                   {user.name?.charAt(0).toUpperCase() || 'U'}
                 </span>
               </div>
-              <button className="absolute bottom-0 right-0 p-2 bg-white rounded-full shadow-lg hover:bg-gray-50 transition">
+              {/* <button className="absolute bottom-0 right-0 p-2 bg-white rounded-full shadow-lg hover:bg-gray-50 transition">
                 <Camera size={16} className="text-[#a97c50]" />
-              </button>
+              </button> */}
             </div>
             
             <div className="flex-1 text-center md:text-left">
@@ -142,7 +142,7 @@ function ProfilePage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <div className="bg-white/95 backdrop-blur-sm rounded-xl p-5 shadow-lg border border-white/20">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-[#f8f7f2] rounded-lg">
@@ -180,7 +180,7 @@ function ProfilePage() {
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Profile Form */}
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 md:p-8 border border-white/20">
@@ -339,7 +339,7 @@ function ProfilePage() {
                   <p className="text-sm text-gray-500">Shipping Address</p>
                   <p className="font-medium text-[#181818]">{user.address || "Not set"}</p>
                 </div>
-                <div className="md:col-span-2 bg-gradient-to-r from-[#f8f7f2] to-white p-4 rounded-xl border border-[#a97c50]/20">
+                {/* <div className="md:col-span-2 bg-gradient-to-r from-[#f8f7f2] to-white p-4 rounded-xl border border-[#a97c50]/20">
                   <p className="text-sm text-gray-500">Member Since</p>
                   <p className="font-medium text-[#a97c50]">
                     {user.created_at ? new Date(user.created_at).toLocaleDateString('en-US', {
@@ -348,7 +348,7 @@ function ProfilePage() {
                       day: 'numeric'
                     }) : "N/A"}
                   </p>
-                </div>
+                </div> */}
               </div>
             </div>
           )}
