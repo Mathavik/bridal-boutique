@@ -107,29 +107,53 @@ export default function Product() {
 
   const addToWishlist = async (product, size = "") => {
     if (!user) {
-      showToast('Please log in to add items to wishlist', 'error');
-      setTimeout(() => navigate('/login'), 500);
+      showToast("Please log in to add items to wishlist", "error");
+      setTimeout(() => navigate("/login"), 500);
       return;
     }
 
-    const selectedSize = size || getDefaultSize(product);
+    const existingItem = wishlistItems.find(
+      (item) => item.product_id === product.id
+    );
 
     try {
-      const response = await axios.post(`${API_BASE}/wishlist/save.php`, {
-        guest_id: guestId(),
-        product_id: product.id,
-        size: selectedSize,
-      });
+      // Already in wishlist -> Remove
+      if (existingItem) {
+        const response = await axios.delete(
+          `${API_BASE}/wishlist/delete.php?id=${existingItem.id}`
+        );
+
+        if (response.data?.status) {
+          await refreshCounts();
+          showToast("Removed from wishlist", "success");
+        } else {
+          showToast(response.data?.message || "Unable to remove", "error");
+        }
+
+        return;
+      }
+
+      // Not in wishlist -> Add
+      const selectedSize = size || getDefaultSize(product);
+
+      const response = await axios.post(
+        `${API_BASE}/wishlist/save.php`,
+        {
+          guest_id: guestId(),
+          product_id: product.id,
+          size: selectedSize,
+        }
+      );
+
       if (response.data?.status) {
-        incrementWishlistCount(1);
         await refreshCounts();
-        showToast('Added to wishlist successfully', 'success');
+        showToast("Added to wishlist", "success");
       } else {
-        showToast(response.data?.message || 'Unable to add to wishlist', 'error');
+        showToast(response.data?.message || "Unable to add", "error");
       }
     } catch (error) {
-      console.error("Add to wishlist failed:", error);
-      showToast('Add to wishlist failed. Please try again.', 'error');
+      console.error(error);
+      showToast("Something went wrong", "error");
     }
   };
 

@@ -16,6 +16,7 @@ const parseQuery = (search) => {
     min_price: params.get("min_price") || "",
     max_price: params.get("max_price") || "",
     availability: params.get("availability") || "",
+    sort: params.get("sort") || "",
   };
 };
 
@@ -24,7 +25,7 @@ export default function Search() {
   const navigate = useNavigate();
   const { guestId, refreshCounts, wishlistItems, incrementWishlistCount } = useStore();
   const { user } = useAuth();
-  const { q, category_id, min_price, max_price, availability } = useMemo(
+  const { q, category_id, min_price, max_price, availability, sort } = useMemo(
     () => parseQuery(location.search),
     [location.search]
   );
@@ -32,10 +33,11 @@ export default function Search() {
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchText, setSearchText] = useState(q);
   const [selectedCategory, setSelectedCategory] = useState(category_id);
   const [priceRange, setPriceRange] = useState({ min: min_price, max: max_price });
   const [selectedAvailability, setSelectedAvailability] = useState(availability);
+  const [selectedSort, setSelectedSort] = useState(sort);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -52,11 +54,11 @@ export default function Search() {
   }, []);
 
   useEffect(() => {
-    setSearchText(q);
     setSelectedCategory(category_id);
     setPriceRange({ min: min_price, max: max_price });
     setSelectedAvailability(availability);
-  }, [q, category_id, min_price, max_price, availability]);
+    setSelectedSort(sort);
+  }, [q, category_id, min_price, max_price, availability, sort]);
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -69,6 +71,7 @@ export default function Search() {
             min_price: priceRange.min || 0,
             max_price: priceRange.max || 0,
             availability: selectedAvailability || "",
+            sort: selectedSort || "",
           },
         });
         if (response.data?.status) {
@@ -97,11 +100,6 @@ export default function Search() {
       }
     });
     navigate({ pathname: "/search", search: params.toString() });
-  };
-
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    updateQuery({ q: searchText.trim(), category_id: selectedCategory, min_price: priceRange.min, max_price: priceRange.max, availability: selectedAvailability });
   };
 
   const handleAddToCart = async (product, size = "") => {
@@ -165,96 +163,214 @@ export default function Search() {
     }
   };
 
+  const handleClearAll = () => {
+    updateQuery({
+      category_id: "",
+      min_price: "",
+      max_price: "",
+      availability: "",
+      sort: "",
+    });
+  };
+
   return (
     <div className="min-h-screen bg-[#f8f7f2] pt-28 px-4 md:px-8 lg:px-12">
       <div className="max-w-7xl mx-auto">
+    
         <div className="mb-8">
-          <h1 className="text-3xl font-semibold">Search Results</h1>
-          <p className="text-gray-600 mt-2">Showing {products.length} result{products.length !== 1 ? "s" : ""} for "{q || searchText || ""}"</p>
-        </div>
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h1 className="text-3xl font-semibold">Search Results</h1>
+              <p className="text-gray-600 mt-2">Showing {products.length} result{products.length !== 1 ? "s" : ""} for "{q || ""}"</p>
+            </div>
+            <button
+              type="button"
+              className="inline-flex items-center justify-center rounded-2xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 md:hidden"
+              onClick={() => setShowMobileFilters(true)}
+            >
+              Filters
+            </button>
+          </div>
 
-        <form onSubmit={handleSubmit} className="grid gap-4 lg:grid-cols-[1.5fr_1fr] xl:grid-cols-[1.8fr_1fr] mb-8">
-          <div className="space-y-4">
-            <div className="flex gap-3 flex-col lg:flex-row">
-              <input
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                placeholder="Search products, categories, fabric, color..."
-                className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:border-[#a97c50]"
-              />
-              <button className="rounded-2xl bg-[#a97c50] px-6 py-3 text-white transition hover:bg-[#8a6540]" type="submit">
-                Search
+          <div className="hidden md:grid grid-cols-1 gap-3 xl:grid-cols-[minmax(220px,1fr)_minmax(220px,1fr)_minmax(180px,1fr)_minmax(180px,1fr)_auto] mt-4">
+            <div className="rounded-[12px] border border-[#E5E7EB] bg-white p-3 shadow-sm">
+              <label className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-500">Category</label>
+              <select
+                value={selectedCategory}
+                onChange={(e) => updateQuery({ category_id: e.target.value })}
+                className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none"
+              >
+                <option value="">All Categories</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="rounded-[12px] border border-[#E5E7EB] bg-white p-3 shadow-sm">
+              <label className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-500">Price</label>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <input
+                  type="number"
+                  value={priceRange.min}
+                  onChange={(e) => setPriceRange((prev) => ({ ...prev, min: e.target.value }))}
+                  onBlur={() => updateQuery({ min_price: priceRange.min })}
+                  placeholder="Min"
+                  className="w-full rounded-xl border border-gray-200 bg-[#fafafa] px-3 py-2 text-sm outline-none"
+                />
+                <input
+                  type="number"
+                  value={priceRange.max}
+                  onChange={(e) => setPriceRange((prev) => ({ ...prev, max: e.target.value }))}
+                  onBlur={() => updateQuery({ max_price: priceRange.max })}
+                  placeholder="Max"
+                  className="w-full rounded-xl border border-gray-200 bg-[#fafafa] px-3 py-2 text-sm outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="rounded-[12px] border border-[#E5E7EB] bg-white p-3 shadow-sm">
+              <label className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-500">Availability</label>
+              <select
+                value={selectedAvailability}
+                onChange={(e) => updateQuery({ availability: e.target.value })}
+                className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none"
+              >
+                <option value="">All</option>
+                <option value="in_stock">In Stock</option>
+                <option value="out_of_stock">Out of Stock</option>
+              </select>
+            </div>
+
+            <div className="rounded-[12px] border border-[#E5E7EB] bg-white p-3 shadow-sm">
+              <label className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-500">Sort By</label>
+              <select
+                value={selectedSort}
+                onChange={(e) => updateQuery({ sort: e.target.value })}
+                className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none"
+              >
+                <option value="">Newest</option>
+                <option value="price_asc">Price: Low to High</option>
+                <option value="price_desc">Price: High to Low</option>
+              </select>
+            </div>
+
+            <div className="flex items-center justify-end rounded-[12px] border border-[#E5E7EB] bg-white p-3 shadow-sm">
+              <button
+                type="button"
+                onClick={handleClearAll}
+                className="inline-flex h-11 items-center justify-center rounded-2xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-[#181818] transition hover:bg-gray-50"
+              >
+                Clear All
               </button>
             </div>
+          </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="rounded-2xl border border-gray-300 bg-white p-4">
-                <label className="text-xs font-semibold uppercase text-gray-500">Category</label>
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => updateQuery({ category_id: e.target.value })}
-                  className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none"
-                >
-                  <option value="">All Categories</option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="rounded-2xl border border-gray-300 bg-white p-4">
-                <label className="text-xs font-semibold uppercase text-gray-500">Price</label>
-                <div className="mt-2 flex gap-2">
-                  <input
-                    type="number"
-                    value={priceRange.min}
-                    onChange={(e) => setPriceRange((prev) => ({ ...prev, min: e.target.value }))}
-                    onBlur={() => updateQuery({ min_price: priceRange.min })}
-                    placeholder="Min"
-                    className="w-1/2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none"
-                  />
-                  <input
-                    type="number"
-                    value={priceRange.max}
-                    onChange={(e) => setPriceRange((prev) => ({ ...prev, max: e.target.value }))}
-                    onBlur={() => updateQuery({ max_price: priceRange.max })}
-                    placeholder="Max"
-                    className="w-1/2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none"
-                  />
+          {showMobileFilters && (
+            <div className="fixed inset-0 z-50 bg-black/30 p-4 md:hidden">
+              <div className="h-full overflow-y-auto rounded-[20px] bg-white p-5 shadow-2xl">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-lg font-semibold">Filters</p>
+                    <p className="text-sm text-gray-500">Adjust your search criteria</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowMobileFilters(false)}
+                    className="text-sm font-semibold text-gray-600"
+                  >
+                    Close
+                  </button>
                 </div>
-              </div>
 
-              <div className="rounded-2xl border border-gray-300 bg-white p-4">
-                <label className="text-xs font-semibold uppercase text-gray-500">Availability</label>
-                <div className="mt-2 flex flex-col gap-2">
+                <div className="mt-5 space-y-4">
+                  <div className="rounded-[12px] border border-[#E5E7EB] bg-white p-3">
+                    <label className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-500">Category</label>
+                    <select
+                      value={selectedCategory}
+                      onChange={(e) => updateQuery({ category_id: e.target.value })}
+                      className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none"
+                    >
+                      <option value="">All Categories</option>
+                      {categories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="rounded-[12px] border border-[#E5E7EB] bg-white p-3">
+                    <label className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-500">Price</label>
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      <input
+                        type="number"
+                        value={priceRange.min}
+                        onChange={(e) => setPriceRange((prev) => ({ ...prev, min: e.target.value }))}
+                        onBlur={() => updateQuery({ min_price: priceRange.min })}
+                        placeholder="Min"
+                        className="w-full rounded-xl border border-gray-200 bg-[#fafafa] px-3 py-2 text-sm outline-none"
+                      />
+                      <input
+                        type="number"
+                        value={priceRange.max}
+                        onChange={(e) => setPriceRange((prev) => ({ ...prev, max: e.target.value }))}
+                        onBlur={() => updateQuery({ max_price: priceRange.max })}
+                        placeholder="Max"
+                        className="w-full rounded-xl border border-gray-200 bg-[#fafafa] px-3 py-2 text-sm outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="rounded-[12px] border border-[#E5E7EB] bg-white p-3">
+                    <label className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-500">Availability</label>
+                    <select
+                      value={selectedAvailability}
+                      onChange={(e) => updateQuery({ availability: e.target.value })}
+                      className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none"
+                    >
+                      <option value="">All</option>
+                      <option value="in_stock">In Stock</option>
+                      <option value="out_of_stock">Out of Stock</option>
+                    </select>
+                  </div>
+
+                  <div className="rounded-[12px] border border-[#E5E7EB] bg-white p-3">
+                    <label className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-500">Sort By</label>
+                    <select
+                      value={selectedSort}
+                      onChange={(e) => updateQuery({ sort: e.target.value })}
+                      className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none"
+                    >
+                      <option value="">Newest</option>
+                      <option value="price_asc">Price: Low to High</option>
+                      <option value="price_desc">Price: High to Low</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="mt-6 flex gap-3">
                   <button
                     type="button"
-                    onClick={() => updateQuery({ availability: "" })}
-                    className={`rounded-xl px-3 py-2 text-sm text-left ${selectedAvailability === "" ? "bg-[#f3eedc]" : "bg-white"}`}
+                    onClick={handleClearAll}
+                    className="flex-1 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-[#181818] transition hover:bg-gray-50"
                   >
-                    All
+                    Clear All
                   </button>
                   <button
                     type="button"
-                    onClick={() => updateQuery({ availability: "in_stock" })}
-                    className={`rounded-xl px-3 py-2 text-sm text-left ${selectedAvailability === "in_stock" ? "bg-[#f3eedc]" : "bg-white"}`}
+                    onClick={() => setShowMobileFilters(false)}
+                    className="flex-1 rounded-2xl bg-[#a97c50] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#8a6540]"
                   >
-                    In Stock
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => updateQuery({ availability: "out_of_stock" })}
-                    className={`rounded-xl px-3 py-2 text-sm text-left ${selectedAvailability === "out_of_stock" ? "bg-[#f3eedc]" : "bg-white"}`}
-                  >
-                    Out of Stock
+                    Done
                   </button>
                 </div>
               </div>
             </div>
-          </div>
-        </form>
+          )}
+        </div>
 
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
