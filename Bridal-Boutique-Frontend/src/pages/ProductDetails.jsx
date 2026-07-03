@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Heart, ShoppingBag, Truck, ChevronLeft, ChevronRight, Play } from "lucide-react";
+import { Heart, ShoppingBag, Share2, Truck, RotateCcw, AlertTriangle } from "lucide-react";
 import { formatCurrency, getDiscountPercent } from "../utils/formatters";
 import { useStore } from "../contexts/StoreContext";
 import { useAuth } from "../contexts/AuthContext";
@@ -39,18 +39,9 @@ export default function ProductDetails() {
         if (response.data?.status) {
           setProduct(response.data.data);
 
-          // If product has video, show video by default
-          if (response.data.data.video_url) {
-            setCurrentMediaType('video');
-          } else {
-            setCurrentMediaType('image');
-          }
-
           await axios.post(
             `${API_BASE}/product/increment_view.php`,
-            {
-              product_id: response.data.data.id
-            }
+            { product_id: response.data.data.id }
           );
         } else {
           setError(response.data?.message || "Product not found.");
@@ -80,6 +71,13 @@ export default function ProductDetails() {
     }
   }, [availableSizes, selectedSize]);
 
+  // Stock details calculation
+  const isOutOfStock = useMemo(() => {
+    if (!product) return true;
+    // Unga API data-la column peyar 'stock' illai endral, 'quantity' ena mathikollavum
+    return product.stock === undefined || product.stock === null || Number(product.stock) <= 0;
+  }, [product]);
+
   const validateSize = () => {
     if (availableSizes.length > 0 && !selectedSize) {
       showToast('Please select a size', 'error');
@@ -89,6 +87,11 @@ export default function ProductDetails() {
   };
 
   const addToCart = async () => {
+    if (isOutOfStock) {
+      showToast('Product is out of stock', 'error');
+      return;
+    }
+
     if (!user) {
       showToast('Please log in to add items to cart', 'error');
       setTimeout(() => navigate('/login'), 500);
@@ -151,6 +154,11 @@ export default function ProductDetails() {
   };
 
   const handleBuyNow = () => {
+    if (isOutOfStock) {
+      showToast('Product is out of stock', 'error');
+      return;
+    }
+
     if (!user) {
       showToast('Please log in to proceed to payment', 'error');
       setTimeout(() => navigate('/login'), 500);
@@ -177,7 +185,15 @@ export default function ProductDetails() {
     });
   };
 
-  const incrementQuantity = () => setQuantity(prev => prev + 1);
+  const incrementQuantity = () => {
+    // Stock limit-a thandama iruka check panrom
+    if (product.stock && quantity >= Number(product.stock)) {
+      showToast(`Only ${product.stock} items available in stock`, 'warning');
+      return;
+    }
+    setQuantity(prev => prev + 1);
+  };
+  
   const decrementQuantity = () => {
     if (quantity > 1) {
       setQuantity(prev => prev - 1);
@@ -327,62 +343,47 @@ export default function ProductDetails() {
     return <div className="min-h-screen flex items-center justify-center pt-28">Product not found.</div>;
   }
 
+  const convertImagePath = (imagePath) => {
+    if (!imagePath) return "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f";
+    if (imagePath.startsWith("http")) return imagePath;
+    let cleanPath = imagePath.replace(/\\/g, "/");
+    if (cleanPath.startsWith("uploads/")) {
+      cleanPath = cleanPath.substring(8);
+    }
+    return `${API_BASE}/uploads/${cleanPath}`;
+  };
+
+  let gallery = [];
+  if (product.image_gallery_json) {
+    try {
+      const cleanJson = product.image_gallery_json.replace(/\\\\/g, "").replace(/\\\"/g, '"').replace(/\\\//g, "/");
+      gallery = JSON.parse(cleanJson);
+    } catch (e) {
+      console.warn("Failed to parse image gallery JSON:", e);
+      gallery = [];
+    }
+  }
+
+  const images = [product.image, ...gallery].filter(Boolean).map(convertImagePath);
+
   return (
     <div className="min-h-screen bg-[#f8f7f2] pt-28 px-4 md:px-8 lg:px-12">
       <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-10">
         {/* Left Column - Media Gallery */}
         <div>
-          {/* Main Media Display */}
-          <div className="relative bg-black rounded-xl overflow-hidden">
-            {currentDisplay.type === 'video' ? (
-              <video
-                controls
-                autoPlay
-                muted
-                loop
-                className="w-full h-[520px] object-contain"
-              >
-                <source src={currentDisplay.url} type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
-            ) : (
-              <img
-                src={currentDisplay.url}
-                alt={`${product.product_name}`}
-                className="w-full h-[520px] object-cover"
-              />
-            )}
-
-            {/* Navigation Arrows */}
-            {mediaItems.length > 1 && (
-              <>
-                <button
-                  onClick={prevMedia}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-md transition z-10"
-                >
-                  <ChevronLeft size={20} />
-                </button>
-                <button
-                  onClick={nextMedia}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-md transition z-10"
-                >
-                  <ChevronRight size={20} />
-                </button>
-              </>
-            )}
-
-            {/* Media Type Badge */}
-            {hasVideo && currentMediaType === 'video' && (
-              <div className="absolute top-4 left-4 bg-black/70 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
-                <Play size={12} fill="white" /> Video
-              </div>
-            )}
-            
-            {currentDisplay.type === 'image' && mediaItems.length > 1 && (
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                {getCurrentThumbnailIndex() + 1} / {mediaItems.length}
-              </div>
-            )}
+          {product.image ? (
+            <img src={images[0]} alt={product.product_name} className="w-full h-[520px] object-cover rounded-xl" />
+          ) : product.video_url ? (
+            <video controls autoPlay muted loop className="w-full h-[520px] object-cover rounded-xl">
+              <source src={`${API_BASE}/${product.video_url}`} type="video/mp4" />
+            </video>
+          ) : (
+            <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f" className="w-full h-[520px] object-cover rounded-xl" alt="Default" />
+          )}
+          <div className="mt-4 grid grid-cols-4 gap-3">
+            {images.map((image, index) => (
+              <img key={index} src={image} alt={`${product.product_name}-${index}`} className="h-24 w-full object-cover rounded-lg" />
+            ))}
           </div>
 
           {/* Thumbnail Gallery - Shows both video and images */}
@@ -445,7 +446,21 @@ export default function ProductDetails() {
         <div>
           <p className="text-sm uppercase tracking-[3px] text-[#a97c50]">{product.category_name}</p>
           <h1 className="text-3xl font-semibold mt-2">{product.product_name}</h1>
-          <p className="text-gray-600 mt-3">{product.short_description || product.full_description}</p>
+          <p className="text-gray-600 mt-3">{product.short_description}</p>
+          
+          {/* Stock Badges Status Display */}
+          <div className="mt-3">
+            {isOutOfStock ? (
+              <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider">
+                Out of Stock
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider">
+                In Stock ({product.stock} items left)
+              </span>
+            )}
+          </div>
+
           <div className="mt-4 flex items-center gap-3">
             <span className="text-2xl font-semibold">{formatCurrency(product.price)}</span>
             {product.original_price && (
@@ -456,9 +471,11 @@ export default function ProductDetails() {
             )}
           </div>
 
-          <div className="mt-2 text-sm text-gray-600">
-            Total: <span className="font-semibold">{formatCurrency(product.price * quantity)}</span>
-          </div>
+          {!isOutOfStock && (
+            <div className="mt-2 text-sm text-gray-600">
+              Total: <span className="font-semibold">{formatCurrency(product.price * quantity)}</span>
+            </div>
+          )}
 
           {availableSizes.length > 0 && (
             <div className="mt-4">
@@ -480,37 +497,41 @@ export default function ProductDetails() {
             </div>
           )}
 
-          {/* Quantity Selector */}
-          <div className="mt-4 flex items-center gap-4">
-            <span className="text-sm font-medium text-gray-700">Quantity:</span>
-            <div className="flex items-center border border-gray-300 rounded-md">
-              <button 
-                onClick={decrementQuantity}
-                className="px-3 py-1 hover:bg-gray-100 transition"
-                disabled={quantity <= 1}
-              >
-                -
-              </button>
-              <span className="px-4 py-1 min-w-[40px] text-center">{quantity}</span>
-              <button 
-                onClick={incrementQuantity}
-                className="px-3 py-1 hover:bg-gray-100 transition"
-              >
-                +
-              </button>
+          {/* Quantity Selector - Hides if out of stock */}
+          {!isOutOfStock && (
+            <div className="mt-4 flex items-center gap-4">
+              <span className="text-sm font-medium text-gray-700">Quantity:</span>
+              <div className="flex items-center border border-gray-300 rounded-md bg-white">
+                <button onClick={decrementQuantity} className="px-3 py-1 hover:bg-gray-100 transition" disabled={quantity <= 1}>
+                  -
+                </button>
+                <span className="px-4 py-1 min-w-[40px] text-center">{quantity}</span>
+                <button onClick={incrementQuantity} className="px-3 py-1 hover:bg-gray-100 transition">
+                  +
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="mt-4 text-sm text-gray-500">SKU: {product.product_code || "N/A"} • Barcode: {product.barcode || "N/A"}</div>
           
+          {/* Action Buttons with Conditional Rendering */}
           <div className="mt-6 flex flex-wrap gap-3">
-            <button onClick={addToCart} className="flex items-center gap-2 rounded-md bg-[#181818] px-4 py-3 text-white hover:bg-[#333] transition">
-              <ShoppingBag size={16} /> Add to Cart
-            </button>
-            <button onClick={handleBuyNow} className="flex items-center gap-2 rounded-md bg-[#a97c50] px-4 py-3 text-white hover:bg-[#8a6540] transition">
-              Buy Now
-            </button>
-            <button onClick={addToWishlist} className="flex items-center gap-2 rounded-md border border-gray-300 px-4 py-3 hover:bg-gray-50 transition">
+            {isOutOfStock ? (
+              <div className="w-full flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 px-5 py-4 rounded-md font-medium text-center justify-center">
+                <AlertTriangle size={18} /> Product is Out of Stock
+              </div>
+            ) : (
+              <>
+                <button onClick={addToCart} className="flex items-center gap-2 rounded-md bg-[#181818] px-4 py-3 text-white hover:bg-[#333] transition">
+                  <ShoppingBag size={16} /> Add to Cart
+                </button>
+                <button onClick={handleBuyNow} className="flex items-center gap-2 rounded-md bg-[#a97c50] px-4 py-3 text-white hover:bg-[#8a6540] transition">
+                  Buy Now
+                </button>
+              </>
+            )}
+            <button onClick={addToWishlist} className="flex items-center gap-2 rounded-md border border-gray-300 px-4 py-3 bg-white hover:bg-gray-50 transition">
               <Heart size={16} /> Wishlist
             </button>
           </div>
