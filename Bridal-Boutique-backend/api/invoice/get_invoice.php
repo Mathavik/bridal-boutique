@@ -19,8 +19,15 @@ if ($invoice_id <= 0) {
 try {
     // First try to find by invoice_id directly
     $query = "SELECT 
-                i.*
+                i.*, 
+                c.company_name,
+                c.company_address,
+                c.phone AS company_phone,
+                c.gstin AS company_gstin,
+                c.logo AS company_logo,
+                c.gst_type AS company_gst_type
               FROM invoices i
+              LEFT JOIN companies c ON i.company_id = c.id
               WHERE i.id = $invoice_id";
     
     $result = mysqli_query($conn, $query);
@@ -61,6 +68,40 @@ try {
                     while ($item = mysqli_fetch_assoc($itemsResult)) {
                         $items[] = $item;
                     }
+
+                    $company_name = '';
+                    $company_address = '';
+                    $company_phone = '';
+                    $company_gstin = '';
+                    $company_logo = '';
+                    $company_gst_type = '';
+
+                    $product_ids = array_unique(array_filter(array_map(function ($item) {
+                        return intval($item['product_id'] ?? 0);
+                    }, $items)));
+
+                    if (count($product_ids) > 0) {
+                        $product_id_list = implode(',', $product_ids);
+                        $companyQuery = "SELECT p.company_id FROM products p WHERE p.id IN ($product_id_list) GROUP BY p.company_id LIMIT 1";
+                        $companyResult = mysqli_query($conn, $companyQuery);
+                        if ($companyResult && mysqli_num_rows($companyResult) > 0) {
+                            $company_row = mysqli_fetch_assoc($companyResult);
+                            $company_id = intval($company_row['company_id']);
+                            if ($company_id > 0) {
+                                $companyInfoQuery = "SELECT company_name, company_address, phone, gstin, logo, gst_type FROM companies WHERE id = $company_id LIMIT 1";
+                                $companyInfoResult = mysqli_query($conn, $companyInfoQuery);
+                                if ($companyInfoResult && mysqli_num_rows($companyInfoResult) > 0) {
+                                    $companyInfo = mysqli_fetch_assoc($companyInfoResult);
+                                    $company_name = $companyInfo['company_name'] ?? '';
+                                    $company_address = $companyInfo['company_address'] ?? '';
+                                    $company_phone = $companyInfo['phone'] ?? '';
+                                    $company_gstin = $companyInfo['gstin'] ?? '';
+                                    $company_logo = $companyInfo['logo'] ?? '';
+                                    $company_gst_type = $companyInfo['gst_type'] ?? '';
+                                }
+                            }
+                        }
+                    }
                     
                     echo json_encode([
                         'status' => true,
@@ -80,6 +121,12 @@ try {
                             'payment_method' => 'cash',
                             'payment_status' => $order['payment_status'],
                             'created_at' => $order['created_at'],
+                            'company_name' => $company_name,
+                            'company_address' => $company_address,
+                            'company_phone' => $company_phone,
+                            'company_gstin' => $company_gstin,
+                            'company_logo' => $company_logo,
+                            'company_gst_type' => $company_gst_type,
                         ]
                     ]);
                     exit;
@@ -91,6 +138,40 @@ try {
                 $items = [];
                 while ($item = mysqli_fetch_assoc($itemsResult)) {
                     $items[] = $item;
+                }
+
+                $company_name = '';
+                $company_address = '';
+                $company_phone = '';
+                $company_gstin = '';
+                $company_logo = '';
+                $company_gst_type = '';
+
+                $product_ids = array_unique(array_filter(array_map(function ($item) {
+                    return intval($item['product_id'] ?? 0);
+                }, $items)));
+
+                if (count($product_ids) > 0) {
+                    $product_id_list = implode(',', $product_ids);
+                    $companyQuery = "SELECT p.company_id FROM products p WHERE p.id IN ($product_id_list) GROUP BY p.company_id LIMIT 1";
+                    $companyResult = mysqli_query($conn, $companyQuery);
+                    if ($companyResult && mysqli_num_rows($companyResult) > 0) {
+                        $company_row = mysqli_fetch_assoc($companyResult);
+                        $company_id = intval($company_row['company_id']);
+                        if ($company_id > 0) {
+                            $companyInfoQuery = "SELECT company_name, company_address, phone, gstin, logo, gst_type FROM companies WHERE id = $company_id LIMIT 1";
+                            $companyInfoResult = mysqli_query($conn, $companyInfoQuery);
+                            if ($companyInfoResult && mysqli_num_rows($companyInfoResult) > 0) {
+                                $companyInfo = mysqli_fetch_assoc($companyInfoResult);
+                                $company_name = $companyInfo['company_name'] ?? '';
+                                $company_address = $companyInfo['company_address'] ?? '';
+                                $company_phone = $companyInfo['phone'] ?? '';
+                                $company_gstin = $companyInfo['gstin'] ?? '';
+                                $company_logo = $companyInfo['logo'] ?? '';
+                                $company_gst_type = $companyInfo['gst_type'] ?? '';
+                            }
+                        }
+                    }
                 }
                 
                 echo json_encode([
@@ -111,6 +192,12 @@ try {
                         'payment_method' => 'cash',
                         'payment_status' => $order['payment_status'],
                         'created_at' => $order['created_at'],
+                        'company_name' => $company_name,
+                        'company_address' => $company_address,
+                        'company_phone' => $company_phone,
+                        'company_gstin' => $company_gstin,
+                        'company_logo' => $company_logo,
+                        'company_gst_type' => $company_gst_type,
                     ]
                 ]);
                 exit;
@@ -192,6 +279,12 @@ try {
         'gst_no' => $invoice['gst_no'],
         'created_at' => $invoice['created_at'],
         'due_date' => $invoice['due_date'],
+        'company_name' => $invoice['company_name'] ?? '',
+        'company_address' => $invoice['company_address'] ?? '',
+        'company_phone' => $invoice['company_phone'] ?? '',
+        'company_gstin' => $invoice['company_gstin'] ?? '',
+        'company_logo' => $invoice['company_logo'] ?? '',
+        'company_gst_type' => $invoice['company_gst_type'] ?? '',
     ];
     
     echo json_encode([

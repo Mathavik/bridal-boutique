@@ -163,7 +163,8 @@ export default function InvoicePage() {
         {/* Invoice Content */}
         <div id="invoice-content" className="bg-white rounded-2xl shadow-sm p-8 md:p-10">
           {/* Header */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-200 pb-6 mb-6">
+          <style>{`@media print { .invoice-status-pill { display: none !important; } }`}</style>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-200 pb-6 mb-6">
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <FileText size={28} className="text-[#a97c50]" />
@@ -173,7 +174,7 @@ export default function InvoicePage() {
             </div>
             <div className="mt-3 md:mt-0 text-right">
               <div className="flex items-center gap-2 justify-end">
-                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${statusInfo.color}`}>
+                <span className={`invoice-status-pill inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${statusInfo.color}`}>
                   {statusInfo.icon}
                   {invoice.payment_status ? invoice.payment_status.charAt(0).toUpperCase() + invoice.payment_status.slice(1) : "N/A"}
                 </span>
@@ -192,12 +193,12 @@ export default function InvoicePage() {
           <div className="grid md:grid-cols-2 gap-6 mb-6">
             <div className="bg-[#f8f7f2] p-4 rounded-lg">
               <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">From</h3>
-              <p className="font-semibold text-[#181818]">Bridal Boutique</p>
-              <p className="text-sm text-gray-600">123 Bridal Street,</p>
-              <p className="text-sm text-gray-600">Chennai - 600001</p>
-              <p className="text-sm text-gray-600">Phone: +91 98765 43210</p>
-              <p className="text-sm text-gray-600">Email: info@bridalboutique.com</p>
-              <p className="text-sm text-gray-600">GST: 22AAAAA0000A1Z5</p>
+              <p className="font-semibold text-[#181818]">{invoice.company_name || "Bridal Boutique"}</p>
+              <p className="text-sm text-gray-600">{invoice.company_address || "123 Bridal Street,"}</p>
+              <p className="text-sm text-gray-600">{invoice.company_address ? "" : "Chennai - 600001"}</p>
+              <p className="text-sm text-gray-600">Phone: {invoice.company_phone || "+91 98765 43210"}</p>
+              <p className="text-sm text-gray-600">Email: {invoice.company_email || "info@bridalboutique.com"}</p>
+              <p className="text-sm text-gray-600">GST: {invoice.company_gstin || "22AAAAA0000A1Z5"}</p>
             </div>
             <div className="bg-[#f8f7f2] p-4 rounded-lg">
               <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Bill To</h3>
@@ -285,10 +286,18 @@ export default function InvoicePage() {
             </div>
             <div>
               <p className="text-gray-500">Payment Status</p>
-              <p className={`font-medium capitalize ${statusInfo.color} inline-flex items-center gap-1 px-2 py-0.5 rounded-full`}>
-                {statusInfo.icon}
-                {statusLabel}
-              </p>
+             <p
+  className={`font-medium capitalize px-3 py-1 rounded-full ${statusInfo.color}`}
+  style={{
+    display: "inline-block",
+    textAlign: "center",
+    lineHeight: "18px",
+    minWidth: "70px",
+    fontWeight: 600,
+  }}
+>
+  {statusLabel}
+</p>
             </div>
           </div>
 
@@ -302,3 +311,5 @@ export default function InvoicePage() {
     </div>
   );
 }
+
+
