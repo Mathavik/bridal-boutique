@@ -18,39 +18,39 @@ export default function CategoryList() {
   const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
-  
 
- const getCompanyId = () => {
 
-  return Number(
-    localStorage.getItem("selected_company_id")
-  );
+  const getCompanyId = () => {
 
-};
+    return Number(
+      localStorage.getItem("selected_company_id")
+    );
 
-  const [companies,setCompanies] = useState([]);
-const [selectedCompany,setSelectedCompany] = useState("");
+  };
 
-useEffect(() => {
+  const [companies, setCompanies] = useState([]);
+  const [selectedCompany, setSelectedCompany] = useState("");
 
-  const user = JSON.parse(localStorage.getItem("user"));
+  useEffect(() => {
 
-  api.get(
-    `/company/get_companies_by_admin.php?admin_id=${user.id}`
-  )
-  .then(res => {
+    const user = JSON.parse(localStorage.getItem("user"));
 
-    if(res.data.status){
+    api.get(
+      `/company/get_companies_by_admin.php?admin_id=${user.id}`
+    )
+      .then(res => {
 
-      setCompanies(res.data.data);
+        if (res.data.status) {
 
- 
+          setCompanies(res.data.data);
 
-    }
 
-  });
 
-},[]);
+        }
+
+      });
+
+  }, []);
 
   const fetchCategories = async () => {
 
@@ -86,49 +86,49 @@ useEffect(() => {
   // }, []);
 
 
-  const handleCompanyChange = async(e) => {
+  const handleCompanyChange = async (e) => {
 
-  const companyId = e.target.value;
+    const companyId = e.target.value;
 
-  setSelectedCompany(companyId);
+    setSelectedCompany(companyId);
 
-  localStorage.setItem(
-    "selected_company_id",
-    companyId
-  );
-
-  if(!companyId){
-
-    setCategories([]);
-    return;
-
-  }
-
-  try {
-
-    setLoading(true);
-
-    const res = await api.get(
-      `/category/get_all.php?company_id=${companyId}`
+    localStorage.setItem(
+      "selected_company_id",
+      companyId
     );
 
-    if(res.data.status){
+    if (!companyId) {
 
-      setCategories(res.data.data);
+      setCategories([]);
+      return;
 
     }
 
-  } catch(err){
+    try {
 
-    console.log(err);
+      setLoading(true);
 
-  } finally {
+      const res = await api.get(
+        `/category/get_all.php?company_id=${companyId}`
+      );
 
-    setLoading(false);
+      if (res.data.status) {
 
-  }
+        setCategories(res.data.data);
 
-};
+      }
+
+    } catch (err) {
+
+      console.log(err);
+
+    } finally {
+
+      setLoading(false);
+
+    }
+
+  };
 
   const toggleStatus = async (category) => {
 
@@ -177,19 +177,19 @@ useEffect(() => {
 
 
   const totalPages = Math.max(
-  1,
-  Math.ceil(filtered.length / ITEMS_PER_PAGE)
-);
+    1,
+    Math.ceil(filtered.length / ITEMS_PER_PAGE)
+  );
 
-const safePage = Math.min(
-  currentPage,
-  totalPages
-);
+  const safePage = Math.min(
+    currentPage,
+    totalPages
+  );
 
-const paginated = filtered.slice(
-  (safePage - 1) * ITEMS_PER_PAGE,
-  safePage * ITEMS_PER_PAGE
-);
+  const paginated = filtered.slice(
+    (safePage - 1) * ITEMS_PER_PAGE,
+    safePage * ITEMS_PER_PAGE
+  );
   return (
     <>
       <style>{`
@@ -453,56 +453,56 @@ const paginated = filtered.slice(
 
         </div>
 
-<div
-  style={{
-    display: "flex",
-    alignItems: "center",
-    width: "320px",
-    background: "#ffffff",
-    border: "1.5px solid #dbeafe",
-    borderRadius: "16px",
-    padding: "12px 16px",
-    boxShadow: "0 6px 20px rgba(37,99,235,0.08)",
-    marginBottom: "20px",
-  }}
->
-  <span
-    style={{
-      marginRight: "10px",
-      fontSize: "18px",
-    }}
-  >
-    🏢
-  </span>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            width: "320px",
+            background: "#ffffff",
+            border: "1.5px solid #dbeafe",
+            borderRadius: "16px",
+            padding: "12px 16px",
+            boxShadow: "0 6px 20px rgba(37,99,235,0.08)",
+            marginBottom: "20px",
+          }}
+        >
+          <span
+            style={{
+              marginRight: "10px",
+              fontSize: "18px",
+            }}
+          >
+            🏢
+          </span>
 
-  <select
-    value={selectedCompany}
-    onChange={handleCompanyChange}
-    style={{
-      width: "100%",
-      border: "none",
-      background: "transparent",
-      outline: "none",
-      fontSize: "14px",
-      fontWeight: "600",
-      color: "#0f172a",
-      cursor: "pointer",
-    }}
-  >
-    <option value="">
-      Select Company
-    </option>
+          <select
+            value={selectedCompany}
+            onChange={handleCompanyChange}
+            style={{
+              width: "100%",
+              border: "none",
+              background: "transparent",
+              outline: "none",
+              fontSize: "14px",
+              fontWeight: "600",
+              color: "#0f172a",
+              cursor: "pointer",
+            }}
+          >
+            <option value="">
+              Select Company
+            </option>
 
-    {companies.map((c) => (
-      <option
-        key={c.id}
-        value={c.id}
-      >
-        {c.company_name}
-      </option>
-    ))}
-  </select>
-</div>
+            {companies.map((c) => (
+              <option
+                key={c.id}
+                value={c.id}
+              >
+                {c.company_name}
+              </option>
+            ))}
+          </select>
+        </div>
 
         {/* Search */}
         <div className="cl-search-wrap">
@@ -514,9 +514,9 @@ const paginated = filtered.slice(
             value={search}
             // onChange={(e) => setSearch(e.target.value)}
             onChange={(e) => {
-  setSearch(e.target.value);
-  setCurrentPage(1);
-}}
+              setSearch(e.target.value);
+              setCurrentPage(1);
+            }}
           />
 
         </div>
@@ -530,6 +530,7 @@ const paginated = filtered.slice(
               <tr>
                 <th>#</th>
                 <th>Name</th>
+                <th className="center">Visible Category</th>
                 <th className="center">Actions</th>
                 <th className="center">Status</th>
               </tr>
@@ -570,6 +571,15 @@ const paginated = filtered.slice(
                       <div className="cl-name">
                         {c.name}
                       </div>
+                    </td>
+
+                    <td className="center">
+                      <span
+                        className={`cl-status ${Number(c.visible) === 1 ? "active" : "inactive"
+                          }`}
+                      >
+                        {Number(c.visible) === 1 ? "True" : "False"}
+                      </span>
                     </td>
 
                     <td>
@@ -620,98 +630,97 @@ const paginated = filtered.slice(
             </tbody>
 
           </table>
-{filtered.length > ITEMS_PER_PAGE && (
-  <div
-    style={{
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      padding: "16px 20px",
-      borderTop: "1px solid #e2e8f0",
-      background: "#fafbff",
-      flexWrap: "wrap",
-      gap: 10,
-    }}
-  >
-    <div
-      style={{
-        fontSize: 13,
-        color: "#64748b",
-      }}
-    >
-      Showing{" "}
-      <strong>
-        {(safePage - 1) * ITEMS_PER_PAGE + 1}–
-        {Math.min(
-          safePage * ITEMS_PER_PAGE,
-          filtered.length
-        )}
-      </strong>{" "}
-      of <strong>{filtered.length}</strong> categories
-    </div>
-
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 6,
-      }}
-    >
-      <button
-        disabled={safePage === 1}
-        onClick={() => setCurrentPage((p) => p - 1)}
-        className="cl-page-btn"
-      >
-        <ChevronLeft size={16} />
-      </button>
-
-      {Array.from({ length: totalPages }, (_, i) => i + 1)
-        .filter(
-          (p) =>
-            p === 1 ||
-            p === totalPages ||
-            Math.abs(p - safePage) <= 1
-        )
-        .reduce((acc, p, i, arr) => {
-          if (i > 0 && arr[i - 1] !== p - 1)
-            acc.push("...");
-          acc.push(p);
-          return acc;
-        }, [])
-        .map((item, i) =>
-          item === "..." ? (
-            <span
-              key={i}
+          {filtered.length > ITEMS_PER_PAGE && (
+            <div
               style={{
-                padding: "0 5px",
-                color: "#94a3b8",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "16px 20px",
+                borderTop: "1px solid #e2e8f0",
+                background: "#fafbff",
+                flexWrap: "wrap",
+                gap: 10,
               }}
             >
-              …
-            </span>
-          ) : (
-            <button
-              key={item}
-              onClick={() => setCurrentPage(item)}
-              className={`cl-page-btn ${
-                safePage === item ? "active" : ""
-              }`}
-            >
-              {item}
-            </button>
-          )
-        )}
+              <div
+                style={{
+                  fontSize: 13,
+                  color: "#64748b",
+                }}
+              >
+                Showing{" "}
+                <strong>
+                  {(safePage - 1) * ITEMS_PER_PAGE + 1}–
+                  {Math.min(
+                    safePage * ITEMS_PER_PAGE,
+                    filtered.length
+                  )}
+                </strong>{" "}
+                of <strong>{filtered.length}</strong> categories
+              </div>
 
-      <button
-        disabled={safePage === totalPages}
-        onClick={() => setCurrentPage((p) => p + 1)}
-        className="cl-page-btn"
-      >
-        <ChevronRight size={16} />
-      </button>
-    </div>
-  </div>
-)}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
+                <button
+                  disabled={safePage === 1}
+                  onClick={() => setCurrentPage((p) => p - 1)}
+                  className="cl-page-btn"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(
+                    (p) =>
+                      p === 1 ||
+                      p === totalPages ||
+                      Math.abs(p - safePage) <= 1
+                  )
+                  .reduce((acc, p, i, arr) => {
+                    if (i > 0 && arr[i - 1] !== p - 1)
+                      acc.push("...");
+                    acc.push(p);
+                    return acc;
+                  }, [])
+                  .map((item, i) =>
+                    item === "..." ? (
+                      <span
+                        key={i}
+                        style={{
+                          padding: "0 5px",
+                          color: "#94a3b8",
+                        }}
+                      >
+                        …
+                      </span>
+                    ) : (
+                      <button
+                        key={item}
+                        onClick={() => setCurrentPage(item)}
+                        className={`cl-page-btn ${safePage === item ? "active" : ""
+                          }`}
+                      >
+                        {item}
+                      </button>
+                    )
+                  )}
+
+                <button
+                  disabled={safePage === totalPages}
+                  onClick={() => setCurrentPage((p) => p + 1)}
+                  className="cl-page-btn"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
       </div>
