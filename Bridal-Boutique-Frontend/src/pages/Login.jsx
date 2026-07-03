@@ -4,7 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 
 export default function Login() {
   const { login, loading, user } = useAuth();
-  const [phone, setPhone] = useState("");
+const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [searchParams] = useSearchParams();
@@ -22,17 +22,12 @@ export default function Login() {
     event.preventDefault();
     setError("");
     
-    if (!phone || !password) {
+    if (!email || !password) {
       setError("Please fill in all fields");
       return;
     }
 
-    if (!/^[0-9]{10}$/.test(phone.replace(/[^0-9]/g, ''))) {
-      setError("Please enter a valid 10-digit phone number");
-      return;
-    }
-
-    const response = await login(phone, password);
+    const response = await login(email, password);
     if (response.status) {
       setIsModalOpen(false);
       navigate(redirect, { replace: true });
@@ -175,19 +170,20 @@ export default function Login() {
                 )}
                 
                 <form onSubmit={handleSubmit} className="mt-4 space-y-3">
-                  <div>
-                    <label className="block text-[11px] font-medium text-gray-700 mb-1">
-                      Phone Number *
-                    </label>
-                    <input 
-                      value={phone} 
-                      onChange={(e) => setPhone(e.target.value)} 
-                      required 
-                      type="tel" 
-                      placeholder="Enter your 10-digit phone number" 
-                      className="w-full rounded-lg border border-gray-200 px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-[#a97c50] focus:border-transparent transition outline-none bg-gray-50 hover:bg-white" 
-                    />
-                  </div>
+                 <div>
+  <label className="block text-[11px] font-medium text-gray-700 mb-1">
+    Email Address *
+  </label>
+
+  <input
+    value={email}
+    onChange={(e) => setEmail(e.target.value)}
+    required
+    type="email"
+    placeholder="Enter your email"
+    className="w-full rounded-lg border border-gray-200 px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-[#a97c50] focus:border-transparent transition outline-none bg-gray-50 hover:bg-white"
+  />
+</div>
 
                   <div>
                     <label className="block text-[11px] font-medium text-gray-700 mb-1">
