@@ -68,7 +68,7 @@ function EditorsPick() {
     {item.banner_title}
   </h2>
 
-  <button
+  {/* <button
     onClick={() =>
       navigate(
         item.banner_title === "Dress Materials"
@@ -79,7 +79,7 @@ function EditorsPick() {
     className="bg-white text-black px-8 py-3 font-semibold hover:bg-black hover:text-white transition"
   >
     SHOP NOW
-  </button>
+  </button> */}
 
 </div>
               </div>

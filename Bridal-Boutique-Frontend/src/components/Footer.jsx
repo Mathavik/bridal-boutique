@@ -19,22 +19,21 @@ function Footer() {
 
         {/* Main Footer */}
 
-        <div className="grid grid-cols-1 md:grid-cols-[250px_150px_150px_170px_210px] justify-between gap-10 py-[60px]">
-
+<div className="grid grid-cols-1 md:grid-cols-[250px_150px_150px_170px_210px] gap-10 py-[60px] text-center md:text-left">
           {/* Logo */}
 
           <div>
 
-            <img
-              src={botikLogo}
-              alt="BOTIK"
-              className="w-[185px]"
-            />
+           <img
+  src={botikLogo}
+  alt="BOTIK"
+  className="w-[185px] mx-auto md:mx-0"
+/>
 
         
 
-            <p className="mt-8 w-[215px] text-[12px] leading-[18px] text-[#111111]">
-              A Social Impact Enterprise run by ex-servicemen.
+<p className="mt-8 max-w-[215px] text-[12px] leading-[18px] text-[#111111] mx-auto md:mx-0">
+                A Social Impact Enterprise run by ex-servicemen.
               100 acres of organic farmland in Hyderabad,
               working towards dignified livelihoods through
               natural precision farming.
@@ -140,8 +139,7 @@ function Footer() {
               CONTACT US
             </h3>
 
-            <div className="space-y-4">
-
+<div className="space-y-4 flex flex-col items-center md:items-start">
               <div className="flex items-center gap-3 text-[12px]">
 
                 <Phone size={15} strokeWidth={2} />
@@ -164,8 +162,7 @@ function Footer() {
               FOLLOW US
             </h3>
 
-            <div className="flex items-center gap-4 text-[16px]">
-
+<div className="flex justify-center md:justify-start items-center gap-4 text-[16px]">
               <a href="#">
                 <FaFacebookF />
               </a>
@@ -186,8 +183,7 @@ function Footer() {
 
         {/* Bottom */}
 
-        <div className="border-t border-[#E5E5E5] h-[66px] flex flex-col md:flex-row items-center justify-between">
-
+<div className="border-t border-[#E5E5E5] py-5 flex flex-col md:flex-row items-center justify-between text-center md:text-left">
           <p className="text-[12px] text-[#222222]">
             © 2026 Botik Fashion. All rights reserved.
           </p>
