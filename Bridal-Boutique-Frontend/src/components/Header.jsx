@@ -175,6 +175,27 @@ function Header() {
     }
   };
 
+  const getMegaMenuColumns = (categories) => {
+    const totalColumns = 4;
+    const columns = Array.from({ length: totalColumns }, () => []);
+
+    if (!categories.length) return columns;
+
+    const itemsPerColumn = Math.ceil(categories.length / totalColumns);
+
+    categories.forEach((category, index) => {
+      const columnIndex = Math.min(
+        Math.floor(index / itemsPerColumn),
+        totalColumns - 1
+      );
+      columns[columnIndex].push(category);
+    });
+
+    return columns;
+  };
+
+  const megaMenuColumns = getMegaMenuColumns(shopAllCategories);
+
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-50 bg-white">
@@ -183,36 +204,74 @@ function Header() {
           <div className="flex items-center gap-6 flex-1">
             {/* Desktop Shop Button */}
             <div className="relative hidden lg:flex" ref={dropdownRef}>
-              <button
-                onClick={() => setDropdownOpen((prev) => !prev)}
-                className="flex items-center gap-2 border border-[#D8D8D8] rounded-md px-4 h-[40px] text-[14px] font-medium hover:bg-gray-50 transition"
-              >
-                <Menu size={15} />
-                <span>Shop All</span>
-              </button>
+             <button
+  onClick={() => setDropdownOpen((prev) => !prev)}
+  className="flex items-center gap-2 border border-[#D8D8D8] rounded-md px-4 h-[40px] text-[14px] font-medium hover:bg-gray-50 transition whitespace-nowrap"
+>
+  <Menu size={15} />
+  <span>Shop All</span>
+</button>
 
-              <div
-                className={`absolute left-0 top-[calc(100%_+_8px)] z-40 w-[240px] rounded-2xl border border-[#e5e7eb] bg-white shadow-lg transition-opacity duration-200 ${
-                  dropdownOpen ? "opacity-100 visible" : "opacity-0 invisible"
+            <div
+  className={`absolute left-0 top-[calc(100%_+_14px)] z-40 w-[1220px] rounded-none border border-[#E7E2DA] bg-white shadow-[0_20px_60px_rgba(0,0,0,0.08)] transition-all duration-200 ${
+    dropdownOpen
+      ? "opacity-100 visible translate-y-0"
+      : "opacity-0 invisible translate-y-2"
+  }`}
+>
+  <div className="px-8 py-6">
+    <div className="mb-4 flex items-center justify-between border-b border-black/10 pb-3">
+      <div>
+        <h3 className="text-[20px] font-semibold text-[#181818]">
+          Shop All Categories
+        </h3>
+        <p className="mt-1 text-[13px] text-gray-500">
+          Explore all available bridal collections
+        </p>
+      </div>
+    </div>
+
+    <div className="grid grid-cols-4">
+      {megaMenuColumns.map((column, columnIndex) => (
+        <div
+          key={columnIndex}
+          className={`px-4 min-h-[200px] ${
+            columnIndex !== megaMenuColumns.length - 1
+              ? "border-r border-black/10"
+              : ""
+          }`}
+        >
+          <div className="space-y-1">
+            {column.map((category) => (
+              <Link
+                key={category.id}
+                to={`/bridal-lehenga?category_id=${category.id}`}
+                className={`block rounded-md px-3 py-2 text-[15px] transition ${
+                  activeCategoryId === String(category.id)
+                    ? "bg-[#f8f3ed] text-[#a97c50] font-semibold"
+                    : "text-[#181818] hover:bg-[#faf7f2] hover:text-[#a97c50]"
                 }`}
+                onClick={() => setDropdownOpen(false)}
               >
-                <div className="max-h-[360px] overflow-y-auto py-2">
-                  {shopAllCategories.map((category) => (
-                    <Link
-                      key={category.id}
-                      to={`/bridal-lehenga?category_id=${category.id}`}
-                      className={`block w-full px-4 py-3 text-left text-sm text-[#181818] hover:bg-[#f8f7f2] ${
-                        activeCategoryId === String(category.id)
-                          ? "font-semibold text-[#a97c50]"
-                          : ""
-                      }`}
-                      onClick={() => setDropdownOpen(false)}
-                    >
-                      {category.name}
-                    </Link>
-                  ))}
-                </div>
-              </div>
+                {category.name}
+              </Link>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <div className="mt-4 border-t border-black/10 pt-3">
+      <Link
+        to="/bridal-lehenga"
+        className="inline-flex items-center text-[14px] font-medium text-[#a97c50] hover:underline"
+        onClick={() => setDropdownOpen(false)}
+      >
+        View all products
+      </Link>
+    </div>
+  </div>
+</div>
             </div>
 
             {/* Mobile Menu */}
@@ -221,21 +280,21 @@ function Header() {
             </button>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-7 text-[14px] font-medium text-[#181818]">
-              {navCategories.slice(0, 3).map((category) => (
-                <Link
-                  key={category.id}
-                  to={`/bridal-lehenga?category_id=${category.id}`}
-                  className={`hover:text-[#a97c50] ${
-                    activeCategoryId === String(category.id)
-                      ? "text-[#a97c50] font-semibold"
-                      : ""
-                  }`}
-                >
-                  {category.name}
-                </Link>
-              ))}
-            </nav>
+          <nav className="hidden lg:flex shrink-0 items-center gap-8 text-[14px] font-medium text-[#181818]">
+  {navCategories.slice(0, 3).map((category) => (
+    <Link
+      key={category.id}
+      to={`/bridal-lehenga?category_id=${category.id}`}
+      className={`whitespace-nowrap hover:text-[#a97c50] ${
+        activeCategoryId === String(category.id)
+          ? "text-[#a97c50] font-semibold"
+          : ""
+      }`}
+    >
+      {category.name}
+    </Link>
+  ))}
+</nav>
           </div>
 
           {/* LOGO */}
@@ -392,7 +451,6 @@ function Header() {
           menuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        {/* Header */}
         <div className="sticky top-0 bg-white z-10 flex items-center justify-between px-5 h-[70px] border-b">
           <img src={botikLogo} alt="" className="w-[110px]" />
           <button onClick={() => setMenuOpen(false)}>
@@ -400,7 +458,6 @@ function Header() {
           </button>
         </div>
 
-        {/* Search */}
         <div className="p-5">
           <div className="flex items-center border rounded-md h-11 px-3">
             <input
@@ -424,7 +481,6 @@ function Header() {
           </div>
         </div>
 
-        {/* Menu */}
         <nav className="px-5 pb-6 flex flex-col">
           {navCategories.map((category) => (
             <Link

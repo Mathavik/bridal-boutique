@@ -185,7 +185,7 @@ function Footer() {
 
 <div className="border-t border-[#E5E5E5] py-5 flex flex-col md:flex-row items-center justify-between text-center md:text-left">
           <p className="text-[12px] text-[#222222]">
-            © 2026 Botik Fashion. All rights reserved.
+            © 2026 Pathavathi Collections Fashion. All rights reserved.
           </p>
 
           <div className="flex items-center gap-6 text-[12px] text-[#222222] mt-3 md:mt-0">

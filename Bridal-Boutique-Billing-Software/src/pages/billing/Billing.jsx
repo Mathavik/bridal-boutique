@@ -2055,6 +2055,21 @@ useEffect(() => {
   });
 
 }, [selectedCompany]);
+
+  useEffect(() => {
+    if (!companies.length) return;
+
+    const validCompany = companies.find(
+      (c) => String(c.id) === String(selectedCompany)
+    );
+
+    if (!validCompany && companies.length > 0) {
+      const firstCompanyId = companies[0].id;
+      setSelectedCompany(firstCompanyId);
+      localStorage.setItem("selected_company_id", firstCompanyId);
+    }
+  }, [companies, selectedCompany]);
+
   /* ── Close dropdowns on outside click ── */
   useEffect(() => {
     const handler = e => {
