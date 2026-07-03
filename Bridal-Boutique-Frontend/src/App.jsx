@@ -16,6 +16,7 @@ import OrdersPage from "./pages/OrdersPage";
 import ScrollToTop from "./components/ScrollToTop";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import InvoicePage from "./pages/InvoicePage";
+import Search from "./pages/search";
 
 export default function App() {
   return (
@@ -26,6 +27,7 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/bridal-lehenga" element={<Product />} />
         <Route path="/product/:id" element={<ProductDetails />} />
+        <Route path="/search" element={<Search />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/wishlist" element={<Wishlist />} />
         <Route path="/checkout" element={<Checkout />} />
