@@ -112,12 +112,12 @@ export default function Cart() {
   const grandTotal = subtotal + gstTotal;
 
   return (
-    <div className="min-h-screen bg-[#f8f7f2] pt-28 px-4 md:px-8 lg:px-12">
+    <div className="min-h-screen bg-[#f8f7f2] pt-28 pb-12 px-4 md:px-8 lg:px-12">
       <div className="max-w-7xl mx-auto grid lg:grid-cols-[2fr_1fr] gap-8">
 
         {/* Cart Items */}
         <div>
-          <h1 className="text-3xl font-semibold uppercase tracking-[4px]">
+          <h1 className="text-3xl font-semibold uppercase tracking-wider lg:tracking-[4px]">
             Cart ({items.length})
           </h1>
 
@@ -133,11 +133,11 @@ export default function Cart() {
               items.map((item) => (
                 <div
                   key={item.id}
-                  className="flex flex-col md:flex-row items-start md:items-center justify-between rounded-xl bg-white p-4 shadow-sm hover:shadow-md transition"
+                  className="flex flex-col md:flex-row items-start md:items-center justify-between rounded-xl bg-white p-2 sm:p-4 shadow-sm hover:shadow-md transition"
                 >
                   <div className="flex items-center gap-4 w-full md:w-auto">
                     {/* Image container with object-contain to show full image */}
-                    <div className="h-24 w-24 rounded-lg overflow-hidden bg-[#f8f7f2] flex items-center justify-center flex-shrink-0">
+                    <div className="h-20 w-20 md:h-24 md:w-24 rounded-lg overflow-hidden bg-[#f8f7f2] flex items-center justify-center flex-shrink-0">
                       <img
                         src={
                           resolveImageUrl(item.image) ||
@@ -168,7 +168,7 @@ export default function Cart() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 mt-4 md:mt-0 w-full md:w-auto justify-between md:justify-end">
+                  <div className="flex items-center gap-3 mt-4 md:mt-0 w-full md:w-auto justify-end">
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() =>

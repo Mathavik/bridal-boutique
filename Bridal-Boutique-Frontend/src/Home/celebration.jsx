@@ -46,7 +46,7 @@ function Celebration() {
 
           <div className="relative z-10 flex flex-col items-center justify-center h-full">
 
-            <h2 className="text-white text-6xl font-serif text-center mb-8">
+            <h2 className="text-white text-5xl font-serif text-center mb-8">
               {banner.banner_title}
             </h2>
 
