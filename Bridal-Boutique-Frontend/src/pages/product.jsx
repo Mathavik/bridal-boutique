@@ -158,7 +158,7 @@ export default function Product() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f7f2] pt-28 px-4 md:px-8 lg:px-12">
+    <div className="min-h-screen bg-[#f8f7f2] pt-28 pb-16 px-4 md:px-8 lg:px-12">
       <div className="max-w-7xl mx-auto">
 
         {loading ? (

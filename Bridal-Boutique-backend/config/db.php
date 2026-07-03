@@ -71,6 +71,7 @@ mysqli_query($conn, "CREATE TABLE IF NOT EXISTS products (
     color VARCHAR(255) DEFAULT '',
     available_sizes VARCHAR(255) DEFAULT '',
     occasion VARCHAR(255) DEFAULT '',
+    keywords TEXT DEFAULT NULL,
     image VARCHAR(500) DEFAULT '',
     image_gallery_json TEXT DEFAULT NULL,
     video_url VARCHAR(500) DEFAULT '',
@@ -103,6 +104,7 @@ removeColumnIfExists($conn, 'products', 'shipping_weight');
 removeColumnIfExists($conn, 'products', 'estimated_delivery_days');
 removeColumnIfExists($conn, 'products', 'return_policy');
 removeColumnIfExists($conn, 'products', 'product_tags');
+addColumnIfNotExists($conn, 'products', 'keywords', 'TEXT DEFAULT NULL');
 removeColumnIfExists($conn, 'products', 'seo_title');
 removeColumnIfExists($conn, 'products', 'seo_description');
 removeColumnIfExists($conn, 'products', 'featured_product');

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Heart, ShoppingBag, Truck, ChevronLeft, ChevronRight, Play, AlertTriangle } from "lucide-react";
+import { Heart, ShoppingBag, Truck, ChevronLeft, ChevronRight, Play, AlertTriangle, X, Expand } from "lucide-react";
 import { formatCurrency, getDiscountPercent } from "../utils/formatters";
 import { useStore } from "../contexts/StoreContext";
 import { useAuth } from "../contexts/AuthContext";
@@ -18,6 +18,7 @@ export default function ProductDetails() {
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState("");
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const { guestId, refreshCounts, wishlistItems, incrementWishlistCount } = useStore();
   const { user } = useAuth();
 
@@ -317,6 +318,17 @@ export default function ProductDetails() {
     (item) => item.product_id === product?.id
   );
 
+  // Fullscreen modal for image
+  const openFullscreen = () => {
+    setIsFullscreen(true);
+    document.body.style.overflow = 'hidden';
+  };
+
+  const closeFullscreen = () => {
+    setIsFullscreen(false);
+    document.body.style.overflow = 'auto';
+  };
+
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center pt-28">Loading product...</div>;
   }
@@ -330,19 +342,25 @@ export default function ProductDetails() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f7f2] pt-28 px-4 md:px-8 lg:px-12">
-      <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-10">
-        {/* Left Column - Media Gallery */}
-        <div>
-          {/* Main Media Display */}
-          <div className="relative bg-black rounded-xl overflow-hidden">
+    <div className="min-h-screen bg-[#f8f7f2] pt-28 pb-16 px-4 md:px-8 lg:px-12">
+      {/* Fullscreen Modal */}
+      {isFullscreen && (
+        <div 
+          className="fixed inset-0 z-50 bg-white/95 flex items-center justify-center"
+          onClick={closeFullscreen}
+        >
+          <button
+            onClick={closeFullscreen}
+            className="absolute top-4 right-4 text-gray-800 hover:text-gray-600 transition z-50 bg-white/80 rounded-full p-2"
+          >
+            <X size={28} />
+          </button>
+          <div className="w-full h-full flex items-center justify-center p-4">
             {currentMedia?.type === 'video' ? (
               <video
                 controls
                 autoPlay
-                muted
-                loop
-                className="w-full h-[520px] object-contain"
+                className="max-w-full max-h-full object-contain"
               >
                 <source src={currentMedia.url} type="video/mp4" />
                 Your browser does not support the video tag.
@@ -351,21 +369,97 @@ export default function ProductDetails() {
               <img
                 src={currentMedia?.url || productImages[0]}
                 alt={product.product_name}
-                className="w-full h-[520px] object-cover"
+                className="max-w-full max-h-full object-contain"
               />
+            )}
+          </div>
+          {/* Fullscreen navigation */}
+          {mediaItems.length > 1 && (
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  prevMedia();
+                }}
+                className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-3 text-gray-800 shadow-lg transition z-50"
+              >
+                <ChevronLeft size={28} />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  nextMedia();
+                }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-3 text-gray-800 shadow-lg transition z-50"
+              >
+                <ChevronRight size={28} />
+              </button>
+              <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-white/90 text-gray-800 px-4 py-2 rounded-full text-sm shadow-lg">
+                {currentMediaIndex + 1} / {mediaItems.length}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-10">
+        {/* Left Column - Media Gallery */}
+        <div>
+          {/* Main Media Display - No black background */}
+          <div 
+            className="relative rounded-xl overflow-hidden cursor-pointer bg-[#f8f7f2]"
+            onClick={openFullscreen}
+          >
+            {currentMedia?.type === 'video' ? (
+              <video
+                controls
+                autoPlay
+                muted
+                loop
+                className="w-full h-[520px] object-contain"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <source src={currentMedia.url} type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            ) : (
+              <img
+                src={currentMedia?.url || productImages[0]}
+                alt={product.product_name}
+                className="w-full h-[520px] object-contain"
+              />
+            )}
+
+            {/* Expand button */}
+            {currentMedia?.type !== 'video' && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openFullscreen();
+                }}
+                className="absolute bottom-4 right-4 bg-white/90 hover:bg-white text-gray-700 rounded-full p-2 shadow-md transition z-10"
+              >
+                <Expand size={18} />
+              </button>
             )}
 
             {/* Navigation Arrows */}
             {mediaItems.length > 1 && (
               <>
                 <button
-                  onClick={prevMedia}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    prevMedia();
+                  }}
                   className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-md transition z-10"
                 >
                   <ChevronLeft size={20} />
                 </button>
                 <button
-                  onClick={nextMedia}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    nextMedia();
+                  }}
                   className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-md transition z-10"
                 >
                   <ChevronRight size={20} />
@@ -381,7 +475,7 @@ export default function ProductDetails() {
             )}
             
             {mediaItems.length > 1 && (
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 text-white px-3 py-1 rounded-full text-xs font-semibold">
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/90 text-gray-700 px-3 py-1 rounded-full text-xs font-semibold shadow-md">
                 {currentMediaIndex + 1} / {mediaItems.length}
               </div>
             )}

@@ -75,13 +75,14 @@ function Header() {
           const response = await axios.get(`${API_BASE}/product/search.php`, {
             params: { q: query, limit: 6 },
           });
-          if (response.data?.status) {
-            setSuggestions(response.data.data || []);
-            setSuggestionsOpen(true);
-            setActiveSuggestionIndex(-1);
-          }
+          const items = response.data?.status ? response.data.data || [] : [];
+          setSuggestions(items);
+          setSuggestionsOpen(items.length > 0);
+          setActiveSuggestionIndex(-1);
         } catch (error) {
           console.error("Search suggestions failed:", error);
+          setSuggestions([]);
+          setSuggestionsOpen(false);
         } finally {
           setSearchLoading(false);
         }
@@ -119,7 +120,10 @@ function Header() {
     const trimmed = query.trim();
     if (!trimmed) return;
     navigate(`/search?q=${encodeURIComponent(trimmed)}`);
+    setSearchQuery("");
     setSuggestionsOpen(false);
+    setActiveSuggestionIndex(-1);
+    setShowMobileSearch(false);
   };
 
   const handleKeyDown = (event) => {
@@ -135,6 +139,8 @@ function Header() {
       if (activeSuggestionIndex >= 0 && activeSuggestionIndex < suggestions.length) {
         const selection = suggestions[activeSuggestionIndex];
         navigate(`/product/${selection.id}`);
+        setSearchQuery("");
+        setActiveSuggestionIndex(-1);
       } else {
         handleSearchNavigate(searchQuery);
       }
@@ -248,7 +254,12 @@ function Header() {
                     <button
                       key={product.id}
                       type="button"
-                      onClick={() => navigate(`/product/${product.id}`)}
+                      onClick={() => {
+                        navigate(`/product/${product.id}`);
+                        setSearchQuery("");
+                        setSuggestionsOpen(false);
+                        setActiveSuggestionIndex(-1);
+                      }}
                       className={`w-full text-left flex items-center gap-3 px-3 py-3 transition hover:bg-[#f8f7f2] ${
                         activeSuggestionIndex === index ? "bg-[#f0efd8]" : ""
                       }`}

@@ -78,6 +78,7 @@ $embroidery = $conn->real_escape_string(trim($data['embroidery'] ?? ''));
 $color = $conn->real_escape_string(trim($data['color'] ?? ''));
 $available_sizes = $conn->real_escape_string(trim($data['available_sizes'] ?? ''));
 $occasion = $conn->real_escape_string(trim($data['occasion'] ?? ''));
+$keywords = $conn->real_escape_string(trim($data['keywords'] ?? ''));
 $image_base64 = trim($data['image'] ?? '');
 $gallery_images = $data['gallery_images'] ?? [];
 $video_file = $data['video_file'] ?? '';
@@ -140,7 +141,7 @@ $total_existing_count = count($all_existing_images);
 $new_images_count = is_array($gallery_images) ? count($gallery_images) : 0;
 $total_images = $total_existing_count + $new_images_count;
 
-// Validate total images doesn't exceed 5
+// Validate total images doesn't exzceed 5
 if ($total_images > 5) {
     echo json_encode([
         "status" => false, 
@@ -216,6 +217,13 @@ if ($image !== '') {
 }
 
 if ($image_gallery_json !== '') {
+    $sql .= ", image_gallery_json='$image_gallery_json'";
+}
+$sql .= ", keywords='$keywords'";
+if ($video_path !== '') {
+    $sql .= ", video_url='$video_path'";
+} elseif ($video_url !== '') {
+    $sql .= ", video_url='$video_url'";
     $sql .= ", image_gallery_json = '$image_gallery_json'";
 } elseif ($image_gallery_json === '' && count($gallery_paths) === 0) {
     // If no images left, set to empty JSON array
