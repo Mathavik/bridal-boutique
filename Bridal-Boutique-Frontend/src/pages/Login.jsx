@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import LoginBanner from "../assets/LoginBanner.png";
+import api from "../services/api";
 
 export default function Login() {
   const { login, loading, user } = useAuth();

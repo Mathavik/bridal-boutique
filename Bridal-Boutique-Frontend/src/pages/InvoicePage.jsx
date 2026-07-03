@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import axios from "axios";
+import api from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import { 
   FileText, 
@@ -20,7 +21,7 @@ import {
 import html2pdf from "html2pdf.js";
 import { formatCurrency } from "../utils/formatters";
 
-const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend";
+
 
 export default function InvoicePage() {
   const { id } = useParams();
@@ -41,7 +42,7 @@ export default function InvoicePage() {
   const fetchInvoice = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${API_BASE}/api/invoice/get_invoice.php?id=${id}`);
+      const response = await api.get(`invoice/get_invoice.php?id=${id}`);
       console.log("Invoice Response:", response.data);
       
       if (response.data?.status) {

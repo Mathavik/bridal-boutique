@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import axios from "axios";
+import api from "../services/api";
 import { 
   Package, 
   Calendar, 
@@ -25,7 +26,7 @@ import {
   CircleCheck
 } from "lucide-react";
 
-const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend";
+
 
 // Helper function to format date
 const formatDate = (dateString) => {
@@ -72,8 +73,9 @@ function OrdersPage() {
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${API_BASE}/api/checkout/get_user_orders.php?user_id=${user.id}`);
-      console.log("Orders API Response:", response.data);
+const response = await api.get(
+  `checkout/get_user_orders.php?user_id=${user.id}`
+);      console.log("Orders API Response:", response.data);
       
       if (response.data?.status) {
         setOrders(response.data.data);

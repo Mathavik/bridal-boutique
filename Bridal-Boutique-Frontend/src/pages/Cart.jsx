@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import api from "../services/api";
 import { formatCurrency } from "../utils/formatters";
 import { useStore } from "../contexts/StoreContext";
 import { useAuth } from "../contexts/AuthContext";
 import { showToast } from "../utils/toast";
 
-const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
+
 
 const resolveImageUrl = (src) => {
   if (!src) return "";
@@ -37,7 +38,7 @@ export default function Cart() {
     if (quantity < 1) return;
 
     try {
-      await axios.post(`${API_BASE}/cart/update.php`, {
+      await api.post("cart/update.php", {
         id,
         quantity,
       });
@@ -51,7 +52,7 @@ export default function Cart() {
 
   const removeItem = async (id) => {
     try {
-      await axios.delete(`${API_BASE}/cart/delete.php?id=${id}`);
+      await api.delete(`cart/delete.php?id=${id}`);
       await refreshCounts();
       showToast("Item removed successfully", "success");
     } catch (err) {
@@ -153,7 +154,7 @@ export default function Cart() {
                         {item.product_name}
                       </h3>
                       <p className="text-sm font-medium text-[#a97c50]">
-                        {formatCurrency(item.price)} 
+                        {formatCurrency(item.price)}
                         {item.gst_percentage && Number(item.gst_percentage) > 0 && (
                           <span className="text-xs text-gray-400 ml-1">
                             (GST: {item.gst_percentage}%)

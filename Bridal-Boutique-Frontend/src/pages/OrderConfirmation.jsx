@@ -2,6 +2,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { CheckCircle, ShoppingBag, Home } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
+import api from "../services/api";
 
 export default function OrderConfirmation() {
   const location = useLocation();

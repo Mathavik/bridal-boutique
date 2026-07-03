@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
+import api from "../services/api";
 import { useNavigate } from "react-router-dom";
 
-const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
+
 
 export default function AdminBannerPage() {
   const navigate = useNavigate();
@@ -28,7 +29,7 @@ export default function AdminBannerPage() {
     const fetchBanners = async () => {
       setBannersLoading(true);
       try {
-        const res = await axios.get(`${API_BASE}/banner/get_banners.php`);
+        const res = await api.get("banner/get_banners.php");
         setBanners(res?.data?.data || []);
       } catch (err) {
         console.error("Failed to load banners", err);
@@ -43,7 +44,7 @@ export default function AdminBannerPage() {
       setCategoryLoading(true);
       setCategoryError("");
       try {
-        const response = await axios.get(`${API_BASE}/category/get_active_category.php`);
+        const response = await api.get("category/get_active_category.php");
         const categoryList = response?.data?.data || [];
         setCategories(categoryList);
         if (categoryList.length > 0) {
@@ -108,11 +109,11 @@ export default function AdminBannerPage() {
         if (formData.image instanceof File) {
           payload.append("image", formData.image);
         }
-        response = await axios.post(`${API_BASE}/banner/update_banner.php`, payload, {
+        response = await api.post("banner/update_banner.php", payload, {
           headers: { "Content-Type": "multipart/form-data" },
         });
       } else {
-        response = await axios.post(`${API_BASE}/banner/add_banner.php`, payload, {
+        response = await api.post("banner/add_banner.php", payload, {
           headers: { "Content-Type": "multipart/form-data" },
         });
       }
@@ -159,7 +160,7 @@ export default function AdminBannerPage() {
   const handleDelete = async (id) => {
     if (!confirm("Are you sure you want to delete this banner?")) return;
     try {
-      const res = await axios.post(`${API_BASE}/banner/delete_banner.php`, { id });
+      const res = await api.post("banner/delete_banner.php", { id });
       if (res?.data?.success) {
         setBanners((prev) => prev.filter((b) => String(b.id) !== String(id)));
         setSuccess("Banner deleted.");
@@ -269,7 +270,7 @@ export default function AdminBannerPage() {
             </button>
           </div>
         </form>
-        
+
         <div className="mt-10">
           <h2 className="mb-4 text-xl font-semibold">Existing Banners</h2>
           {bannersLoading ? (

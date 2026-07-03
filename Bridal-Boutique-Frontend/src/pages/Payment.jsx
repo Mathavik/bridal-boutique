@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+import api from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import { useStore } from "../contexts/StoreContext";
 import { formatCurrency } from "../utils/formatters";
@@ -19,7 +20,6 @@ import {
   Mail
 } from "lucide-react";
 
-const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
 
 export default function Payment() {
   const location = useLocation();
@@ -184,7 +184,10 @@ export default function Payment() {
     console.log("Payment payload:", payload);
 
     try {
-      const response = await axios.post(`${API_BASE}/invoice/create_invoice.php`, payload);
+      const response = await api.post(
+  "invoice/create_invoice.php",
+  payload
+);
       console.log("Payment response:", response.data);
 
       if (response.data?.status) {

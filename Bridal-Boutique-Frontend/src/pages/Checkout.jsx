@@ -5,7 +5,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useStore } from "../contexts/StoreContext";
 import { formatCurrency } from "../utils/formatters";
 
-const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
+import api from "../services/api";
 
 export default function Checkout() {
   const location = useLocation();
