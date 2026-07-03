@@ -67,11 +67,22 @@ export default function Cart() {
       return;
     }
 
+    // Calculate GST and totals
+    const subtotalAmount = subtotal;
+    const gstAmount = items.reduce((sum, item) => {
+      const gstPercent = Number(item.gst_percentage || 0);
+      const itemTotal = Number(item.price || 0) * Number(item.quantity || 1);
+      return sum + (itemTotal * gstPercent / 100);
+    }, 0);
+    const totalAmount = subtotalAmount + gstAmount;
+
     navigate("/checkout", {
       state: {
         fromCart: true,
         cartItems: items,
-        subtotal,
+        subtotal: subtotalAmount,
+        gstAmount: gstAmount,
+        total: totalAmount,
         customer_name: user.name || "",
         email: user.email || "",
         mobile: user.phone || "",
@@ -88,6 +99,17 @@ export default function Cart() {
       );
     }, 0);
   }, [items]);
+
+  // Calculate GST total
+  const gstTotal = useMemo(() => {
+    return items.reduce((sum, item) => {
+      const gstPercent = Number(item.gst_percentage || 0);
+      const itemTotal = Number(item.price || 0) * Number(item.quantity || 1);
+      return sum + (itemTotal * gstPercent / 100);
+    }, 0);
+  }, [items]);
+
+  const grandTotal = subtotal + gstTotal;
 
   return (
     <div className="min-h-screen bg-[#f8f7f2] pt-28 px-4 md:px-8 lg:px-12">
@@ -131,7 +153,12 @@ export default function Cart() {
                         {item.product_name}
                       </h3>
                       <p className="text-sm font-medium text-[#a97c50]">
-                        {formatCurrency(item.price)}
+                        {formatCurrency(item.price)} 
+                        {item.gst_percentage && Number(item.gst_percentage) > 0 && (
+                          <span className="text-xs text-gray-400 ml-1">
+                            (GST: {item.gst_percentage}%)
+                          </span>
+                        )}
                       </p>
                       {item.size && (
                         <span className="inline-flex items-center rounded-full bg-[#f0f0f0] px-3 py-1 text-xs font-medium text-gray-700 mt-1">
@@ -199,6 +226,13 @@ export default function Cart() {
                 <span className="font-medium">{formatCurrency(subtotal)}</span>
               </div>
 
+              {gstTotal > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">GST ({items.reduce((sum, item) => sum + Number(item.gst_percentage || 0), 0) / items.filter(item => Number(item.gst_percentage || 0) > 0).length || 0}%)</span>
+                  <span className="font-medium">{formatCurrency(gstTotal)}</span>
+                </div>
+              )}
+
               <div className="flex justify-between">
                 <span className="text-gray-600">Shipping</span>
                 <span className="text-green-600">Free</span>
@@ -208,8 +242,14 @@ export default function Cart() {
 
               <div className="flex justify-between font-bold text-lg">
                 <span>Total</span>
-                <span>{formatCurrency(subtotal)}</span>
+                <span>{formatCurrency(grandTotal)}</span>
               </div>
+
+              {gstTotal > 0 && (
+                <div className="text-xs text-gray-400 text-right mt-1">
+                  Inclusive of all taxes
+                </div>
+              )}
             </div>
 
             <Link
