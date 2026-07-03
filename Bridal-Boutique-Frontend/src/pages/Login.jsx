@@ -22,10 +22,10 @@ const [email, setEmail] = useState("");
     event.preventDefault();
     setError("");
     
-    if (!phone || !password) {
-      setError("Please fill in all fields");
-      return;
-    }
+   if (!email || !password) {
+  setError("Please fill in all fields");
+  return;
+}
 
     
 
