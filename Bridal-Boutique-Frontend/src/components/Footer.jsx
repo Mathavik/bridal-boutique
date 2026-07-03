@@ -9,7 +9,7 @@ import botikLogo from "../assets/Botik.png";
 
 function Footer() {
   return (
-    <footer className="w-full bg-white mt-24">
+    <footer className="w-full bg-white ">
 
       <div className="max-w-[1280px] mx-auto px-2">
 

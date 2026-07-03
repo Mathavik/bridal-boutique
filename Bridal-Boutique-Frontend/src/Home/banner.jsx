@@ -30,9 +30,9 @@ function Banner() {
           </div>
 
           {/* Button */}
-          <button className="mt-10 h-[48px] w-[130px] bg-white text-black text-[12px] font-semibold hover:bg-black hover:text-white transition duration-300">
+          {/* <button className="mt-10 h-[48px] w-[130px] bg-white text-black text-[12px] font-semibold hover:bg-black hover:text-white transition duration-300">
             SHOP NOW
-          </button>
+          </button> */}
         </div>
       </div>
     </section>

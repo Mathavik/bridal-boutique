@@ -7,7 +7,7 @@ import {
   ShoppingBag,
   X,
 } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
@@ -21,10 +21,19 @@ function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [allCategories, setAllCategories] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [suggestionsOpen, setSuggestionsOpen] = useState(false);
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
   const dropdownRef = useRef(null);
+  const searchRef = useRef(null);
+  const mobileSearchRef = useRef(null);
   const { cartCount, wishlistCount } = useStore();
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const params = new URLSearchParams(location.search);
   const activeCategoryId = params.get("category_id") || "";
@@ -50,9 +59,53 @@ function Header() {
   }, [location.search]);
 
   useEffect(() => {
+    const handler = setTimeout(() => {
+      const query = searchQuery.trim();
+      if (!query) {
+        setSuggestions([]);
+        setSuggestionsOpen(false);
+        setActiveSuggestionIndex(-1);
+        setSearchLoading(false);
+        return;
+      }
+
+      const fetchSuggestions = async () => {
+        setSearchLoading(true);
+        try {
+          const response = await axios.get(`${API_BASE}/product/search.php`, {
+            params: { q: query, limit: 6 },
+          });
+          if (response.data?.status) {
+            setSuggestions(response.data.data || []);
+            setSuggestionsOpen(true);
+            setActiveSuggestionIndex(-1);
+          }
+        } catch (error) {
+          console.error("Search suggestions failed:", error);
+        } finally {
+          setSearchLoading(false);
+        }
+      };
+
+      fetchSuggestions();
+    }, 300);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery]);
+
+  useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setDropdownOpen(false);
+      }
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setSuggestionsOpen(false);
+        setActiveSuggestionIndex(-1);
+      }
+      if (mobileSearchRef.current && !mobileSearchRef.current.contains(event.target)) {
+        setShowMobileSearch(false);
       }
     };
 
@@ -61,6 +114,36 @@ function Header() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  const handleSearchNavigate = (query) => {
+    const trimmed = query.trim();
+    if (!trimmed) return;
+    navigate(`/search?q=${encodeURIComponent(trimmed)}`);
+    setSuggestionsOpen(false);
+  };
+
+  const handleKeyDown = (event) => {
+    if (!suggestionsOpen || suggestions.length === 0) return;
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setActiveSuggestionIndex((prev) => Math.min(prev + 1, suggestions.length - 1));
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setActiveSuggestionIndex((prev) => Math.max(prev - 1, 0));
+    } else if (event.key === "Enter") {
+      if (activeSuggestionIndex >= 0 && activeSuggestionIndex < suggestions.length) {
+        const selection = suggestions[activeSuggestionIndex];
+        navigate(`/product/${selection.id}`);
+      } else {
+        handleSearchNavigate(searchQuery);
+      }
+      setSuggestionsOpen(false);
+    } else if (event.key === "Escape") {
+      setSuggestionsOpen(false);
+      setActiveSuggestionIndex(-1);
+    }
+  };
 
   return (
     <>
@@ -139,16 +222,76 @@ function Header() {
           {/* RIGHT */}
           <div className="flex items-center justify-end gap-3 md:gap-5 flex-1">
             {/* Desktop Search */}
-            <div className="hidden md:flex items-center w-[280px] h-[42px] border border-[#D8D8D8] rounded-md px-4">
+            <div ref={searchRef} className="relative hidden md:flex items-center w-[320px] h-[42px] border border-[#D8D8D8] rounded-md px-4 bg-white">
               <input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
                 placeholder="Search"
                 className="flex-1 outline-none text-sm"
               />
-              <Search size={20} />
+              <button
+                type="button"
+                onClick={() => handleSearchNavigate(searchQuery)}
+                className="text-gray-500"
+              >
+                {searchLoading ? (
+                  <span className="text-[12px]">Loading...</span>
+                ) : (
+                  <Search size={20} />
+                )}
+              </button>
+
+              {suggestionsOpen && suggestions.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 z-50 rounded-2xl border border-[#E5E7EB] bg-white shadow-lg">
+                  {suggestions.map((product, index) => (
+                    <button
+                      key={product.id}
+                      type="button"
+                      onClick={() => navigate(`/product/${product.id}`)}
+                      className={`w-full text-left flex items-center gap-3 px-3 py-3 transition hover:bg-[#f8f7f2] ${
+                        activeSuggestionIndex === index ? "bg-[#f0efd8]" : ""
+                      }`}
+                    >
+                      <img
+                        src={product.image ? `${API_BASE}/${product.image}` : "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f"}
+                        alt={product.product_name}
+                        className="h-12 w-12 rounded-xl object-cover"
+                      />
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold line-clamp-1">{product.product_name}</p>
+                        <p className="text-xs text-gray-500 line-clamp-1">{product.category_name || "Category"}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Mobile Search */}
-            <Search size={22} className="md:hidden cursor-pointer" />
+            <button
+              type="button"
+              onClick={() => setShowMobileSearch((prev) => !prev)}
+              className="md:hidden"
+            >
+              <Search size={22} />
+            </button>
+            {showMobileSearch && (
+              <div ref={mobileSearchRef} className="fixed inset-x-0 top-[82px] z-50 px-4 py-3 bg-white shadow-lg md:hidden">
+                <div className="flex items-center gap-2 rounded-2xl border border-gray-300 bg-white px-3 py-2">
+                  <input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    className="flex-1 bg-transparent text-sm outline-none"
+                    placeholder="Search products"
+                  />
+                  <button type="button" onClick={() => handleSearchNavigate(searchQuery)} className="text-gray-500">
+                    {searchLoading ? <span className="text-[12px]">Loading...</span> : <Search size={20} />}
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* User Dropdown - Updated */}
             <UserDropdown />

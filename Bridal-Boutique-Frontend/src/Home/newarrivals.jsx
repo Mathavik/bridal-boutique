@@ -66,9 +66,9 @@ function NewArrivals() {
                   {item.subtitle}
                 </h3>
 
-                <button className="bg-white text-black font-semibold px-10 py-3 hover:bg-black hover:text-white transition duration-300">
+                {/* <button className="bg-white text-black font-semibold px-10 py-3 hover:bg-black hover:text-white transition duration-300">
                   SHOP NOW
-                </button>
+                </button> */}
               </div>
             </div>
           ))}

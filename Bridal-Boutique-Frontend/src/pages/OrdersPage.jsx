@@ -69,25 +69,25 @@ function OrdersPage() {
     }
   };
 
-  const cancelOrder = async (orderId) => {
-    if (!confirm("Are you sure you want to cancel this order?")) return;
+  // const cancelOrder = async (orderId) => {
+  //   if (!confirm("Are you sure you want to cancel this order?")) return;
 
-    try {
-      const response = await axios.post(`${API_BASE}/api/checkout/cancel_order.php`, {
-        order_id: orderId,
-        user_id: user.id,
-      });
-      if (response.data?.status) {
-        fetchOrders();
-        alert("Order cancelled successfully!");
-      } else {
-        alert(response.data?.message || "Failed to cancel order");
-      }
-    } catch (error) {
-      console.error("Error cancelling order:", error);
-      alert("Failed to cancel order");
-    }
-  };
+  //   try {
+  //     const response = await axios.post(`${API_BASE}/api/checkout/cancel_order.php`, {
+  //       order_id: orderId,
+  //       user_id: user.id,
+  //     });
+  //     if (response.data?.status) {
+  //       fetchOrders();
+  //       alert("Order cancelled successfully!");
+  //     } else {
+  //       alert(response.data?.message || "Failed to cancel order");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error cancelling order:", error);
+  //     alert("Failed to cancel order");
+  //   }
+  // };
 
   const viewOrderDetails = (order) => {
     setSelectedOrder(order);
@@ -229,7 +229,7 @@ function OrdersPage() {
                     View Invoice
                   </button>
 
-                  {(order.status || 'pending') !== "cancelled" && (order.status || 'pending') !== "delivered" && (
+                  {/* {(order.status || 'pending') !== "cancelled" && (order.status || 'pending') !== "delivered" && (
                     <button
                       onClick={() => cancelOrder(order.id)}
                       className="flex items-center gap-1 px-4 py-2 text-sm text-red-600 border border-red-600 rounded-lg hover:bg-red-600 hover:text-white transition"
@@ -237,7 +237,7 @@ function OrdersPage() {
                       <X size={16} />
                       Cancel
                     </button>
-                  )}
+                  )} */}
                 </div>
               </div>
             </div>
