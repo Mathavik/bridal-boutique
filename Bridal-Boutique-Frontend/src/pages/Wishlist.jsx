@@ -88,7 +88,7 @@ export default function Wishlist() {
           {items.length > 0 && (
             <div className="flex items-center gap-3">
               <Link 
-                to="/products" 
+                to="/" 
                 className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition"
               >
                 <ArrowLeft size={16} /> Continue Shopping
@@ -113,7 +113,7 @@ export default function Wishlist() {
             <h3 className="text-xl font-medium text-gray-700">Your wishlist is empty</h3>
             <p className="text-gray-400 mt-2">Start adding your favorite items to your wishlist</p>
             <Link 
-              to="/products" 
+              to="/" 
               className="mt-6 inline-flex items-center gap-2 px-8 py-3 bg-[#181818] text-white rounded-full hover:bg-[#333] transition"
             >
               <ShoppingBag size={18} /> Start Shopping
