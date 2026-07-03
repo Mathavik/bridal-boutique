@@ -10,6 +10,7 @@ const [email, setEmail] = useState("");
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const redirect = searchParams.get("redirect") || "/";
+  const [isModalOpen, setIsModalOpen] = useState(true);
 
   useEffect(() => {
     if (user) {
@@ -21,18 +22,28 @@ const [email, setEmail] = useState("");
     event.preventDefault();
     setError("");
     
-    if (!email || !password) {
+    if (!phone || !password) {
       setError("Please fill in all fields");
       return;
     }
 
-    const response = await login(email, password);
+    
+
+const response = await login(email, password);
     if (response.status) {
+      setIsModalOpen(false);
       navigate(redirect, { replace: true });
     } else {
       setError(response.message || "Login failed");
     }
   };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    navigate("/");
+  };
+
+  if (!isModalOpen) return null;
 
   return (
     <>
@@ -222,6 +233,23 @@ const [email, setEmail] = useState("");
           </div>
         </div>
       </div>
+
+      {/* Animation Styles */}
+      <style>{`
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px) scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+        .animate-slideUp {
+          animation: slideUp 0.3s ease-out forwards;
+        }
+      `}</style>
     </>
   );
 }
