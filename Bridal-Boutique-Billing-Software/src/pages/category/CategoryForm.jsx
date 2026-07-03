@@ -43,6 +43,7 @@ export default function CategoryForm() {
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [status, setStatus] = useState("active"); // New status state
+  const [visible, setVisible] = useState(false);
   const [bannerImage, setBannerImage] = useState("");
   const [bannerFile, setBannerFile] = useState(null);
   const [bannerPreview, setBannerPreview] = useState("");
@@ -128,12 +129,13 @@ export default function CategoryForm() {
         }
       }
 
-      const payload = {
-        name: name.trim(),
-        company_id: company_id,
-        banner_image: banner_image_value,
-        status: status, // Include status in payload
-      };
+     const payload = {
+  name: name.trim(),
+  company_id: company_id,
+  banner_image: banner_image_value,
+  status: status,
+  visible: visible,
+};
 
       const res = await api.post("/category/create.php", payload);
       if (res.data.status) {
@@ -629,6 +631,46 @@ export default function CategoryForm() {
                 ❌ Inactive
               </button>
             </div>
+
+            <div style={{ marginBottom: "20px" }}>
+  <label className="cf-label">Category Visibility</label>
+
+  <label
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "10px",
+      marginTop: "10px",
+      cursor: "pointer",
+      fontWeight: "600",
+      color: "#334155",
+    }}
+  >
+    <input
+      type="checkbox"
+      checked={visible}
+      onChange={(e) => setVisible(e.target.checked)}
+      style={{
+        width: "18px",
+        height: "18px",
+        cursor: "pointer",
+      }}
+    />
+
+    Visible Category
+  </label>
+
+  <p
+    style={{
+      marginTop: "6px",
+      marginLeft: "28px",
+      fontSize: "12px",
+      color: "#94a3b8",
+    }}
+  >
+    Checked = <b>true</b> &nbsp;&nbsp; Unchecked = <b>false</b>
+  </p>
+</div>
 
             {/* Banner Image */}
             <div className="cf-label-row">
