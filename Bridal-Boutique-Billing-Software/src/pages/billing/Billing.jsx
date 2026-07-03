@@ -2087,11 +2087,14 @@ api.get(
   .then(res => {
 
     if (res.data.status) {
+      const companyList = res.data.data || [];
+      setCompanies(companyList);
 
-      setCompanies(
-        res.data.data || []
-      );
-
+      if (!selectedCompany && companyList.length > 0) {
+        const firstCompanyId = companyList[0].id;
+        setSelectedCompany(firstCompanyId);
+        localStorage.setItem("selected_company_id", firstCompanyId);
+      }
     }
 
   });

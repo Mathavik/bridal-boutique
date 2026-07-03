@@ -20,9 +20,7 @@ import UserDropdown from "./UserDropdown";
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  // Categories for navigation (desktop + mobile drawer)
   const [navCategories, setNavCategories] = useState([]);
-  // Categories for "Shop All" dropdown (uses get_active_category.php)
   const [shopAllCategories, setShopAllCategories] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
@@ -41,49 +39,48 @@ function Header() {
   const params = new URLSearchParams(location.search);
   const activeCategoryId = params.get("category_id") || "";
 
-  // Fetch both category endpoints
- useEffect(() => {
-  const fetchCategories = async () => {
-    try {
-      const companyId = params.get("company_id");
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const companyId = params.get("company_id");
 
-      const visibleUrl = companyId
-        ? `${API_BASE}/category/getVisibleCategories.php?company_id=${companyId}`
-        : `${API_BASE}/category/getVisibleCategories.php`;
+        const visibleUrl = companyId
+          ? `${API_BASE}/category/getVisibleCategories.php?company_id=${companyId}`
+          : `${API_BASE}/category/getVisibleCategories.php`;
 
-      const activeUrl = companyId
-        ? `${API_BASE}/category/get_active_category.php?company_id=${companyId}`
-        : `${API_BASE}/category/get_active_category.php`;
+        const activeUrl = companyId
+          ? `${API_BASE}/category/get_active_category.php?company_id=${companyId}`
+          : `${API_BASE}/category/get_active_category.php`;
 
-      const [visibleRes, activeRes] = await Promise.all([
-        axios.get(visibleUrl),
-        axios.get(activeUrl),
-      ]);
+        const [visibleRes, activeRes] = await Promise.all([
+          axios.get(visibleUrl),
+          axios.get(activeUrl),
+        ]);
 
-      console.log("Visible:", visibleRes.data);
-      console.log("Active:", activeRes.data);
+        console.log("Visible:", visibleRes.data);
+        console.log("Active:", activeRes.data);
 
-      setNavCategories(
-        Array.isArray(visibleRes.data?.data)
-          ? visibleRes.data.data
-          : []
-      );
+        setNavCategories(
+          Array.isArray(visibleRes.data?.data)
+            ? visibleRes.data.data
+            : []
+        );
 
-      setShopAllCategories(
-        Array.isArray(activeRes.data?.data)
-          ? activeRes.data.data
-          : []
-      );
-    } catch (err) {
-      console.error(err);
-      setNavCategories([]);
-      setShopAllCategories([]);
-    }
-  };
+        setShopAllCategories(
+          Array.isArray(activeRes.data?.data)
+            ? activeRes.data.data
+            : []
+        );
+      } catch (err) {
+        console.error(err);
+        setNavCategories([]);
+        setShopAllCategories([]);
+      }
+    };
 
-  fetchCategories();
-}, [location.search]);
-  // Search suggestions (unchanged)
+    fetchCategories();
+  }, [location.search]);
+
   useEffect(() => {
     const handler = setTimeout(() => {
       const query = searchQuery.trim();
@@ -122,7 +119,6 @@ function Header() {
     };
   }, [searchQuery]);
 
-  // Click outside handlers (unchanged)
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -151,6 +147,7 @@ function Header() {
     setSuggestionsOpen(false);
     setActiveSuggestionIndex(-1);
     setShowMobileSearch(false);
+    setMenuOpen(false);
   };
 
   const handleKeyDown = (event) => {
@@ -184,7 +181,7 @@ function Header() {
         <div className="max-w-[1220px] mx-auto h-[82px] px-4 lg:px-0 flex items-center justify-between">
           {/* LEFT */}
           <div className="flex items-center gap-6 flex-1">
-            {/* Desktop Shop Button - uses shopAllCategories */}
+            {/* Desktop Shop Button */}
             <div className="relative hidden lg:flex" ref={dropdownRef}>
               <button
                 onClick={() => setDropdownOpen((prev) => !prev)}
@@ -223,7 +220,7 @@ function Header() {
               <Menu size={25} />
             </button>
 
-            {/* Desktop Navigation - uses navCategories */}
+            {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center gap-7 text-[14px] font-medium text-[#181818]">
               {navCategories.slice(0, 3).map((category) => (
                 <Link
@@ -255,7 +252,10 @@ function Header() {
           {/* RIGHT */}
           <div className="flex items-center justify-end gap-3 md:gap-5 flex-1">
             {/* Desktop Search */}
-            <div ref={searchRef} className="relative hidden md:flex items-center w-[320px] h-[42px] border border-[#D8D8D8] rounded-md px-4 bg-white">
+            <div
+              ref={searchRef}
+              className="relative hidden md:flex items-center w-[320px] h-[42px] border border-[#D8D8D8] rounded-md px-4 bg-white"
+            >
               <input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -292,13 +292,21 @@ function Header() {
                       }`}
                     >
                       <img
-                        src={product.image ? `${API_BASE}/${product.image}` : "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f"}
+                        src={
+                          product.image
+                            ? `${API_BASE}/${product.image}`
+                            : "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f"
+                        }
                         alt={product.product_name}
                         className="h-12 w-12 rounded-xl object-cover"
                       />
                       <div className="flex-1">
-                        <p className="text-sm font-semibold line-clamp-1">{product.product_name}</p>
-                        <p className="text-xs text-gray-500 line-clamp-1">{product.category_name || "Category"}</p>
+                        <p className="text-sm font-semibold line-clamp-1">
+                          {product.product_name}
+                        </p>
+                        <p className="text-xs text-gray-500 line-clamp-1">
+                          {product.category_name || "Category"}
+                        </p>
                       </div>
                     </button>
                   ))}
@@ -314,8 +322,12 @@ function Header() {
             >
               <Search size={22} />
             </button>
+
             {showMobileSearch && (
-              <div ref={mobileSearchRef} className="fixed inset-x-0 top-[82px] z-50 px-4 py-3 bg-white shadow-lg md:hidden">
+              <div
+                ref={mobileSearchRef}
+                className="fixed inset-x-0 top-[82px] z-50 px-4 py-3 bg-white shadow-lg md:hidden"
+              >
                 <div className="flex items-center gap-2 rounded-2xl border border-gray-300 bg-white px-3 py-2">
                   <input
                     value={searchQuery}
@@ -324,8 +336,16 @@ function Header() {
                     className="flex-1 bg-transparent text-sm outline-none"
                     placeholder="Search products"
                   />
-                  <button type="button" onClick={() => handleSearchNavigate(searchQuery)} className="text-gray-500">
-                    {searchLoading ? <span className="text-[12px]">Loading...</span> : <Search size={20} />}
+                  <button
+                    type="button"
+                    onClick={() => handleSearchNavigate(searchQuery)}
+                    className="text-gray-500"
+                  >
+                    {searchLoading ? (
+                      <span className="text-[12px]">Loading...</span>
+                    ) : (
+                      <Search size={20} />
+                    )}
                   </button>
                 </div>
               </div>
@@ -368,12 +388,12 @@ function Header() {
 
       {/* Mobile Drawer */}
       <div
-        className={`fixed top-0 left-0 h-full w-[290px] bg-white z-[70] transition-transform duration-300 ${
+        className={`fixed top-0 left-0 h-full w-[290px] bg-white z-[70] transition-transform duration-300 overflow-y-auto ${
           menuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 h-[70px] border-b">
+        <div className="sticky top-0 bg-white z-10 flex items-center justify-between px-5 h-[70px] border-b">
           <img src={botikLogo} alt="" className="w-[110px]" />
           <button onClick={() => setMenuOpen(false)}>
             <X size={24} />
@@ -384,23 +404,36 @@ function Header() {
         <div className="p-5">
           <div className="flex items-center border rounded-md h-11 px-3">
             <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleSearchNavigate(searchQuery);
+                }
+              }}
               placeholder="Search Products"
               className="flex-1 outline-none text-sm"
             />
-            <Search size={20} />
+            <button
+              type="button"
+              onClick={() => handleSearchNavigate(searchQuery)}
+              className="text-gray-500"
+            >
+              <Search size={20} />
+            </button>
           </div>
         </div>
 
-        {/* Menu - uses navCategories */}
-        <nav className="px-5 flex flex-col">
-          {navCategories.slice(0, 4).map((category) => (
+        {/* Menu */}
+        <nav className="px-5 pb-6 flex flex-col">
+          {navCategories.map((category) => (
             <Link
               key={category.id}
               to={`/bridal-lehenga?category_id=${category.id}`}
-              className={`py-4 border-b font-medium ${
+              className={`py-4 border-b text-[16px] font-medium ${
                 activeCategoryId === String(category.id)
                   ? "text-[#a97c50] font-semibold"
-                  : ""
+                  : "text-[#181818]"
               }`}
               onClick={() => setMenuOpen(false)}
             >
@@ -410,60 +443,12 @@ function Header() {
 
           <Link
             to="/bridal-lehenga"
-            className="py-4 border-b font-medium"
+            className="py-4 border-b text-[16px] font-medium text-[#181818]"
             onClick={() => setMenuOpen(false)}
           >
             Shop All
           </Link>
         </nav>
-
-        {/* Bottom Icons */}
-        <div className="absolute bottom-0 left-0 right-0 border-t">
-          <div className="grid grid-cols-3">
-            {user ? (
-              <Link
-                to="/profile"
-                className="flex flex-col items-center py-4 gap-2"
-                onClick={() => setMenuOpen(false)}
-              >
-                <User size={22} />
-                <span className="text-xs">Profile</span>
-              </Link>
-            ) : (
-              <Link
-                to="/login"
-                className="flex flex-col items-center py-4 gap-2"
-                onClick={() => setMenuOpen(false)}
-              >
-                <User size={22} />
-                <span className="text-xs">Login</span>
-              </Link>
-            )}
-
-            <Link
-              to="/wishlist"
-              className="flex flex-col items-center py-4 gap-2"
-              onClick={() => setMenuOpen(false)}
-            >
-              <Heart
-                size={22}
-                className={`${
-                  wishlistCount > 0 ? "text-red-600" : "text-black"
-                }`}
-              />
-              <span className="text-xs">Wishlist</span>
-            </Link>
-
-            <Link
-              to="/cart"
-              className="flex flex-col items-center py-4 gap-2"
-              onClick={() => setMenuOpen(false)}
-            >
-              <ShoppingBag size={22} />
-              <span className="text-xs">Cart</span>
-            </Link>
-          </div>
-        </div>
       </div>
     </>
   );
