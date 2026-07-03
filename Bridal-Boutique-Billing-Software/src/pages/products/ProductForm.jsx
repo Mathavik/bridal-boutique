@@ -202,10 +202,21 @@ export default function ProductForm() {
       reader.readAsDataURL(file);
     });
 
+  // Updated handler for gallery files - limits to 5 images
   const handleGalleryFilesChange = (e) => {
     const files = Array.from(e.target.files || []);
-    setGalleryFiles(files);
-    setGalleryPreviews(files.map((file) => URL.createObjectURL(file)));
+    
+    // Check if adding these files would exceed 5
+    if (galleryFiles.length + files.length > 5) {
+      show("warn", "Limit Exceeded", "You can upload maximum 5 images.");
+      return;
+    }
+    
+    setGalleryFiles((prev) => [...prev, ...files]);
+    setGalleryPreviews((prev) => [
+      ...prev,
+      ...files.map((file) => URL.createObjectURL(file))
+    ]);
   };
 
   const handleRemoveGalleryImage = (index) => {
@@ -269,7 +280,7 @@ export default function ProductForm() {
       show(
         "warn",
         "Invalid GST",
-        "Please enter a valid GST percentage (0�100)."
+        "Please enter a valid GST percentage (0–100)."
       );
       return;
     }
@@ -596,6 +607,108 @@ export default function ProductForm() {
           animation: pfFadeIn 0.3s ease both;
         }
         @keyframes pfFadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+
+        /* Media Gallery Styles */
+        .pf-media-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+          gap: 10px;
+          margin-top: 12px;
+        }
+        .pf-media-thumb {
+          position: relative;
+          border-radius: 12px;
+          overflow: hidden;
+          aspect-ratio: 1;
+          background: #f1f5f9;
+          border: 2px solid #e2e8f0;
+          transition: all 0.2s;
+        }
+        .pf-media-thumb:hover {
+          border-color: #3b82f6;
+          transform: scale(1.02);
+        }
+        .pf-media-thumb img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+        .pf-media-remove {
+          position: absolute;
+          top: 4px;
+          right: 4px;
+          width: 22px;
+          height: 22px;
+          border-radius: 50%;
+          border: none;
+          background: rgba(239, 68, 68, 0.9);
+          color: white;
+          font-size: 12px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s;
+        }
+        .pf-media-remove:hover {
+          background: #dc2626;
+          transform: scale(1.1);
+        }
+        .pf-upload-area {
+          border: 2px dashed #d1d5db;
+          border-radius: 12px;
+          padding: 20px;
+          text-align: center;
+          cursor: pointer;
+          transition: all 0.2s;
+          background: #fafafa;
+        }
+        .pf-upload-area:hover {
+          border-color: #3b82f6;
+          background: #f0f6ff;
+        }
+        .pf-upload-area.dragover {
+          border-color: #3b82f6;
+          background: #eff6ff;
+        }
+        .pf-upload-counter {
+          font-size: 12px;
+          color: #6b7280;
+          margin-top: 4px;
+        }
+        .pf-video-preview {
+          margin-top: 12px;
+          position: relative;
+        }
+        .pf-video-preview video {
+          border-radius: 12px;
+          max-height: 200px;
+          width: 100%;
+          background: #000;
+        }
+        .pf-video-preview .pf-media-remove {
+          top: 8px;
+          right: 8px;
+        }
+        .pf-file-input-wrapper {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          align-items: center;
+        }
+        .pf-file-input-wrapper input[type="file"] {
+          flex: 1;
+          padding: 10px;
+          border: 1.5px solid #e2e8f0;
+          border-radius: 12px;
+          background: #f8faff;
+          font-size: 13px;
+          min-width: 150px;
+        }
+        .pf-file-input-wrapper input[type="file"]:hover {
+          border-color: #bfdbfe;
+          background: #f0f6ff;
+        }
       `}</style>
 
       <ToastPortal toasts={toasts} remove={remove} />
@@ -608,7 +721,7 @@ export default function ProductForm() {
           <div className="pf-stripe" />
 
           <div className="pf-header">
-            <div className="pf-header-icon">??</div>
+            <div className="pf-header-icon">📦</div>
             <div className="pf-header-text">
               <h1>Add Product</h1>
               <p>Fill in the details to create a new product</p>
@@ -622,7 +735,7 @@ export default function ProductForm() {
               style={{
                 display: "flex",
                 alignItems: "center",
-                width: "320px",
+                width: "100%",
                 background: "#fff",
                 border: "1px solid #dbeafe",
                 borderRadius: "14px",
@@ -637,7 +750,7 @@ export default function ProductForm() {
                   fontSize: "18px",
                 }}
               >
-                ??
+                🏢
               </span>
 
               <select
@@ -667,7 +780,7 @@ export default function ProductForm() {
                 Product Name <span style={{ color: "#ef4444" }}>*</span>
               </label>
               <div className="pf-input-wrap">
-                <span className="pf-input-icon">???</span>
+                <span className="pf-input-icon">📝</span>
                 <input
                   className="pf-input"
                   placeholder="e.g. Bisleri Water 1L"
@@ -680,7 +793,7 @@ export default function ProductForm() {
             <div className="pf-field">
               <label className="pf-label">Product Code</label>
               <div className="pf-input-wrap">
-                <span className="pf-input-icon">??</span>
+                <span className="pf-input-icon">🔢</span>
                 <input
                   className="pf-input"
                   placeholder="e.g. PRD001"
@@ -700,20 +813,20 @@ export default function ProductForm() {
                 Category <span style={{ color: "#ef4444" }}>*</span>
               </label>
               <div className="pf-select-wrap pf-input-wrap">
-                <span className="pf-input-icon">???</span>
+                <span className="pf-input-icon">📂</span>
                 <select
                   className="pf-select"
                   value={form.category_id}
                   onChange={(e) => set("category_id", e.target.value)}
                 >
-                  <option value="">Select a category�</option>
+                  <option value="">Select a category…</option>
                   {categories.map((category) => (
                     <option key={category.id} value={category.id}>
                       {category.name}
                     </option>
                   ))}
                 </select>
-                <span className="pf-select-arrow">?</span>
+                <span className="pf-select-arrow">▾</span>
               </div>
             </div>
 
@@ -795,14 +908,27 @@ export default function ProductForm() {
             </p>
 
             <div className="pf-field">
-              <label className="pf-label">Product Images</label>
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleGalleryFilesChange}
-              />
-              {galleryPreviews.length > 0 && (
+              <label className="pf-label">
+                Product Images (Max 5)
+                <span style={{ fontSize: "11px", color: "#6b7280", marginLeft: "8px", fontWeight: "400" }}>
+                  {galleryFiles.length}/5 uploaded
+                </span>
+              </label>
+              <div className="pf-file-input-wrapper">
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleGalleryFilesChange}
+                  disabled={galleryFiles.length >= 5}
+                />
+                {galleryFiles.length >= 5 && (
+                  <span style={{ fontSize: "12px", color: "#ef4444", fontWeight: "500" }}>
+                    ⚠️ Maximum 5 images reached
+                  </span>
+                )}
+              </div>
+              {galleryFiles.length > 0 && (
                 <div className="pf-media-grid">
                   {galleryPreviews.map((src, index) => (
                     <div key={index} className="pf-media-thumb">
@@ -814,6 +940,18 @@ export default function ProductForm() {
                       >
                         ✕
                       </button>
+                      <span style={{
+                        position: "absolute",
+                        bottom: "4px",
+                        left: "4px",
+                        background: "rgba(0,0,0,0.7)",
+                        color: "white",
+                        fontSize: "10px",
+                        padding: "2px 6px",
+                        borderRadius: "4px",
+                      }}>
+                        {index + 1}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -839,7 +977,7 @@ export default function ProductForm() {
                     className="pf-media-remove"
                     onClick={handleClearVideo}
                   >
-                    Remove video
+                    ✕
                   </button>
                 </div>
               )}
@@ -867,10 +1005,10 @@ export default function ProductForm() {
             <div className="pf-grid-2">
               <div>
                 <label className="pf-label">
-                  Price (?) <span style={{ color: "#ef4444" }}>*</span>
+                  Price (₹) <span style={{ color: "#ef4444" }}>*</span>
                 </label>
                 <div className="pf-input-wrap">
-                  <span className="pf-prefix">?</span>
+                  <span className="pf-prefix">₹</span>
                   <input
                     type="number"
                     className="pf-input"
@@ -885,7 +1023,7 @@ export default function ProductForm() {
                   Stock Qty <span style={{ color: "#ef4444" }}>*</span>
                 </label>
                 <div className="pf-input-wrap">
-                  <span className="pf-input-icon">??</span>
+                  <span className="pf-input-icon">📊</span>
                   <input
                     type="number"
                     className="pf-input"
@@ -902,7 +1040,7 @@ export default function ProductForm() {
                 Unit <span style={{ color: "#ef4444" }}>*</span>
               </label>
               <div className="pf-input-wrap">
-                <span className="pf-input-icon">??</span>
+                <span className="pf-input-icon">📏</span>
                 <input
                   className="pf-input"
                   placeholder="e.g. kg / litre / piece"
@@ -917,7 +1055,7 @@ export default function ProductForm() {
                 GST
                 {!gstLoading && (
                   <span className={`pf-gst-badge ${gstEnabled ? "on" : "off"}`}>
-                    {gstEnabled ? "? Enabled" : "? Disabled"}
+                    {gstEnabled ? "✅ Enabled" : "❌ Disabled"}
                   </span>
                 )}
               </label>
@@ -944,7 +1082,7 @@ export default function ProductForm() {
                 </div>
               ) : (
                 <div className="pf-gst-disabled">
-                  <span>??</span>
+                  <span>ℹ️</span>
                   <span>GST not applicable for this company (without GST plan)</span>
                 </div>
               )}
@@ -967,7 +1105,7 @@ export default function ProductForm() {
                 </div>
               </div>
               <button className="pf-gen-btn" onClick={generateBarcode} type="button">
-                ? Auto
+                ⚡ Auto
               </button>
             </div>
 
@@ -988,10 +1126,10 @@ export default function ProductForm() {
             >
               {loading ? (
                 <>
-                  <div className="pf-spinner" /> Saving product�
+                  <div className="pf-spinner" /> Saving product…
                 </>
               ) : (
-                <>?? Save Product</>
+                <>💾 Save Product</>
               )}
             </button>
             <button

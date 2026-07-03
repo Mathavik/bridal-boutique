@@ -17,7 +17,9 @@ export default function ProductDetails() {
   const [error, setError] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState("");
-  const { guestId, refreshCounts, cartItems, incrementCartCount, incrementWishlistCount } = useStore();
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [currentMediaType, setCurrentMediaType] = useState('video'); // 'video' or 'image'
+  const { guestId, refreshCounts, incrementWishlistCount } = useStore();
   const { user } = useAuth();
 
   useEffect(() => {
@@ -198,6 +200,137 @@ export default function ProductDetails() {
     }
   };
 
+  const nextMedia = () => {
+    if (hasVideo && currentMediaType === 'video') {
+      // If currently showing video, switch to first image
+      setCurrentMediaType('image');
+      setCurrentImageIndex(0);
+    } else if (images.length > 0) {
+      // Navigate through images
+      const nextIndex = (currentImageIndex + 1) % images.length;
+      setCurrentImageIndex(nextIndex);
+      if (nextIndex === 0 && hasVideo) {
+        // If we've gone through all images, go back to video
+        setCurrentMediaType('video');
+      }
+    }
+  };
+
+  const prevMedia = () => {
+    if (hasVideo && currentMediaType === 'image' && currentImageIndex === 0) {
+      // If on first image, go back to video
+      setCurrentMediaType('video');
+    } else if (images.length > 0) {
+      // Navigate through images
+      const prevIndex = (currentImageIndex - 1 + images.length) % images.length;
+      setCurrentImageIndex(prevIndex);
+      setCurrentMediaType('image');
+    }
+  };
+
+  const convertImagePath = (imagePath) => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith("http")) return imagePath;
+    let cleanPath = imagePath.replace(/\\/g, "/");
+    if (cleanPath.startsWith("uploads/")) {
+      cleanPath = cleanPath.substring(8);
+    }
+    return `${API_BASE}/uploads/${cleanPath}`;
+  };
+
+  const convertVideoPath = (videoPath) => {
+    if (!videoPath) return null;
+    if (videoPath.startsWith("http")) return videoPath;
+    let cleanPath = videoPath.replace(/\\/g, "/");
+    if (cleanPath.startsWith("uploads/")) {
+      cleanPath = cleanPath.substring(8);
+    }
+    return `${API_BASE}/uploads/${cleanPath}`;
+  };
+
+  // Parse gallery images
+  let gallery = [];
+  if (product?.image_gallery_json) {
+    try {
+      let cleanJson = product.image_gallery_json;
+      if (typeof cleanJson === 'string') {
+        cleanJson = cleanJson.replace(/\\\\/g, "").replace(/\\\"/g, '"').replace(/\\\//g, "/");
+        gallery = JSON.parse(cleanJson);
+      } else if (Array.isArray(cleanJson)) {
+        gallery = cleanJson;
+      }
+    } catch (e) {
+      console.warn("Failed to parse image gallery JSON:", e);
+      gallery = [];
+    }
+  }
+
+  // Build images array - include main image and gallery images
+  let images = [];
+  
+  // Add main image
+  if (product?.image) {
+    images.push(product.image);
+  }
+  
+  // Add gallery images (avoid duplicates)
+  if (gallery.length > 0) {
+    gallery.forEach(img => {
+      if (!images.includes(img)) {
+        images.push(img);
+      }
+    });
+  }
+  
+  // Convert all to URLs and remove nulls
+  images = images.filter(Boolean).map(convertImagePath).filter(Boolean);
+
+  // If no images, use default
+  if (images.length === 0) {
+    images = ["https://images.unsplash.com/photo-1515886657613-9f3515b0c78f"];
+  }
+
+  // Get video URL
+  const videoUrl = product?.video_url ? convertVideoPath(product.video_url) : null;
+  const hasVideo = !!videoUrl;
+
+  // Get all media items for thumbnail display
+  const getAllMediaItems = () => {
+    const items = [];
+    
+    // Add video as first item if exists
+    if (hasVideo) {
+      items.push({ type: 'video', url: videoUrl, label: 'Video' });
+    }
+    
+    // Add all images
+    images.forEach((img, index) => {
+      items.push({ type: 'image', url: img, label: `Image ${index + 1}` });
+    });
+    
+    return items;
+  };
+
+  const mediaItems = getAllMediaItems();
+
+  // Get current display item
+  const getCurrentDisplay = () => {
+    if (hasVideo && currentMediaType === 'video') {
+      return { type: 'video', url: videoUrl };
+    }
+    return { type: 'image', url: images[currentImageIndex] || images[0] };
+  };
+
+  const currentDisplay = getCurrentDisplay();
+
+  // Get current index for thumbnail highlighting
+  const getCurrentThumbnailIndex = () => {
+    if (hasVideo && currentMediaType === 'video') {
+      return 0;
+    }
+    return hasVideo ? currentImageIndex + 1 : currentImageIndex;
+  };
+
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center pt-28">Loading product...</div>;
   }
@@ -236,6 +369,7 @@ export default function ProductDetails() {
   return (
     <div className="min-h-screen bg-[#f8f7f2] pt-28 px-4 md:px-8 lg:px-12">
       <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-10">
+        {/* Left Column - Media Gallery */}
         <div>
           {product.image ? (
             <img src={images[0]} alt={product.product_name} className="w-full h-[520px] object-cover rounded-xl" />
@@ -251,8 +385,64 @@ export default function ProductDetails() {
               <img key={index} src={image} alt={`${product.product_name}-${index}`} className="h-24 w-full object-cover rounded-lg" />
             ))}
           </div>
+
+          {/* Thumbnail Gallery - Shows both video and images */}
+          {mediaItems.length > 1 && (
+            <div className="mt-4 grid grid-cols-6 gap-2">
+              {mediaItems.map((item, index) => (
+                <button
+                  key={index}
+                  onClick={() => {
+                    if (item.type === 'video') {
+                      setCurrentMediaType('video');
+                      setCurrentImageIndex(0);
+                    } else {
+                      setCurrentMediaType('image');
+                      const imageIndex = hasVideo ? index - 1 : index;
+                      setCurrentImageIndex(imageIndex);
+                    }
+                  }}
+                  className={`relative rounded-lg overflow-hidden border-2 transition ${
+                    (item.type === 'video' && currentMediaType === 'video') ||
+                    (item.type === 'image' && currentMediaType === 'image' && 
+                      (hasVideo ? currentImageIndex === index - 1 : currentImageIndex === index))
+                      ? 'border-[#a97c50]' 
+                      : 'border-transparent hover:border-gray-300'
+                  }`}
+                >
+                  {item.type === 'video' ? (
+                    <div className="relative h-20 w-full bg-gray-900 flex items-center justify-center">
+                      <video
+                        src={item.url}
+                        className="h-full w-full object-cover opacity-70"
+                        muted
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Play size={24} className="text-white" fill="white" />
+                      </div>
+                      <div className="absolute bottom-1 left-1 bg-black/70 text-white text-[8px] px-1.5 py-0.5 rounded">
+                        Video
+                      </div>
+                    </div>
+                  ) : (
+                    <img
+                      src={item.url}
+                      alt={`Thumbnail ${index + 1}`}
+                      className="h-20 w-full object-cover hover:opacity-80 transition"
+                    />
+                  )}
+                  {(item.type === 'video' && currentMediaType === 'video') ||
+                   (item.type === 'image' && currentMediaType === 'image' && 
+                    (hasVideo ? currentImageIndex === index - 1 : currentImageIndex === index)) && (
+                    <div className="absolute inset-0 bg-[#a97c50]/10"></div>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
+        {/* Right Column - Product Info */}
         <div>
           <p className="text-sm uppercase tracking-[3px] text-[#a97c50]">{product.category_name}</p>
           <h1 className="text-3xl font-semibold mt-2">{product.product_name}</h1>
@@ -296,7 +486,9 @@ export default function ProductDetails() {
                     key={size}
                     type="button"
                     onClick={() => setSelectedSize(size)}
-                    className={`rounded-full border px-4 py-2 text-sm transition ${selectedSize === size ? "border-[#a97c50] bg-[#a97c50] text-white" : "border-gray-300 bg-white text-gray-700"}`}
+                    className={`rounded-full border px-4 py-2 text-sm transition ${
+                      selectedSize === size ? "border-[#a97c50] bg-[#a97c50] text-white" : "border-gray-300 bg-white text-gray-700"
+                    }`}
                   >
                     {size}
                   </button>
