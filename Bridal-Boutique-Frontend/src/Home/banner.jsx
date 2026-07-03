@@ -9,7 +9,7 @@ function Banner() {
       >
         <div className="ml-[55px] max-w-[420px] text-white">
           {/* Heading */}
-         <h1 className="font-porsha text-[58px] font-normal leading-[100%] tracking-[0px]">
+         <h1 className="font-porsha text-4xl sm:text-4xl md:text-5xl lg:text-[58px] font-normal leading-[100%] tracking-[0px]">
   Styled For Every
   <br />
   Cherished Moments
@@ -20,7 +20,7 @@ function Banner() {
               FLAT
             </span>
 
-            <span className="font-porsha text-[48px] leading-none">
+            <span className="font-porsha text-2xl sm:text-3xl md:text-4xl lg:text-[48px] leading-none">
               30-50%
             </span>
 

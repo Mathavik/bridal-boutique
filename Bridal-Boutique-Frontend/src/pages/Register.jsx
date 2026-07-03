@@ -77,7 +77,7 @@ export default function Register() {
   return (
     <>
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl overflow-hidden animate-slideUp">
+        <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl overflow-y-auto max-h-screen animate-slideUp">
           <button
             onClick={closeModal}
             className="absolute top-3 right-3 z-30 w-8 h-8 flex items-center justify-center rounded-full bg-white/90 hover:bg-white shadow-md transition text-gray-400 hover:text-gray-600"
