@@ -35,8 +35,18 @@ export default function ProductDetails() {
       try {
         const response = await axios.get(`${API_BASE}/product/get_by_id.php?id=${id}`);
         if (response.data?.status) {
-          setProduct(response.data.data);
-        } else {
+
+    setProduct(response.data.data);
+
+   await axios.post(
+  `${API_BASE}/product/increment_view.php`,
+  {
+    product_id: response.data.data.id
+  }
+);
+
+}
+         else {
           setError(response.data?.message || "Product not found.");
         }
       } catch (fetchError) {
@@ -211,8 +221,32 @@ export default function ProductDetails() {
     <div className="min-h-screen bg-[#f8f7f2] pt-28 px-4 md:px-8 lg:px-12">
       <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-10">
         <div>
-          <img src={images[0] || "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f"} alt={product.product_name} className="w-full h-[520px] object-cover rounded-xl" />
-          <div className="mt-4 grid grid-cols-4 gap-3">
+{product.image ? (
+  <img
+    src={images[0]}
+    alt={product.product_name}
+    className="w-full h-[520px] object-cover rounded-xl"
+  />
+) : product.video_url ? (
+  <video
+    controls
+    autoPlay
+    muted
+    loop
+    className="w-full h-[520px] object-cover rounded-xl"
+  >
+    <source
+      src={`${API_BASE}/${product.video_url}`}
+      type="video/mp4"
+    />
+  </video>
+) : (
+  <img
+    src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f"
+    className="w-full h-[520px] object-cover rounded-xl"
+    alt="Default"
+  />
+)}          <div className="mt-4 grid grid-cols-4 gap-3">
             {images.map((image, index) => (
               <img key={index} src={image} alt={`${product.product_name}-${index}`} className="h-24 w-full object-cover rounded-lg" />
             ))}

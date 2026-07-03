@@ -37,6 +37,7 @@ export default function App() {
         <Route path="/order-confirmation" element={<OrderConfirmation />} />
         <Route path="/payment-success" element={<PaymentSuccess />} />
         <Route path="/invoice/:id" element={<InvoicePage />} />
+        
 
       </Routes>
       <Footer />

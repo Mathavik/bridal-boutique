@@ -13,7 +13,7 @@ import {
   User,
   LogOut,
   CreditCard,
-  Users
+  Users,
   Image
 } from "lucide-react";
 
