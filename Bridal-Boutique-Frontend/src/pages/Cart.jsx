@@ -103,7 +103,7 @@ export default function Cart() {
             {items.length === 0 ? (
               <div className="rounded-xl bg-white p-6 shadow text-center">
                 <p className="text-gray-500">Your cart is empty.</p>
-                <Link to="/products" className="mt-4 inline-block text-[#a97c50] hover:underline">
+                <Link to="/" className="mt-4 inline-block text-[#a97c50] hover:underline">
                   Continue Shopping →
                 </Link>
               </div>
@@ -213,7 +213,7 @@ export default function Cart() {
             </div>
 
             <Link
-              to="/products"
+              to="/"
               className="block text-center mt-5 text-[#a97c50] hover:underline"
             >
               Continue Shopping
