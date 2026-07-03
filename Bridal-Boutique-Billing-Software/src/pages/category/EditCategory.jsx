@@ -116,7 +116,8 @@ export default function EditCategory() {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const { toasts, show, remove } = useToast();
-
+const [visible, setVisible] = useState(false);
+const [originalVisible, setOriginalVisible] = useState(false);
   const fetchCategory = async () => {
     setFetching(true);
     try {
@@ -128,6 +129,8 @@ export default function EditCategory() {
         setOriginalBannerImage(res.data.data.banner_image || "");
         setBannerPreview(res.data.data.banner_image || "");
         setCharCount(res.data.data.name.length);
+        setVisible(Boolean(Number(res.data.data.visible)));
+setOriginalVisible(Boolean(Number(res.data.data.visible)));
       } else {
         show("error", "Not found", "Category could not be loaded.");
       }
@@ -171,7 +174,7 @@ export default function EditCategory() {
       show("warn", "Missing field", "Category name cannot be empty.");
       return;
     }
-    if (name.trim() === originalName && bannerFile === null && bannerImage.trim() === originalBannerImage.trim()) {
+    if (name.trim() === originalName && bannerFile === null && bannerImage.trim() === originalBannerImage.trim() && visible === originalVisible) {
       show("warn", "No changes", "You haven't changed anything.");
       return;
     }
@@ -188,7 +191,7 @@ export default function EditCategory() {
           return;
         }
       }
-      const res = await api.post("/category/update.php", { id, name: name.trim(), banner_image: banner_image_value });
+      const res = await api.post("/category/update.php", { id, name: name.trim(), banner_image: banner_image_value, visible: visible });
       if (res.data.status) {
         show("success", "Category updated!", `"${name.trim()}" saved successfully.`);
         setTimeout(() => navigate("/category"), 2000);
@@ -202,7 +205,7 @@ export default function EditCategory() {
     }
   };
 
-  const isDirty = name.trim() !== originalName || bannerImage.trim() !== originalBannerImage.trim();
+  const isDirty = name.trim() !== originalName || bannerImage.trim() !== originalBannerImage.trim() || visible !== originalVisible;
 
   return (
     <>
@@ -584,6 +587,49 @@ export default function EditCategory() {
                 <div className="ec-input-prefix">#</div>
               </div>
             )}
+
+            <div style={{ marginBottom: "20px" }}>
+    <label className="ec-label">
+        Category Visibility
+    </label>
+
+    <label
+        style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            marginTop: "10px",
+            cursor: "pointer",
+            fontWeight: "600",
+            color: "#334155",
+        }}
+    >
+        <input
+            type="checkbox"
+            checked={visible}
+            onChange={(e) =>
+                setVisible(e.target.checked)
+            }
+            style={{
+                width: "18px",
+                height: "18px",
+            }}
+        />
+
+        Visible Category
+    </label>
+
+    <p
+        style={{
+            fontSize: "12px",
+            color: "#94a3b8",
+            marginTop: "6px",
+            marginLeft: "28px",
+        }}
+    >
+        Checked = True &nbsp;&nbsp; Unchecked = False
+    </p>
+</div>
 
             <div className="ec-label-row">
               <span className="ec-label">Banner Image</span>

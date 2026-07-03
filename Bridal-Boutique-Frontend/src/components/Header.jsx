@@ -20,7 +20,10 @@ import UserDropdown from "./UserDropdown";
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [allCategories, setAllCategories] = useState([]);
+  // Categories for navigation (desktop + mobile drawer)
+  const [navCategories, setNavCategories] = useState([]);
+  // Categories for "Shop All" dropdown (uses get_active_category.php)
+  const [shopAllCategories, setShopAllCategories] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
@@ -38,26 +41,49 @@ function Header() {
   const params = new URLSearchParams(location.search);
   const activeCategoryId = params.get("category_id") || "";
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const companyId = params.get("company_id");
-        let url = `${API_BASE}/category/get_active_category.php`;
-        if (companyId) {
-          url += `?company_id=${companyId}`;
-        }
-        const response = await axios.get(url);
-        if (response.data?.status) {
-          setAllCategories(response.data.data || []);
-        }
-      } catch (error) {
-        console.error("Error loading categories:", error);
-      }
-    };
+  // Fetch both category endpoints
+ useEffect(() => {
+  const fetchCategories = async () => {
+    try {
+      const companyId = params.get("company_id");
 
-    fetchCategories();
-  }, [location.search]);
+      const visibleUrl = companyId
+        ? `${API_BASE}/category/getVisibleCategories.php?company_id=${companyId}`
+        : `${API_BASE}/category/getVisibleCategories.php`;
 
+      const activeUrl = companyId
+        ? `${API_BASE}/category/get_active_category.php?company_id=${companyId}`
+        : `${API_BASE}/category/get_active_category.php`;
+
+      const [visibleRes, activeRes] = await Promise.all([
+        axios.get(visibleUrl),
+        axios.get(activeUrl),
+      ]);
+
+      console.log("Visible:", visibleRes.data);
+      console.log("Active:", activeRes.data);
+
+      setNavCategories(
+        Array.isArray(visibleRes.data?.data)
+          ? visibleRes.data.data
+          : []
+      );
+
+      setShopAllCategories(
+        Array.isArray(activeRes.data?.data)
+          ? activeRes.data.data
+          : []
+      );
+    } catch (err) {
+      console.error(err);
+      setNavCategories([]);
+      setShopAllCategories([]);
+    }
+  };
+
+  fetchCategories();
+}, [location.search]);
+  // Search suggestions (unchanged)
   useEffect(() => {
     const handler = setTimeout(() => {
       const query = searchQuery.trim();
@@ -96,6 +122,7 @@ function Header() {
     };
   }, [searchQuery]);
 
+  // Click outside handlers (unchanged)
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -157,7 +184,7 @@ function Header() {
         <div className="max-w-[1220px] mx-auto h-[82px] px-4 lg:px-0 flex items-center justify-between">
           {/* LEFT */}
           <div className="flex items-center gap-6 flex-1">
-            {/* Desktop Shop Button */}
+            {/* Desktop Shop Button - uses shopAllCategories */}
             <div className="relative hidden lg:flex" ref={dropdownRef}>
               <button
                 onClick={() => setDropdownOpen((prev) => !prev)}
@@ -173,7 +200,7 @@ function Header() {
                 }`}
               >
                 <div className="max-h-[360px] overflow-y-auto py-2">
-                  {allCategories.map((category) => (
+                  {shopAllCategories.map((category) => (
                     <Link
                       key={category.id}
                       to={`/bridal-lehenga?category_id=${category.id}`}
@@ -196,9 +223,9 @@ function Header() {
               <Menu size={25} />
             </button>
 
-            {/* Desktop Navigation */}
+            {/* Desktop Navigation - uses navCategories */}
             <nav className="hidden lg:flex items-center gap-7 text-[14px] font-medium text-[#181818]">
-              {allCategories.slice(0, 3).map((category) => (
+              {navCategories.slice(0, 3).map((category) => (
                 <Link
                   key={category.id}
                   to={`/bridal-lehenga?category_id=${category.id}`}
@@ -304,7 +331,7 @@ function Header() {
               </div>
             )}
 
-            {/* User Dropdown - Updated */}
+            {/* User Dropdown */}
             <UserDropdown />
 
             {/* Wishlist */}
@@ -364,9 +391,9 @@ function Header() {
           </div>
         </div>
 
-        {/* Menu */}
+        {/* Menu - uses navCategories */}
         <nav className="px-5 flex flex-col">
-          {allCategories.slice(0, 4).map((category) => (
+          {navCategories.slice(0, 4).map((category) => (
             <Link
               key={category.id}
               to={`/bridal-lehenga?category_id=${category.id}`}

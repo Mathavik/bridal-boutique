@@ -22,6 +22,7 @@ $result = mysqli_query($conn, "
     SELECT
         id,
         name,
+        visible,
         status
     FROM categories
     WHERE company_id='$company_id'

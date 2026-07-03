@@ -1,3 +1,4 @@
+
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
@@ -146,7 +147,7 @@ export default function Checkout() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f7f2] pt-28 px-4 md:px-8 lg:px-12">
+    <div className="min-h-screen bg-[#f8f7f2] pt-28 pb-12 px-4 md:px-8 lg:px-12">
       <div className="max-w-7xl mx-auto grid lg:grid-cols-[1.2fr_0.8fr] gap-8">
         <form onSubmit={handleSubmit} className="rounded-xl bg-white p-6 shadow-sm">
           <h1 className="text-2xl font-semibold">
