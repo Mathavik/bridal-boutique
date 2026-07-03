@@ -77,7 +77,11 @@ $image_path = '';
 $gallery_paths = [];
 $upload_dir = __DIR__ . "/../uploads/";
 
+// Process gallery images
 if (is_array($gallery_images) && count($gallery_images) > 0) {
+    // Limit to 5 images
+    $gallery_images = array_slice($gallery_images, 0, 5);
+    
     foreach ($gallery_images as $index => $galleryItem) {
         $savedPath = saveBase64Upload($galleryItem, $upload_dir, 'png');
         if ($savedPath) {

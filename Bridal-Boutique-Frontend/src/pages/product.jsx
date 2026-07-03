@@ -107,40 +107,59 @@ export default function Product() {
 
   const addToWishlist = async (product, size = "") => {
     if (!user) {
-      showToast('Please log in to add items to wishlist', 'error');
-      setTimeout(() => navigate('/login'), 500);
+      showToast("Please log in to add items to wishlist", "error");
+      setTimeout(() => navigate("/login"), 500);
       return;
     }
 
-    const selectedSize = size || getDefaultSize(product);
+    const existingItem = wishlistItems.find(
+      (item) => item.product_id === product.id
+    );
 
     try {
-      const response = await axios.post(`${API_BASE}/wishlist/save.php`, {
-        guest_id: guestId(),
-        product_id: product.id,
-        size: selectedSize,
-      });
+      // Already in wishlist -> Remove
+      if (existingItem) {
+        const response = await axios.delete(
+          `${API_BASE}/wishlist/delete.php?id=${existingItem.id}`
+        );
+
+        if (response.data?.status) {
+          await refreshCounts();
+          showToast("Removed from wishlist", "success");
+        } else {
+          showToast(response.data?.message || "Unable to remove", "error");
+        }
+
+        return;
+      }
+
+      // Not in wishlist -> Add
+      const selectedSize = size || getDefaultSize(product);
+
+      const response = await axios.post(
+        `${API_BASE}/wishlist/save.php`,
+        {
+          guest_id: guestId(),
+          product_id: product.id,
+          size: selectedSize,
+        }
+      );
+
       if (response.data?.status) {
-        incrementWishlistCount(1);
         await refreshCounts();
-        showToast('Added to wishlist successfully', 'success');
+        showToast("Added to wishlist", "success");
       } else {
-        showToast(response.data?.message || 'Unable to add to wishlist', 'error');
+        showToast(response.data?.message || "Unable to add", "error");
       }
     } catch (error) {
-      console.error("Add to wishlist failed:", error);
-      showToast('Add to wishlist failed. Please try again.', 'error');
+      console.error(error);
+      showToast("Something went wrong", "error");
     }
   };
 
   return (
     <div className="min-h-screen bg-[#f8f7f2] pt-28 px-4 md:px-8 lg:px-12">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-semibold uppercase tracking-[4px]">Bridal Lehenga</h1>
-          <p className="text-gray-600 mt-2">Discover handcrafted bridal wear curated from our latest collection.</p>
-        </div>
-
 
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">

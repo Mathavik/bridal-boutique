@@ -205,10 +205,24 @@ export default function EditProduct() {
       reader.readAsDataURL(file);
     });
 
+  // Updated handler for gallery files - limits to 5 images total (existing + new)
   const handleGalleryFilesChange = (e) => {
     const files = Array.from(e.target.files || []);
-    setNewGalleryFiles(files);
-    setGalleryPreviews(files.map((file) => URL.createObjectURL(file)));
+    
+    // Calculate total images (existing + new)
+    const totalImages = existingImages.length + newGalleryFiles.length + files.length;
+    
+    // Check if adding these files would exceed 5
+    if (totalImages > 5) {
+      show("warn", "Limit Exceeded", `You can upload maximum 5 images total. Currently have ${existingImages.length + newGalleryFiles.length} images.`);
+      return;
+    }
+    
+    setNewGalleryFiles((prev) => [...prev, ...files]);
+    setGalleryPreviews((prev) => [
+      ...prev,
+      ...files.map((file) => URL.createObjectURL(file))
+    ]);
   };
 
   const handleRemoveExistingImage = (index) => {
@@ -339,6 +353,9 @@ export default function EditProduct() {
       setLoading(false);
     }
   };
+
+  // Calculate total images count
+  const totalImages = existingImages.length + newGalleryFiles.length;
 
   return (
     <>
@@ -581,6 +598,7 @@ export default function EditProduct() {
         .ep-toast-warn    .ep-toast-bar{background:#fbbf24;}
         @keyframes epShrink{from{width:100%}to{width:0%}}
 
+        /* Updated Media Gallery Styles */
         .ep-media-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
@@ -591,28 +609,40 @@ export default function EditProduct() {
           position: relative;
           border-radius: 8px;
           overflow: hidden;
-          border: 1px solid #e2e8f0;
+          border: 2px solid #e2e8f0;
+          aspect-ratio: 1;
+          background: #f1f5f9;
+          transition: all 0.2s;
+        }
+        .ep-media-thumb:hover {
+          border-color: #3b82f6;
+          transform: scale(1.02);
         }
         .ep-media-thumb img {
           width: 100%;
-          height: 100px;
+          height: 100%;
           object-fit: cover;
         }
         .ep-media-remove {
           position: absolute;
-          top: 4px;
-          right: 4px;
-          width: 24px;
-          height: 24px;
+          top: 6px;
+          right: 6px;
+          width: 26px;
+          height: 26px;
           border-radius: 50%;
-          background: rgba(255,0,0,0.8);
+          background: rgba(239, 68, 68, 0.9);
           color: white;
           border: none;
           cursor: pointer;
-          font-size: 12px;
+          font-size: 14px;
           display: flex;
           align-items: center;
           justify-content: center;
+          transition: all 0.2s;
+        }
+        .ep-media-remove:hover {
+          background: #dc2626;
+          transform: scale(1.1);
         }
         .ep-video-preview {
           margin-top: 10px;
@@ -661,6 +691,77 @@ export default function EditProduct() {
         .ep-video-thumbnail p {
           color: rgba(255,255,255,0.7);
           font-size: 13px;
+        }
+
+        /* Upload area styling */
+        .ep-upload-area {
+          border: 2px dashed #d1d5db;
+          border-radius: 12px;
+          padding: 20px;
+          text-align: center;
+          cursor: pointer;
+          transition: all 0.2s;
+          background: #fafafa;
+        }
+        .ep-upload-area:hover {
+          border-color: #3b82f6;
+          background: #f0f6ff;
+        }
+        .ep-upload-area.dragover {
+          border-color: #3b82f6;
+          background: #eff6ff;
+        }
+        .ep-upload-counter {
+          font-size: 12px;
+          color: #6b7280;
+          margin-top: 4px;
+        }
+        .ep-file-input-wrapper {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          align-items: center;
+        }
+        .ep-file-input-wrapper input[type="file"] {
+          flex: 1;
+          padding: 10px;
+          border: 1.5px solid #e2e8f0;
+          border-radius: 12px;
+          background: #f8faff;
+          font-size: 13px;
+          min-width: 150px;
+        }
+        .ep-file-input-wrapper input[type="file"]:hover {
+          border-color: #bfdbfe;
+          background: #f0f6ff;
+        }
+        .ep-file-input-wrapper input[type="file"]:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        .ep-image-counter {
+          font-size: 11px;
+          color: #6b7280;
+          margin-left: 8px;
+          font-weight: 400;
+        }
+        .ep-image-warning {
+          font-size: 12px;
+          color: #ef4444;
+          font-weight: 500;
+          margin-left: 8px;
+        }
+        .ep-image-index {
+          position: absolute;
+          bottom: 4px;
+          left: 4px;
+          background: rgba(0, 0, 0, 0.7);
+          color: white;
+          font-size: 10px;
+          padding: 2px 6px;
+          border-radius: 4px;
+          font-weight: 600;
         }
       `}</style>
 
@@ -890,7 +991,10 @@ export default function EditProduct() {
             {/* Existing Images */}
             {existingImages.length > 0 && (
               <div className="ep-field">
-                <label className="ep-label">Existing Images ({existingImages.length})</label>
+                <label className="ep-label">
+                  Existing Images ({existingImages.length})
+                  <span className="ep-image-counter">(Total: {totalImages}/5)</span>
+                </label>
                 <div className="ep-media-grid">
                   {existingImages.map((img, index) => (
                     <div key={index} className="ep-media-thumb">
@@ -902,6 +1006,7 @@ export default function EditProduct() {
                       >
                         ✕
                       </button>
+                      <span className="ep-image-index">{index + 1}</span>
                     </div>
                   ))}
                 </div>
@@ -910,13 +1015,27 @@ export default function EditProduct() {
 
             {/* Add New Images */}
             <div className="ep-field">
-              <label className="ep-label">Add New Images</label>
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleGalleryFilesChange}
-              />
+              <label className="ep-label">
+                Add New Images (Max 5 total)
+                <span className="ep-image-counter">({totalImages}/5 uploaded)</span>
+                {totalImages >= 5 && (
+                  <span className="ep-image-warning">⚠️ Maximum 5 images reached</span>
+                )}
+              </label>
+              <div className="ep-file-input-wrapper">
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleGalleryFilesChange}
+                  disabled={totalImages >= 5}
+                />
+                {totalImages >= 5 && (
+                  <span style={{ fontSize: "12px", color: "#ef4444", fontWeight: "500" }}>
+                    ⚠️ Maximum 5 images reached
+                  </span>
+                )}
+              </div>
               {galleryPreviews.length > 0 && (
                 <div className="ep-media-grid">
                   {galleryPreviews.map((src, index) => (
@@ -929,6 +1048,7 @@ export default function EditProduct() {
                       >
                         ✕
                       </button>
+                      <span className="ep-image-index">{existingImages.length + index + 1}</span>
                     </div>
                   ))}
                 </div>
