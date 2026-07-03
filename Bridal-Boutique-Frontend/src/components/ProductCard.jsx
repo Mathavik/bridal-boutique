@@ -35,29 +35,50 @@ export default function ProductCard({
   }, [availableSizes]);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-      <button
-        type="button"
-        onClick={onNavigate}
-        className="block w-full overflow-hidden"
-      >
-        <img
-          src={resolveImageUrl(product.image || "") || "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0"}
-          alt={product.product_name}
-          className="w-full h-80 object-cover"
-        />
+    <div className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden">
+     <button
+  type="button"
+  onClick={onNavigate}
+  className="block w-full"
+>
+<div className="relative w-full aspect-[4/5] bg-[#f8f8f8] overflow-hidden"> 
+ {product.video_url ? (
+<video
+    src={resolveImageUrl(product.video_url)}
+    className="absolute inset-0 w-full h-full object-cover"
+    autoPlay
+    muted
+    loop
+    playsInline
+/>
+  ) : product.image ? (
+<img
+    src={resolveImageUrl(product.image)}
+    alt={product.product_name}
+    className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+/>
+  ) : (
+<img
+    src="https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0"
+    alt="Default"
+    className="absolute inset-0 w-full h-full object-cover"
+/>
+  )}
+</div>
       </button>
 
       <div className="p-5">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">{product.product_name}</h3>
-          <span className="text-sm text-[#a97c50]">{product.brand || "Padmavathi Collection"}</span>
+          <h3 className="text-base font-semibold text-gray-900 line-clamp-2 leading-6">
+  {product.product_name}
+</h3>
+          {/* <span className="text-sm text-[#a97c50]">{product.brand || "Padmavathi Collection"}</span> */}
         </div>
 
-        <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+        {/* <p className="text-sm text-gray-600 mt-2 line-clamp-2">
           {product.short_description || product.category_name || "Beautiful bridal wear crafted for the moment."}
-        </p>
-
+        </p> */}
+{/* 
         {availableSizes.length > 0 ? (
           <div className="mt-3 flex flex-wrap gap-2">
             {availableSizes.map((size) => (
@@ -75,7 +96,7 @@ export default function ProductCard({
           <div className="mt-3 flex items-center gap-2 text-sm text-gray-500">
             <span>Sizes: {product.available_sizes || "Custom"}</span>
           </div>
-        )}
+        )} */}
 
         <div className="mt-4 flex items-center gap-3">
           <span className="font-semibold">{formatCurrency(product.offer_price || product.price)}</span>
@@ -87,9 +108,28 @@ export default function ProductCard({
           ) : null}
         </div>
 
-        <div className="mt-3 text-sm text-gray-500">
-          Rating: 4.8 • Stock: {product.stock > 0 ? `${product.stock} in stock` : "Out of Stock"}
-        </div>
+<div className="mt-3 flex items-center justify-between">
+  <div className="flex items-center gap-2">
+    <span className="flex items-center gap-1 bg-green-600 text-white text-xs font-semibold px-2 py-1 rounded-md">
+      4.8
+      <span>★</span>
+    </span>
+
+    <span className="text-xs text-gray-500">
+  ({product.view_count || 0})
+</span>
+  </div>
+
+  <span
+    className={`text-xs font-medium ${
+      product.stock > 0 ? "text-green-600" : "text-red-500"
+    }`}
+  >
+    {product.stock > 0
+      ? `${product.stock} Left`
+      : "Out of Stock"}
+  </span>
+</div>
 
         <div className="mt-5 flex gap-2">
           <button
