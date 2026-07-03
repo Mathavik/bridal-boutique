@@ -115,12 +115,25 @@ const Spotlight = () => {
               className="bg-white rounded-2xl overflow-hidden"
             >
 
-              <img
-                src={resolveImage(product.image)}
-                alt={product.product_name}
-                className="w-full h-[360px] object-cover cursor-pointer"
-                onClick={() => navigate(`/bridal-lehenga?product_id=${product.id}`)}
-              />
+             {product.video_url ? (
+  <video
+    src={resolveImage(product.video_url)}
+    className="w-full h-[360px] object-cover cursor-pointer"
+    autoPlay
+    muted
+    loop
+    playsInline
+    controls
+    onClick={() => navigate(`/bridal-lehenga?product_id=${product.id}`)}
+  />
+) : (
+  <img
+    src={resolveImage(product.image)}
+    alt={product.product_name}
+    className="w-full h-[360px] object-cover cursor-pointer"
+    onClick={() => navigate(`/bridal-lehenga?product_id=${product.id}`)}
+  />
+)}
 
               <div className="mt-4">
 
