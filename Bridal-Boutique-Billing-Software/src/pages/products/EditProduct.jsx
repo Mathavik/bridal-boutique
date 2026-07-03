@@ -71,7 +71,9 @@ export default function EditProduct() {
     color: "",
     available_sizes: "",
     occasion: "",
+    keywords: "",
   });
+  const [keywordsLoading, setKeywordsLoading] = useState(false);
 
   const set = (field, val) => setForm((p) => ({ ...p, [field]: val }));
 
@@ -150,6 +152,7 @@ export default function EditProduct() {
           color: p.color || "",
           available_sizes: p.available_sizes || "",
           occasion: p.occasion || "",
+          keywords: p.keywords || "",
         });
 
         // Set existing images
@@ -313,6 +316,7 @@ export default function EditProduct() {
         color: form.color,
         available_sizes: form.available_sizes,
         occasion: form.occasion,
+        keywords: form.keywords,
         image: firstImageData,
         gallery_images: galleryData,
         existing_images: existingImages,
@@ -740,6 +744,66 @@ export default function EditProduct() {
                     value={form.description}
                     onChange={e => set("description", e.target.value)}
                   />
+              }
+            </div>
+
+            <div className="ep-field">
+              <label className="ep-label">AI Search Keywords</label>
+              {fetching
+                ? <div className="ep-skel" />
+                : <>
+                    <textarea
+                      className="ep-input"
+                      style={{ minHeight: "110px", paddingTop: "14px", resize: "vertical" }}
+                      placeholder="Comma-separated keywords for search relevance"
+                      value={form.keywords}
+                      onChange={e => set("keywords", e.target.value)}
+                    />
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10 }}>
+                      <span style={{ color: "#64748b", fontSize: 12 }}>
+                        Generate keywords automatically from product details.
+                      </span>
+                      <button
+                        type="button"
+                        className="ep-gen-btn"
+                        onClick={async () => {
+                          if (!form.name.trim() && !form.description.trim()) {
+                            show("warn", "Missing Product Data", "Provide a product name or description first.");
+                            return;
+                          }
+                          setKeywordsLoading(true);
+                          try {
+                            const categoryName = categories.find(c => String(c.id) === String(form.category_id))?.name || "";
+                            const res = await api.post("/product/generate_keywords.php", {
+                              product_name: form.name,
+                              category_name: categoryName,
+                              description: form.description,
+                              price: form.price,
+                              color: form.color,
+                              fabric: form.fabric,
+                              work_type: form.embroidery,
+                              occasion: form.occasion,
+                              additional: [form.available_sizes, form.unit, form.barcode].filter(Boolean).join(", "),
+                            });
+                            if (res.data.status) {
+                              set("keywords", res.data.data);
+                              show("success", "Keywords Generated", "AI keywords have been populated. Review and save.");
+                            } else {
+                              show("error", "AI Generation Failed", res.data.message || "Unable to generate keywords.");
+                            }
+                          } catch (err) {
+                            console.error(err);
+                            show("error", "AI Error", "Unable to reach the keyword generator.");
+                          } finally {
+                            setKeywordsLoading(false);
+                          }
+                        }}
+                        disabled={keywordsLoading}
+                      >
+                        {keywordsLoading ? "Generating..." : "Generate Keywords"}
+                      </button>
+                    </div>
+                  </>
               }
             </div>
 

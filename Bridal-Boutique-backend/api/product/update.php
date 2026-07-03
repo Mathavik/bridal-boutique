@@ -71,6 +71,7 @@ $embroidery = $conn->real_escape_string(trim($data['embroidery'] ?? ''));
 $color = $conn->real_escape_string(trim($data['color'] ?? ''));
 $available_sizes = $conn->real_escape_string(trim($data['available_sizes'] ?? ''));
 $occasion = $conn->real_escape_string(trim($data['occasion'] ?? ''));
+$keywords = $conn->real_escape_string(trim($data['keywords'] ?? ''));
 $image_base64 = trim($data['image'] ?? '');
 $gallery_images = $data['gallery_images'] ?? [];
 $video_file = $data['video_file'] ?? '';
@@ -144,6 +145,7 @@ if ($image !== '') {
 if ($image_gallery_json !== '') {
     $sql .= ", image_gallery_json='$image_gallery_json'";
 }
+$sql .= ", keywords='$keywords'";
 if ($video_path !== '') {
     $sql .= ", video_url='$video_path'";
 } elseif ($video_url !== '') {

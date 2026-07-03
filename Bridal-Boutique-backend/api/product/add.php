@@ -68,6 +68,7 @@ $embroidery = $conn->real_escape_string(trim($data['embroidery'] ?? ''));
 $color = $conn->real_escape_string(trim($data['color'] ?? ''));
 $available_sizes = $conn->real_escape_string(trim($data['available_sizes'] ?? ''));
 $occasion = $conn->real_escape_string(trim($data['occasion'] ?? ''));
+$keywords = $conn->real_escape_string(trim($data['keywords'] ?? ''));
 $gallery_images = $data['gallery_images'] ?? [];
 $video_file = $data['video_file'] ?? '';
 $video_url = trim($data['video_url'] ?? '');
@@ -105,9 +106,9 @@ if (!$name || !$category_id || !$company_id) {
 
 $query = "INSERT INTO products (
     product_name, product_code, category_id, company_id, price, stock, gst_percentage, barcode, unit,
-    short_description, full_description, fabric, embroidery, color, available_sizes, occasion,
+    short_description, full_description, fabric, embroidery, color, available_sizes, occasion, keywords,
     image, image_gallery_json, video_url
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 $stmt = $conn->prepare($query);
 if (!$stmt) {
@@ -115,8 +116,8 @@ if (!$stmt) {
     exit;
 }
 
-$params = [$name, $product_code, $category_id, $company_id, $price, $stock, $gst_percentage, $barcode, $unit, $short_description, $full_description, $fabric, $embroidery, $color, $available_sizes, $occasion, $image, $image_gallery_json, $video_url];
-$types = 'ssii' . 'd' . 'i' . 'd' . str_repeat('s', 12);
+$params = [$name, $product_code, $category_id, $company_id, $price, $stock, $gst_percentage, $barcode, $unit, $short_description, $full_description, $fabric, $embroidery, $color, $available_sizes, $occasion, $keywords, $image, $image_gallery_json, $video_url];
+$types = 'ssiidid' . str_repeat('s', 13);
 $stmt->bind_param($types, ...$params);
 
 if ($stmt->execute()) {
