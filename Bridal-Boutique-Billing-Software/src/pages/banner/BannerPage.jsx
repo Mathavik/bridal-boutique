@@ -27,7 +27,7 @@ export default function BannerPage() {
     const reader = new FileReader();
     reader.onload = () => {
       setPreview(reader.result);
-      console.log("Banner preview loaded");
+      console.log("Banner pr eview loaded");
     };
     reader.onerror = (error) => {
       console.error("Banner preview error:", error);

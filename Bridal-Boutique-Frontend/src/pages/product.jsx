@@ -4,60 +4,131 @@ import axios from "axios";
 import { useStore } from "../contexts/StoreContext";
 import { useAuth } from "../contexts/AuthContext";
 import ProductCard from "../components/ProductCard";
+import FilterSidebar from "../components/filters/FilterSidebar";
 import { showToast } from "../utils/toast";
+import { Filter } from "lucide-react";
 
 const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
 
 export default function Product() {
-  const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { guestId, cartItems, refreshCounts, wishlistItems, incrementCartCount, incrementWishlistCount } = useStore();
+  const [showMobileFilter, setShowMobileFilter] = useState(false);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [filterOptions, setFilterOptions] = useState(null);
+  const [filters, setFilters] = useState({
+    price_min: 0,
+    price_max: 1000000,
+    sizes: [],
+    availability: 'all',
+    rating: 0,
+    sort_by: 'newest',
+    limit: 20,
+    offset: 0,
+    availableOptions: {}
+  });
+
+  const { guestId, refreshCounts, wishlistItems } = useStore();
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Get category_id from URL
+  const categoryId = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get("category_id");
+  }, [location.search]);
+
+  // Fetch filter options
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchFilterOptions = async () => {
       try {
-        const response = await axios.get(`${API_BASE}/category/get_active_category.php`);
+        const companyId = localStorage.getItem("selected_company_id") || "1";
+        const url = `${API_BASE}/product/get_filter_options.php?company_id=${companyId}${categoryId ? `&category_id=${categoryId}` : ''}`;
+        console.log("Fetching filter options from:", url);
+        const response = await axios.get(url);
+        console.log("Filter options response:", response.data);
         if (response.data?.status) {
-          setCategories(response.data.data || []);
+          setFilterOptions(response.data.data);
+          setFilters(prev => ({
+            ...prev,
+            availableOptions: response.data.data
+          }));
         }
       } catch (error) {
-        console.error("Failed to load categories:", error);
+        console.error("Failed to load filter options:", error);
       }
     };
+    fetchFilterOptions();
+  }, [categoryId]);
 
-    fetchCategories();
-  }, []);
+  // Fetch products with filters
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const companyId = localStorage.getItem("selected_company_id") || "1";
+      
+      const payload = {
+        company_id: companyId,
+        ...filters,
+        category_id: categoryId || 0,
+        colors: [],
+        occasions: [],
+        fabrics: [],
+        product_types: []
+      };
+      
+      console.log("Fetching products with payload:", payload);
+
+      const response = await axios.post(
+        `${API_BASE}/product/get_filtered_products.php`,
+        payload
+      );
+      
+      console.log("Products response:", response.data);
+
+      if (response.data?.status) {
+        setProducts(response.data.data || []);
+        setTotalProducts(response.data.pagination?.total || 0);
+      } else {
+        console.error("API returned error:", response.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch products:", error);
+      showToast("Failed to load products", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const params = new URLSearchParams(location.search);
-        const categoryId = params.get("category_id");
-        const productId = params.get("product_id");
-
-        let url = `${API_BASE}/product/get.php?limit=20`;
-        if (categoryId) {
-          url = `${API_BASE}/product/get.php?category_id=${categoryId}&limit=20`;
-        } else if (productId) {
-          url = `${API_BASE}/product/get.php?id=${productId}`;
-        }
-
-        const response = await axios.get(url);
-        if (response.data?.status) {
-          const data = response.data.data || [];
-          setProducts(Array.isArray(data) ? data : [data]);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchProducts();
-  }, [location.search]);
+  }, [filters.sort_by, filters.limit, filters.offset, categoryId]);
+
+  const applyFilters = () => {
+    setFilters(prev => ({ ...prev, offset: 0 }));
+    fetchProducts();
+    if (window.innerWidth < 768) {
+      setShowMobileFilter(false);
+    }
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      price_min: 0,
+      price_max: filterOptions?.price_range?.max || 1000000,
+      sizes: [],
+      availability: 'all',
+      rating: 0,
+      sort_by: 'newest',
+      limit: 20,
+      offset: 0,
+      availableOptions: filterOptions || {}
+    });
+    setTimeout(() => {
+      fetchProducts();
+    }, 100);
+  };
 
   const getDefaultSize = (product) => {
     if (!product?.available_sizes) return "";
@@ -117,25 +188,18 @@ export default function Product() {
     );
 
     try {
-      // Already in wishlist -> Remove
       if (existingItem) {
         const response = await axios.delete(
           `${API_BASE}/wishlist/delete.php?id=${existingItem.id}`
         );
-
         if (response.data?.status) {
           await refreshCounts();
           showToast("Removed from wishlist", "success");
-        } else {
-          showToast(response.data?.message || "Unable to remove", "error");
         }
-
         return;
       }
 
-      // Not in wishlist -> Add
       const selectedSize = size || getDefaultSize(product);
-
       const response = await axios.post(
         `${API_BASE}/wishlist/save.php`,
         {
@@ -148,8 +212,6 @@ export default function Product() {
       if (response.data?.status) {
         await refreshCounts();
         showToast("Added to wishlist", "success");
-      } else {
-        showToast(response.data?.message || "Unable to add", "error");
       }
     } catch (error) {
       console.error(error);
@@ -157,31 +219,139 @@ export default function Product() {
     }
   };
 
+  const handleSortChange = (e) => {
+    setFilters(prev => ({ ...prev, sort_by: e.target.value, offset: 0 }));
+  };
+
+  const activeFilterCount = 
+    (filters.sizes || []).length + 
+    (filters.availability !== 'all' ? 1 : 0) + 
+    (filters.rating > 0 ? 1 : 0) + 
+    (filters.price_min > 0 ? 1 : 0);
+
   return (
     <div className="min-h-screen bg-[#f8f7f2] pt-28 pb-16 px-4 md:px-8 lg:px-12">
       <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-900">Products</h1>
+            <p className="text-sm text-gray-500 mt-1">
+              {totalProducts} products found
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            {/* Sort */}
+            <select
+              value={filters.sort_by}
+              onChange={handleSortChange}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="newest">Newest First</option>
+              <option value="price_low">Price: Low to High</option>
+              <option value="price_high">Price: High to Low</option>
+              <option value="popular">Most Popular</option>
+              <option value="rating">Top Rated</option>
+            </select>
 
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <div key={index} className="h-96 rounded-xl bg-white animate-pulse" />
-            ))}
+            {/* Filter Button - Mobile */}
+            <button
+              onClick={() => setShowMobileFilter(true)}
+              className="md:hidden flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+            >
+              <Filter className="w-4 h-4" />
+              Filters
+              {activeFilterCount > 0 && (
+                <span className="bg-blue-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {products.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onNavigate={() => window.location.assign(`/product/${product.id}`)}
-                onAddToCart={(prod, size) => addToCart(prod, size)}
-                onAddToWishlist={(prod, size) => addToWishlist(prod, size)}
-                isWishlisted={isWishlisted(product)}
-              />
-            ))}
+        </div>
+
+        {/* Main Layout */}
+        <div className="flex gap-8">
+          {/* Desktop Filter Sidebar */}
+          <div className="hidden md:block w-72 flex-shrink-0">
+            <FilterSidebar
+              filters={filters}
+              setFilters={setFilters}
+              onApply={applyFilters}
+              onClear={clearFilters}
+            />
           </div>
-        )}
+
+          {/* Product Grid */}
+          <div className="flex-1">
+            {loading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <div key={index} className="h-96 rounded-xl bg-white animate-pulse" />
+                ))}
+              </div>
+            ) : products.length === 0 ? (
+              <div className="text-center py-20">
+                <svg className="w-20 h-20 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                </svg>
+                <p className="text-lg text-gray-500">No products found</p>
+                <p className="text-sm text-gray-400">Try adjusting your filters</p>
+                <button
+                  onClick={clearFilters}
+                  className="mt-4 text-blue-500 hover:text-blue-700"
+                >
+                  Clear all filters
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                {products.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    onNavigate={() => navigate(`/product/${product.id}`)}
+                    onAddToCart={(prod, size) => addToCart(prod, size)}
+                    onAddToWishlist={(prod, size) => addToWishlist(prod, size)}
+                    isWishlisted={isWishlisted(product)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
+
+      {/* Mobile Filter Overlay */}
+      {showMobileFilter && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div 
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setShowMobileFilter(false)}
+          />
+          <div className="absolute right-0 top-0 h-full w-full max-w-sm bg-white overflow-y-auto p-4 animate-slide-in">
+            <FilterSidebar
+              filters={filters}
+              setFilters={setFilters}
+              onApply={applyFilters}
+              onClear={clearFilters}
+              isMobile={true}
+              onClose={() => setShowMobileFilter(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes slide-in {
+          from { transform: translateX(100%); }
+          to { transform: translateX(0); }
+        }
+        .animate-slide-in {
+          animation: slide-in 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 }

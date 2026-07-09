@@ -7,7 +7,7 @@ import { useStore } from "../contexts/StoreContext";
 import { useAuth } from "../contexts/AuthContext";
 import { showToast } from "../utils/toast";
 
-
+const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
 
 const resolveImageUrl = (src) => {
   if (!src) return "";
@@ -25,13 +25,15 @@ export default function Cart() {
   const navigate = useNavigate();
 
   const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     refreshCounts();
   }, []);
 
   useEffect(() => {
-    setItems(cartItems);
+    setItems(cartItems || []);
+    setLoading(false);
   }, [cartItems]);
 
   const updateQuantity = async (id, quantity) => {
@@ -44,6 +46,7 @@ export default function Cart() {
       });
 
       await refreshCounts();
+      showToast("Quantity updated", "success");
     } catch (err) {
       console.error(err);
       showToast("Unable to update quantity", "error");
@@ -65,6 +68,11 @@ export default function Cart() {
     if (!user) {
       showToast("Please login first", "error");
       setTimeout(() => navigate("/login"), 500);
+      return;
+    }
+
+    if (items.length === 0) {
+      showToast("Your cart is empty", "error");
       return;
     }
 
@@ -93,6 +101,7 @@ export default function Cart() {
   };
 
   const subtotal = useMemo(() => {
+    if (!items || items.length === 0) return 0;
     return items.reduce((sum, item) => {
       return (
         sum +
@@ -103,6 +112,7 @@ export default function Cart() {
 
   // Calculate GST total
   const gstTotal = useMemo(() => {
+    if (!items || items.length === 0) return 0;
     return items.reduce((sum, item) => {
       const gstPercent = Number(item.gst_percentage || 0);
       const itemTotal = Number(item.price || 0) * Number(item.quantity || 1);
@@ -111,6 +121,23 @@ export default function Cart() {
   }, [items]);
 
   const grandTotal = subtotal + gstTotal;
+
+  // Calculate average GST for display
+  const avgGst = useMemo(() => {
+    if (!items || items.length === 0) return 0;
+    const itemsWithGst = items.filter(item => Number(item.gst_percentage || 0) > 0);
+    if (itemsWithGst.length === 0) return 0;
+    const totalGst = itemsWithGst.reduce((sum, item) => sum + Number(item.gst_percentage || 0), 0);
+    return Math.round(totalGst / itemsWithGst.length);
+  }, [items]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#f8f7f2] pt-28 pb-12 px-4 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#a97c50]/20 border-t-[#a97c50]"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f8f7f2] pt-28 pb-12 px-4 md:px-8 lg:px-12">
@@ -125,8 +152,14 @@ export default function Cart() {
           <div className="mt-6 space-y-4">
             {items.length === 0 ? (
               <div className="rounded-xl bg-white p-6 shadow text-center">
-                <p className="text-gray-500">Your cart is empty.</p>
-                <Link to="/" className="mt-4 inline-block text-[#a97c50] hover:underline">
+                <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <p className="text-gray-500 text-lg">Your cart is empty.</p>
+                <p className="text-gray-400 text-sm mt-1">Start shopping to add items to your cart</p>
+                <Link to="/" className="mt-6 inline-block px-6 py-2 bg-[#a97c50] text-white rounded-full hover:bg-[#8a6540] transition">
                   Continue Shopping →
                 </Link>
               </div>
@@ -134,10 +167,10 @@ export default function Cart() {
               items.map((item) => (
                 <div
                   key={item.id}
-                  className="flex flex-col md:flex-row items-start md:items-center justify-between rounded-xl bg-white p-2 sm:p-4 shadow-sm hover:shadow-md transition"
+                  className="flex flex-col md:flex-row items-start md:items-center justify-between rounded-xl bg-white p-4 shadow-sm hover:shadow-md transition"
                 >
                   <div className="flex items-center gap-4 w-full md:w-auto">
-                    {/* Image container with object-contain to show full image */}
+                    {/* Image container */}
                     <div className="h-20 w-20 md:h-24 md:w-24 rounded-lg overflow-hidden bg-[#f8f7f2] flex items-center justify-center flex-shrink-0">
                       <img
                         src={
@@ -145,7 +178,7 @@ export default function Cart() {
                           "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0"
                         }
                         alt={item.product_name}
-                        className="w-full h-full object-contain"
+                        className="w-full h-full object-cover"
                       />
                     </div>
 
@@ -229,7 +262,7 @@ export default function Cart() {
 
               {gstTotal > 0 && (
                 <div className="flex justify-between">
-                  <span className="text-gray-600">GST ({items.reduce((sum, item) => sum + Number(item.gst_percentage || 0), 0) / items.filter(item => Number(item.gst_percentage || 0) > 0).length || 0}%)</span>
+                  <span className="text-gray-600">GST ({avgGst}%)</span>
                   <span className="font-medium">{formatCurrency(gstTotal)}</span>
                 </div>
               )}

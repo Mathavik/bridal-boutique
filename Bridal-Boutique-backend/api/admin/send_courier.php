@@ -9,14 +9,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit();
 }
 
-include __DIR__ . '/../../config/db.php';
-
 // Load PHPMailer
 require_once __DIR__ . '/../../vendor/autoload.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\SMTP;
 use PHPMailer\PHPMailer\Exception;
+
+include __DIR__ . '/../../config/db.php';
 
 $data = json_decode(file_get_contents("php://input"), true);
 $user_id = intval($data['user_id'] ?? 0);
@@ -36,94 +36,32 @@ function generateCourierId() {
     return $prefix . $date . $random;
 }
 
-try {
-    // Get user details
-    $userQuery = "SELECT * FROM frontend_users WHERE id = $user_id";
-    $userResult = mysqli_query($conn, $userQuery);
-    
-    if (!$userResult || mysqli_num_rows($userResult) == 0) {
-        echo json_encode([
-            'status' => false,
-            'message' => 'User not found'
-        ]);
-        exit;
-    }
-    
-    $user = mysqli_fetch_assoc($userResult);
-    
-    // Get user's latest order
-    $orderQuery = "SELECT * FROM orders 
-                   WHERE guest_id = 'user_" . $user_id . "' 
-                   AND status NOT IN ('delivered', 'cancelled')
-                   ORDER BY id DESC LIMIT 1";
-    
-    $orderResult = mysqli_query($conn, $orderQuery);
-    
-    if (!$orderResult || mysqli_num_rows($orderResult) == 0) {
-        echo json_encode([
-            'status' => false,
-            'message' => 'No active orders found for this customer'
-        ]);
-        exit;
-    }
-    
-    $order = mysqli_fetch_assoc($orderResult);
-    
-    // Generate courier ID
-    $courier_id = generateCourierId();
-    $shipped_at = date('Y-m-d H:i:s');
-    
-    // Update order with courier ID
-    $updateQuery = "UPDATE orders SET 
-                        tracking_id = '$courier_id',
-                        tracking_status = 'shipped',
-                        status = 'shipped',
-                        shipped_at = '$shipped_at'
-                    WHERE id = " . $order['id'];
-    
-    if (!mysqli_query($conn, $updateQuery)) {
-        throw new Exception("Failed to update order: " . mysqli_error($conn));
-    }
-    
-    // Send email
-    $emailSent = sendCourierEmail($user['email'], $user['name'], $order['id'], $courier_id);
-    
-    echo json_encode([
-        'status' => true,
-        'message' => $emailSent ? 'Courier ID sent successfully!' : 'Courier ID generated but email failed!',
-        'data' => [
-            'courier_id' => $courier_id,
-            'order_id' => $order['id'],
-            'customer_email' => $user['email'],
-            'shipped_at' => $shipped_at,
-            'email_sent' => $emailSent
-        ]
-    ]);
-    
-} catch (Exception $e) {
-    echo json_encode([
-        'status' => false,
-        'message' => $e->getMessage()
-    ]);
-}
-
-function sendCourierEmail($email, $customer_name, $order_id, $courier_id) {
+function sendEmail($to, $name, $order_id, $courier_id) {
     try {
         $mail = new PHPMailer(true);
         
-        // 🔥 IMPORTANT: Update these with your email details
+        // Server settings
         $mail->isSMTP();
-        $mail->Host       = 'smtp.gmail.com';           // For Gmail
+        $mail->Host       = 'smtp.gmail.com';
         $mail->SMTPAuth   = true;
-        $mail->Username   = 'majesticjesi@gmail.com';     // YOUR GMAIL
-        $mail->Password   = 'fpws pgxt cyfb obvt';        // YOUR APP PASSWORD
+        $mail->Username   = 'majesticjesi@gmail.com';
+        $mail->Password   = 'fpws pgxt cyfb obvt';  // App Password
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
         
+        // Disable SSL verification (for local testing)
+        $mail->SMTPOptions = array(
+            'ssl' => array(
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true
+            )
+        );
+        
         // Recipients
-        $mail->setFrom('your-email@gmail.com', 'Bridal Boutique');
-        $mail->addAddress($email, $customer_name);
-        $mail->addReplyTo('your-email@gmail.com', 'Support');
+        $mail->setFrom('majesticjesi@gmail.com', 'Bridal Boutique');
+        $mail->addAddress($to, $name);
+        $mail->addReplyTo('majesticjesi@gmail.com', 'Support');
         
         // Content
         $mail->isHTML(true);
@@ -153,22 +91,20 @@ function sendCourierEmail($email, $customer_name, $order_id, $courier_id) {
                     <p style='margin: 10px 0 0; opacity: 0.9;'>Your order is on its way</p>
                 </div>
                 <div class='content'>
-                    <p>Dear <strong>" . htmlspecialchars($customer_name) . "</strong>,</p>
+                    <p>Dear <strong>" . htmlspecialchars($name) . "</strong>,</p>
                     <p>Great news! Your order <strong>#$order_id</strong> has been shipped.</p>
                     
                     <div class='tracking-box'>
                         <p style='margin: 0 0 10px; color: #666; font-size: 14px;'>📦 Your Courier Tracking ID</p>
                         <div class='tracking-id'>" . htmlspecialchars($courier_id) . "</div>
-                        // <p style='margin: 10px 0 0; font-size: 12px; color: #999;'>Use this ID to track your order</p>
+                      
                     </div>
                     
-                    <div style='text-align: center; margin: 25px 0;'>
-                        <a href='http://localhost/bridal-boutique/track-order?tracking_id=" . htmlspecialchars($courier_id) . "' class='btn'>Track Your Order</a>
-                    </div>
+                   
                     
                     <p style='margin-top: 20px;'>
                         Thanks for shopping with us!<br>
-                        <strong>Bridal Boutique Team</strong>
+                        <strong>Padmavathi Collection</strong>
                     </p>
                 </div>
                 <div class='footer'>
@@ -188,4 +124,84 @@ function sendCourierEmail($email, $customer_name, $order_id, $courier_id) {
         return false;
     }
 }
+
+try {
+    // Get user details
+    $userQuery = "SELECT * FROM frontend_users WHERE id = $user_id";
+    $userResult = mysqli_query($conn, $userQuery);
+    
+    if (!$userResult || mysqli_num_rows($userResult) == 0) {
+        echo json_encode([
+            'status' => false,
+            'message' => 'User not found'
+        ]);
+        exit;
+    }
+    
+    $user = mysqli_fetch_assoc($userResult);
+    
+    // Get user's latest order
+    $guestId = 'user_' . $user_id;
+    $orderQuery = "SELECT * FROM orders 
+                   WHERE guest_id = '$guestId' 
+                   AND status NOT IN ('delivered', 'cancelled')
+                   ORDER BY id DESC LIMIT 1";
+    
+    $orderResult = mysqli_query($conn, $orderQuery);
+    
+    if (!$orderResult || mysqli_num_rows($orderResult) == 0) {
+        echo json_encode([
+            'status' => false,
+            'message' => 'No active orders found for this customer'
+        ]);
+        exit;
+    }
+    
+    $order = mysqli_fetch_assoc($orderResult);
+    
+    // Generate courier ID
+    $courier_id = generateCourierId();
+    $shipped_at = date('Y-m-d H:i:s');
+    
+    // Update order
+    $updateQuery = "UPDATE orders SET 
+                        tracking_id = '$courier_id',
+                        status = 'shipped',
+                        shipped_at = '$shipped_at'
+                    WHERE id = " . $order['id'];
+    
+    if (!mysqli_query($conn, $updateQuery)) {
+        throw new Exception("Failed to update order: " . mysqli_error($conn));
+    }
+    
+    // Send email
+    $emailSent = false;
+    $userEmail = $user['email'] ?? '';
+    $userName = $user['name'] ?? 'Customer';
+    
+    if (!empty($userEmail)) {
+        $emailSent = sendEmail($userEmail, $userName, $order['id'], $courier_id);
+    }
+    
+    echo json_encode([
+        'status' => true,
+        'message' => $emailSent ? 'Order shipped and email sent successfully!' : 'Order shipped but email sending failed.',
+        'data' => [
+            'courier_id' => $courier_id,
+            'order_id' => $order['id'],
+            'customer_email' => $userEmail,
+            'customer_name' => $userName,
+            'shipped_at' => $shipped_at,
+            'email_sent' => $emailSent
+        ]
+    ]);
+    
+} catch (Exception $e) {
+    echo json_encode([
+        'status' => false,
+        'message' => $e->getMessage()
+    ]);
+}
+
+$conn->close();
 ?>

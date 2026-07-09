@@ -17,6 +17,8 @@ import ScrollToTop from "./components/ScrollToTop";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import InvoicePage from "./pages/InvoicePage";
 import Search from "./pages/search";
+import FilterSidebar from "./components/filters/FilterSidebar";
+import ForEveryOccasion from "./Home/ForEveryOccasion";
 
 export default function App() {
   return (
@@ -39,6 +41,10 @@ export default function App() {
         <Route path="/order-confirmation" element={<OrderConfirmation />} />
         <Route path="/payment-success" element={<PaymentSuccess />} />
         <Route path="/invoice/:id" element={<InvoicePage />} />
+        <Route path="/filtersidebar" element={<FilterSidebar />} />
+        <Route path="/foreveryoccassion" element={<ForEveryOccasion />} />
+
+
         
 
       </Routes>

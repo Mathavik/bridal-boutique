@@ -19,43 +19,45 @@ if (!$company_id) {
 }
 
 /* ─────────────────────────────────────────
-   1. TOTAL CREDIT SALES
+   1. TOTAL CREDIT SALES - From invoices table
 ───────────────────────────────────────── */
 $credit = 0;
 $res = $conn->query("
-    SELECT SUM(total_amount) as total
+    SELECT ROUND(SUM(total_amount), 2) as total
     FROM invoices
     WHERE company_id='$company_id'
-    AND payment_type='credit'
+    AND payment_type = 'credit'
 ");
 if ($row = $res->fetch_assoc()) {
     $credit = floatval($row['total']);
 }
 
 /* ─────────────────────────────────────────
-   2. TOTAL OUTSTANDING
+   2. TOTAL OUTSTANDING - From payments table
 ───────────────────────────────────────── */
 $outstanding = 0;
 $res = $conn->query("
-    SELECT SUM(balance_amount) as total
+    SELECT ROUND(SUM(balance_amount), 2) as total
     FROM payments
     WHERE company_id='$company_id'
-    AND balance_amount > 0
+    AND balance_amount > 0.01
+    AND payment_status != 'paid'
 ");
 if ($row = $res->fetch_assoc()) {
     $outstanding = floatval($row['total']);
 }
 
 /* ─────────────────────────────────────────
-   3. OVERDUE AMOUNT
+   3. OVERDUE AMOUNT - From payments with due date
 ───────────────────────────────────────── */
 $overdue = 0;
 $res = $conn->query("
-    SELECT SUM(p.balance_amount) as total
+    SELECT ROUND(SUM(p.balance_amount), 2) as total
     FROM payments p
-    JOIN invoices i ON p.invoice_id = i.id
+    INNER JOIN invoices i ON p.invoice_id = i.id
     WHERE p.company_id='$company_id'
-    AND p.balance_amount > 0
+    AND p.balance_amount > 0.01
+    AND p.payment_status != 'paid'
     AND i.due_date IS NOT NULL
     AND i.due_date < CURDATE()
 ");
@@ -64,11 +66,11 @@ if ($row = $res->fetch_assoc()) {
 }
 
 /* ─────────────────────────────────────────
-   4. TODAY COLLECTION
+   4. TODAY COLLECTION - From payments
 ───────────────────────────────────────── */
 $today = 0;
 $res = $conn->query("
-    SELECT SUM(paid_amount) as total
+    SELECT ROUND(SUM(paid_amount), 2) as total
     FROM payments
     WHERE company_id='$company_id'
     AND DATE(created_at) = CURDATE()
@@ -78,43 +80,37 @@ if ($row = $res->fetch_assoc()) {
 }
 
 /* ─────────────────────────────────────────
-   5. TABLE DATA
+   5. OUTSTANDING CUSTOMERS LIST
 ───────────────────────────────────────── */
 $list = [];
-
 $res = $conn->query("
     SELECT 
         i.customer_name,
-        p.balance_amount,
+        ROUND(p.balance_amount, 2) as balance_amount,
         i.due_date,
-
         CASE 
-            WHEN p.balance_amount <= 0 THEN 'Paid'
+            WHEN p.balance_amount <= 0.01 THEN 'Paid'
             WHEN i.due_date IS NOT NULL AND i.due_date < CURDATE() THEN 'Overdue'
             ELSE 'Pending'
         END AS status
-
     FROM payments p
-    JOIN invoices i ON p.invoice_id = i.id
-
+    INNER JOIN invoices i ON p.invoice_id = i.id
     WHERE p.company_id='$company_id'
-    AND p.balance_amount > 0
-
+    AND p.balance_amount > 0.01
+    AND p.payment_status != 'paid'
     ORDER BY i.due_date ASC
+    LIMIT 50
 ");
 
 while ($row = $res->fetch_assoc()) {
     $list[] = [
         "customer"    => $row['customer_name'],
         "outstanding" => floatval($row['balance_amount']),
-        "due_date"    => $row['due_date'],
+        "due_date"    => $row['due_date'] ?? 'N/A',
         "status"      => $row['status']
     ];
 }
 
-/* ─────────────────────────────────────────
-   FINAL RESPONSE
-───────────────────────────────────────── */
 echo json_encode([
     "status" => true,
     "cards" => [
@@ -125,3 +121,6 @@ echo json_encode([
     ],
     "list" => $list
 ]);
+
+$conn->close();
+?>

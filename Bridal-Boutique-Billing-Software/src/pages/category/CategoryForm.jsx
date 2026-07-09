@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
+import BulkVideoUpload from "../../components/BulkVideoUpload";
 
 /* ─── Toast Hook ─────────────────────────────────────────── */
 function useToast() {
@@ -42,11 +43,14 @@ function ToastPortal({ toasts, remove }) {
 export default function CategoryForm() {
   const navigate = useNavigate();
   const [name, setName] = useState("");
-  const [status, setStatus] = useState("active"); // New status state
+  const [status, setStatus] = useState("active");
   const [visible, setVisible] = useState(false);
   const [bannerImage, setBannerImage] = useState("");
   const [bannerFile, setBannerFile] = useState(null);
   const [bannerPreview, setBannerPreview] = useState("");
+  const [categoryVideo, setCategoryVideo] = useState("");
+  const [videoFile, setVideoFile] = useState(null);
+  const [videoPreview, setVideoPreview] = useState("");
   const [loading, setLoading] = useState(false);
   const [charCount, setCharCount] = useState(0);
   const { toasts, show, remove } = useToast();
@@ -54,6 +58,8 @@ export default function CategoryForm() {
   const [selectedCompany, setSelectedCompany] = useState(
     localStorage.getItem("selected_company_id") || ""
   );
+  const [createdCategoryId, setCreatedCategoryId] = useState(null);
+  const [createdCategoryName, setCreatedCategoryName] = useState("");
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user"));
@@ -104,6 +110,17 @@ export default function CategoryForm() {
     setBannerImage("");
   };
 
+  const handleVideoFileChange = (e) => {
+    const file = e.target.files?.[0] || null;
+    setVideoFile(file);
+    if (!file) {
+      setVideoPreview("");
+      return;
+    }
+    setVideoPreview(URL.createObjectURL(file));
+    setCategoryVideo("");
+  };
+
   const handleSubmit = async () => {
     const company_id = Number(selectedCompany);
     if (!name.trim()) {
@@ -129,18 +146,37 @@ export default function CategoryForm() {
         }
       }
 
-     const payload = {
-  name: name.trim(),
-  company_id: company_id,
-  banner_image: banner_image_value,
-  status: status,
-  visible: visible,
-};
+      let category_video_value = categoryVideo;
+      if (videoFile) {
+        try {
+          category_video_value = await readFileAsBase64(videoFile);
+        } catch (error) {
+          console.error(error);
+          show("error", "Upload failed", "Unable to read the selected video.");
+          setLoading(false);
+          return;
+        }
+      }
+
+      const payload = {
+        name: name.trim(),
+        company_id: company_id,
+        banner_image: banner_image_value,
+        category_video: category_video_value,
+        status: status,
+        visible: visible,
+      };
 
       const res = await api.post("/category/create.php", payload);
       if (res.data.status) {
+        // Store the created category ID for bulk upload
+        if (res.data.data && res.data.data.id) {
+          setCreatedCategoryId(res.data.data.id);
+          setCreatedCategoryName(name.trim());
+        }
         show("success", "Category added!", `"${name.trim()}" has been created.`);
-        setTimeout(() => navigate("/category"), 2000);
+        // Don't navigate away immediately - let user upload videos
+        // setTimeout(() => navigate("/category"), 2000);
       } else {
         show("error", "Failed", res.data.message || "Something went wrong.");
       }
@@ -169,7 +205,6 @@ export default function CategoryForm() {
           overflow: hidden;
         }
 
-        /* Decorative background shapes */
         .cf-bg-ring {
           position: absolute;
           border-radius: 50%;
@@ -193,11 +228,10 @@ export default function CategoryForm() {
           pointer-events: none;
         }
 
-        /* Card */
         .cf-card {
           position: relative;
           width: 100%;
-          max-width: 480px;
+          max-width: 520px;
           background: #ffffff;
           border-radius: 26px;
           border: 1px solid rgba(226,232,240,0.8);
@@ -213,7 +247,6 @@ export default function CategoryForm() {
           to   { opacity:1; transform:translateY(0) scale(1); }
         }
 
-        /* Accent stripe at top */
         .cf-stripe {
           height: 5px;
           background: linear-gradient(90deg, #1d4ed8, #6366f1, #3b82f6, #1d4ed8);
@@ -225,7 +258,6 @@ export default function CategoryForm() {
           100% { background-position: 200% 0%; }
         }
 
-        /* Header section */
         .cf-header {
           padding: 2rem 2rem 1.5rem;
           display: flex;
@@ -255,19 +287,16 @@ export default function CategoryForm() {
           font-weight: 400;
         }
 
-        /* Divider */
         .cf-hr {
           height: 1px;
           background: #f1f5f9;
           margin: 0 2rem;
         }
 
-        /* Body */
         .cf-body {
           padding: 1.75rem 2rem 2rem;
         }
 
-        /* Label row */
         .cf-label-row {
           display: flex;
           align-items: center;
@@ -289,7 +318,6 @@ export default function CategoryForm() {
         }
         .cf-char.active { color: #3b82f6; }
 
-        /* Input group */
         .cf-input-group {
           position: relative;
           margin-bottom: 1.5rem;
@@ -339,7 +367,6 @@ export default function CategoryForm() {
           border-right-color: #bfdbfe;
         }
 
-        /* Status Toggle */
         .cf-status-group {
           display: flex;
           gap: 12px;
@@ -373,7 +400,6 @@ export default function CategoryForm() {
           background: #f1f5f9;
         }
 
-        /* Suggestion chips */
         .cf-chips {
           display: flex;
           flex-wrap: wrap;
@@ -407,7 +433,6 @@ export default function CategoryForm() {
           background: #eff6ff;
         }
 
-        /* Submit button */
         .cf-btn {
           width: 100%;
           padding: 15px;
@@ -466,7 +491,59 @@ export default function CategoryForm() {
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* ── Toast styles ── */
+        .video-preview {
+          margin-bottom: 1.5rem;
+          border-radius: 14px;
+          overflow: hidden;
+          border: 1.5px solid #e2e8f0;
+        }
+        .video-preview video {
+          width: 100%;
+          display: block;
+        }
+
+        .cf-success-box {
+          background: #f0fdf4;
+          border: 1px solid #bbf7d0;
+          border-radius: 14px;
+          padding: 16px;
+          margin-bottom: 20px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .cf-success-box .icon {
+          font-size: 24px;
+        }
+        .cf-success-box .text {
+          flex: 1;
+        }
+        .cf-success-box .text h4 {
+          color: #15803d;
+          margin: 0 0 4px;
+          font-size: 14px;
+          font-weight: 700;
+        }
+        .cf-success-box .text p {
+          color: #16a34a;
+          margin: 0;
+          font-size: 13px;
+        }
+        .cf-success-box .btn-go {
+          background: #22c55e;
+          color: white;
+          border: none;
+          padding: 6px 14px;
+          border-radius: 8px;
+          cursor: pointer;
+          font-weight: 600;
+          font-size: 12px;
+        }
+        .cf-success-box .btn-go:hover {
+          background: #16a34a;
+        }
+
+        /* ── Toast ── */
         .cf-toast {
           pointer-events: auto;
           display: flex;
@@ -542,12 +619,17 @@ export default function CategoryForm() {
           from { width: 100%; }
           to   { width: 0%; }
         }
+
+        .cf-bulk-upload-section {
+          margin-top: 20px;
+          border-top: 1px solid #e2e8f0;
+          padding-top: 20px;
+        }
       `}</style>
 
       <ToastPortal toasts={toasts} remove={remove} />
 
       <div className="cf-page">
-        {/* BG decorations */}
         <div className="cf-bg-ring cf-bg-ring-1" />
         <div className="cf-bg-ring cf-bg-ring-2" />
         {[...Array(8)].map((_, i) => (
@@ -559,10 +641,8 @@ export default function CategoryForm() {
         ))}
 
         <div className="cf-card">
-          {/* Animated top stripe */}
           <div className="cf-stripe" />
 
-          {/* Header */}
           <div className="cf-header">
             <div className="cf-icon-box">🏷️</div>
             <div className="cf-header-text">
@@ -573,7 +653,6 @@ export default function CategoryForm() {
 
           <div className="cf-hr" />
 
-          {/* Body */}
           <div className="cf-body">
             {/* Select Company */}
             <div style={{marginBottom:"20px"}}>
@@ -613,7 +692,7 @@ export default function CategoryForm() {
               <div className="cf-input-prefix">#</div>
             </div>
 
-            {/* Status Toggle - NEW */}
+            {/* Status Toggle */}
             <div className="cf-label-row">
               <span className="cf-label">Category Status</span>
             </div>
@@ -632,45 +711,43 @@ export default function CategoryForm() {
               </button>
             </div>
 
+            {/* Visibility */}
             <div style={{ marginBottom: "20px" }}>
-  <label className="cf-label">Category Visibility</label>
-
-  <label
-    style={{
-      display: "flex",
-      alignItems: "center",
-      gap: "10px",
-      marginTop: "10px",
-      cursor: "pointer",
-      fontWeight: "600",
-      color: "#334155",
-    }}
-  >
-    <input
-      type="checkbox"
-      checked={visible}
-      onChange={(e) => setVisible(e.target.checked)}
-      style={{
-        width: "18px",
-        height: "18px",
-        cursor: "pointer",
-      }}
-    />
-
-    Visible Category
-  </label>
-
-  <p
-    style={{
-      marginTop: "6px",
-      marginLeft: "28px",
-      fontSize: "12px",
-      color: "#94a3b8",
-    }}
-  >
-    Checked = <b>true</b> &nbsp;&nbsp; Unchecked = <b>false</b>
-  </p>
-</div>
+              <label className="cf-label">Category Visibility</label>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  marginTop: "10px",
+                  cursor: "pointer",
+                  fontWeight: "600",
+                  color: "#334155",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={visible}
+                  onChange={(e) => setVisible(e.target.checked)}
+                  style={{
+                    width: "18px",
+                    height: "18px",
+                    cursor: "pointer",
+                  }}
+                />
+                Visible Category
+              </label>
+              <p
+                style={{
+                  marginTop: "6px",
+                  marginLeft: "28px",
+                  fontSize: "12px",
+                  color: "#94a3b8",
+                }}
+              >
+                Checked = <b>true</b> &nbsp;&nbsp; Unchecked = <b>false</b>
+              </p>
+            </div>
 
             {/* Banner Image */}
             <div className="cf-label-row">
@@ -708,6 +785,41 @@ export default function CategoryForm() {
               </div>
             )}
 
+            {/* Category Video */}
+            <div className="cf-label-row">
+              <span className="cf-label">Category Video</span>
+              <span className="cf-char">Optional</span>
+            </div>
+            <div className="cf-input-group">
+              <input
+                type="file"
+                accept="video/*"
+                className="cf-input"
+                onChange={handleVideoFileChange}
+              />
+            </div>
+            <div className="cf-input-group">
+              <input
+                type="text"
+                className="cf-input"
+                placeholder="Or paste video URL"
+                value={categoryVideo}
+                onChange={(e) => {
+                  setCategoryVideo(e.target.value);
+                  setVideoFile(null);
+                  setVideoPreview(e.target.value);
+                }}
+              />
+            </div>
+            {(videoPreview || categoryVideo) && (
+              <div className="video-preview">
+                <video controls>
+                  <source src={videoPreview || categoryVideo} type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+            )}
+
             {/* Quick-fill suggestion chips */}
             <div className="cf-chips">
               <span className="cf-chip-label">Quick suggestions</span>
@@ -718,7 +830,7 @@ export default function CategoryForm() {
               ))}
             </div>
 
-            {/* CTA */}
+            {/* CTA Buttons */}
             <button className="cf-btn" onClick={handleSubmit} disabled={loading}>
               {loading
                 ? <><div className="cf-spinner" /> Saving…</>
@@ -728,6 +840,33 @@ export default function CategoryForm() {
             <button className="cf-btn-cancel" onClick={() => navigate("/category")}>
               Cancel
             </button>
+
+            {/* ─── Success Message & Bulk Upload ─── */}
+            {createdCategoryId && (
+              <div className="cf-bulk-upload-section">
+                <div className="cf-success-box">
+                  <div className="icon">✅</div>
+                  <div className="text">
+                    <h4>Category Created!</h4>
+                    <p>"{createdCategoryName}" has been created. Now upload videos.</p>
+                  </div>
+                  <button 
+                    className="btn-go" 
+                    onClick={() => navigate("/category")}
+                  >
+                    Go to List
+                  </button>
+                </div>
+
+                <BulkVideoUpload 
+                  categoryId={createdCategoryId}
+                  categoryName={createdCategoryName}
+                  onUploadComplete={() => {
+                    show("success", "Upload Complete!", "Videos have been uploaded successfully.");
+                  }}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>

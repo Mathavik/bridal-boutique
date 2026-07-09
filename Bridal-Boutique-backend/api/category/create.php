@@ -21,7 +21,6 @@ function saveBase64Image($value)
         return '';
     }
 
-    // Already uploaded path
     if (!preg_match('/^[A-Za-z0-9+\/]+={0,2}$/', $value)) {
         return $value;
     }
@@ -52,9 +51,9 @@ function saveBase64Image($value)
 $name = trim($data['name'] ?? '');
 $company_id = intval($data['company_id'] ?? 0);
 $banner_image = saveBase64Image(trim($data['banner_image'] ?? ''));
+$category_video = trim($data['category_video'] ?? '');
+$video_title = trim($data['video_title'] ?? ''); // NEW: Get video title
 $status = trim($data['status'] ?? 'active');
-
-// Visible (true/false -> 1/0)
 $visible = (!empty($data['visible']) && $data['visible'] == true) ? 1 : 0;
 
 // Validate status
@@ -88,12 +87,14 @@ if (mysqli_num_rows($dup) > 0) {
     exit;
 }
 
-// Insert Category
+// Insert Category - Added video_title column
 $sql = "INSERT INTO categories
 (
     name,
     company_id,
     banner_image,
+    category_video,
+    video_title,
     status,
     visible
 )
@@ -102,15 +103,34 @@ VALUES
     '$name',
     '$company_id',
     '$banner_image',
+    '$category_video',
+    '$video_title',
     '$status',
     '$visible'
 )";
 
 if ($conn->query($sql)) {
+    $category_id = $conn->insert_id;
+    
+    // If video was uploaded with a title, also insert into category_videos table
+    if (!empty($category_video) && !empty($video_title)) {
+        $video_path = $category_video;
+        $insert_video = "INSERT INTO category_videos 
+                        (category_id, video_path, video_title, video_order, status) 
+                        VALUES ('$category_id', '$video_path', '$video_title', 0, 'active')";
+        $conn->query($insert_video);
+    }
 
     echo json_encode([
         "status" => true,
-        "message" => "Category added successfully"
+        "message" => "Category added successfully",
+        "data" => [
+            "id" => $category_id,
+            "name" => $name,
+            "banner_image" => $banner_image,
+            "category_video" => $category_video,
+            "video_title" => $video_title
+        ]
     ]);
 
 } else {

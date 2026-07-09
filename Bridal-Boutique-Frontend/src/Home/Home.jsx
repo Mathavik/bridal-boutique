@@ -6,12 +6,14 @@ import Spotlight from "./spotlight";
 import Workflow from "./workflow";
 import SpotlightSection from "./spotlight";
 import EditorsPick from "./editors pick";
+import ForEveryOccasion from "./ForEveryOccasion";
 
 function Home() {
   return (
     <>
       <Banner />
       <SpotlightSection />
+      <ForEveryOccasion/>
       <NewArrivals />
       <EditorsPick/>
       <Celebration />

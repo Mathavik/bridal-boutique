@@ -45,6 +45,7 @@ import BannerPage from "../pages/banner/BannerPage";
 import UserForm from "../pages/users/UserForm";
 import UserList from "../pages/users/UserList";
 import EditUser from "../pages/users/EditUser";
+import BulkVideoUpload from "../components/BulkVideoUpload";
 
 export default function AppRoutes() {
   return (
@@ -138,6 +139,8 @@ export default function AppRoutes() {
           {/* Requests */}
           <Route path="/cashier-requests" element={<PendingCashierRequests />} />
           <Route path="/company-requests" element={<CompanyRequest />} />
+          <Route path="/bulkvideoupload" element={<BulkVideoUpload />} />
+
           
           {/* Profile */}
           <Route path="/profile" element={<Profile />} />

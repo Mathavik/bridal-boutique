@@ -1,70 +1,7 @@
-// import { useEffect, useState } from "react";
-// import { useNavigate, useParams } from "react-router-dom";
-// import api from "../../services/api";
-
-// export default function EditCategory() {
-//   const { id } = useParams();
-//   const navigate = useNavigate();
-
-//   const [name, setName] = useState("");
-
-//   // 🔥 FETCH SINGLE
-//   const fetchCategory = async () => {
-//     const res = await api.get(`/category/get_by_id.php?id=${id}`);
-
-//     if (res.data.status) {
-//       setName(res.data.data.name);
-//     }
-//   };
-
-//   useEffect(() => {
-//     fetchCategory();
-//   }, [id]);
-
-//   // 🔥 UPDATE
-//   const handleUpdate = async () => {
-//     if (!name) {
-//       alert("Enter category name");
-//       return;
-//     }
-
-//     const res = await api.post("/category/update.php", {
-//       id,
-//       name,
-//     });
-
-//     if (res.data.status) {
-//       alert("Updated Successfully ✅");
-//       navigate("/category");
-//     } else {
-//       alert(res.data.message);
-//     }
-//   };
-
-//   return (
-//     <div className="max-w-lg bg-white p-6 rounded shadow">
-//       <h2 className="text-xl font-bold mb-4">Edit Category</h2>
-
-//       <input
-//         value={name}
-//         onChange={(e) => setName(e.target.value)}
-//         className="w-full p-3 border mb-4"
-//         placeholder="Category Name"
-//       />
-
-//       <button
-//         onClick={handleUpdate}
-//         className="bg-blue-600 text-white w-full p-3"
-//       >
-//         Update Category
-//       </button>
-//     </div>
-//   );
-// }
-
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../services/api";
+import BulkVideoUpload from "../../components/BulkVideoUpload";
 
 /* ─── Toast Hook ─────────────────────────────────────────── */
 function useToast() {
@@ -106,31 +43,59 @@ function ToastPortal({ toasts, remove }) {
 export default function EditCategory() {
   const { id } = useParams();
   const navigate = useNavigate();
+  
+  // Form states
   const [name, setName] = useState("");
   const [originalName, setOriginalName] = useState("");
+  const [status, setStatus] = useState("active");
+  const [originalStatus, setOriginalStatus] = useState("active");
+  const [visible, setVisible] = useState(false);
+  const [originalVisible, setOriginalVisible] = useState(false);
+  
+  // Banner Image states
   const [bannerImage, setBannerImage] = useState("");
   const [originalBannerImage, setOriginalBannerImage] = useState("");
   const [bannerFile, setBannerFile] = useState(null);
   const [bannerPreview, setBannerPreview] = useState("");
+  
+  // Video states
+  const [categoryVideo, setCategoryVideo] = useState("");
+  const [originalCategoryVideo, setOriginalCategoryVideo] = useState("");
+  const [videoFile, setVideoFile] = useState(null);
+  const [videoPreview, setVideoPreview] = useState("");
+  
+  // UI states
   const [charCount, setCharCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
   const { toasts, show, remove } = useToast();
-const [visible, setVisible] = useState(false);
-const [originalVisible, setOriginalVisible] = useState(false);
+
+  // ─── Fetch Category ──────────────────────────────────────
   const fetchCategory = async () => {
     setFetching(true);
     try {
       const res = await api.get(`/category/get_by_id.php?id=${id}`);
       if (res.data.status) {
-        setName(res.data.data.name);
-        setOriginalName(res.data.data.name);
-        setBannerImage(res.data.data.banner_image || "");
-        setOriginalBannerImage(res.data.data.banner_image || "");
-        setBannerPreview(res.data.data.banner_image || "");
-        setCharCount(res.data.data.name.length);
-        setVisible(Boolean(Number(res.data.data.visible)));
-setOriginalVisible(Boolean(Number(res.data.data.visible)));
+        const data = res.data.data;
+        
+        setName(data.name || "");
+        setOriginalName(data.name || "");
+        setCharCount((data.name || "").length);
+        
+        setStatus(data.status || "active");
+        setOriginalStatus(data.status || "active");
+        
+        setVisible(Boolean(Number(data.visible)));
+        setOriginalVisible(Boolean(Number(data.visible)));
+        
+        setBannerImage(data.banner_image || "");
+        setOriginalBannerImage(data.banner_image || "");
+        setBannerPreview(data.banner_image || "");
+        
+        setCategoryVideo(data.category_video || "");
+        setOriginalCategoryVideo(data.category_video || "");
+        setVideoPreview(data.category_video || "");
       } else {
         show("error", "Not found", "Category could not be loaded.");
       }
@@ -143,17 +108,8 @@ setOriginalVisible(Boolean(Number(res.data.data.visible)));
 
   useEffect(() => { fetchCategory(); }, [id]);
 
-  const readFileAsBase64 = (file) => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const base64Data = reader.result.split(",")[1] || "";
-      resolve(base64Data);
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-
-  const handleChange = (e) => {
+  // ─── Handlers ────────────────────────────────────────────
+  const handleNameChange = (e) => {
     setName(e.target.value);
     setCharCount(e.target.value.length);
   };
@@ -169,43 +125,93 @@ setOriginalVisible(Boolean(Number(res.data.data.visible)));
     setBannerImage("");
   };
 
+  const handleVideoFileChange = (e) => {
+    const file = e.target.files?.[0] || null;
+    setVideoFile(file);
+    if (!file) {
+      setVideoPreview("");
+      return;
+    }
+    setVideoPreview(URL.createObjectURL(file));
+    setCategoryVideo("");
+  };
+
+  // ─── Update with FormData ──────────────────────────────
   const handleUpdate = async () => {
     if (!name.trim()) {
       show("warn", "Missing field", "Category name cannot be empty.");
       return;
     }
-    if (name.trim() === originalName && bannerFile === null && bannerImage.trim() === originalBannerImage.trim() && visible === originalVisible) {
+
+    // Check if any changes
+    const hasChanges = 
+      name.trim() !== originalName ||
+      status !== originalStatus ||
+      visible !== originalVisible ||
+      bannerFile !== null ||
+      (bannerImage.trim() !== originalBannerImage.trim()) ||
+      videoFile !== null ||
+      (categoryVideo.trim() !== originalCategoryVideo.trim());
+
+    if (!hasChanges) {
       show("warn", "No changes", "You haven't changed anything.");
       return;
     }
+
     setLoading(true);
     try {
-      let banner_image_value = bannerImage;
+      // Use FormData for file uploads
+      const formData = new FormData();
+      formData.append('id', id);
+      formData.append('name', name.trim());
+      formData.append('status', status);
+      formData.append('visible', visible ? 'true' : 'false');
+      
+      // Append files if they exist
       if (bannerFile) {
-        try {
-          banner_image_value = await readFileAsBase64(bannerFile);
-        } catch (error) {
-          console.error(error);
-          show("error", "Upload failed", "Unable to read the selected image.");
-          setLoading(false);
-          return;
-        }
+        formData.append('banner_image', bannerFile);
+      } else if (bannerImage && bannerImage !== originalBannerImage) {
+        // If it's a URL, send it as text
+        formData.append('banner_image_url', bannerImage);
       }
-      const res = await api.post("/category/update.php", { id, name: name.trim(), banner_image: banner_image_value, visible: visible });
+      
+      if (videoFile) {
+        formData.append('category_video', videoFile);
+      } else if (categoryVideo && categoryVideo !== originalCategoryVideo) {
+        // If it's a URL, send it as text
+        formData.append('category_video_url', categoryVideo);
+      }
+
+      // Use axios with FormData
+      const res = await api.post("/category/update.php", formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
       if (res.data.status) {
         show("success", "Category updated!", `"${name.trim()}" saved successfully.`);
         setTimeout(() => navigate("/category"), 2000);
       } else {
         show("error", "Update failed", res.data.message || "Something went wrong.");
       }
-    } catch {
+    } catch (error) {
+      console.error('Update error:', error);
       show("error", "Server error", "Unable to reach the server.");
     } finally {
       setLoading(false);
     }
   };
 
-  const isDirty = name.trim() !== originalName || bannerImage.trim() !== originalBannerImage.trim() || visible !== originalVisible;
+  // ─── Check if dirty ──────────────────────────────────────
+  const isDirty = 
+    name.trim() !== originalName ||
+    status !== originalStatus ||
+    visible !== originalVisible ||
+    bannerFile !== null ||
+    (bannerImage.trim() !== originalBannerImage.trim()) ||
+    videoFile !== null ||
+    (categoryVideo.trim() !== originalCategoryVideo.trim());
 
   return (
     <>
@@ -250,7 +256,7 @@ setOriginalVisible(Boolean(Number(res.data.data.visible)));
         .ec-card {
           position: relative;
           width: 100%;
-          max-width: 480px;
+          max-width: 520px;
           background: #ffffff;
           border-radius: 26px;
           border: 1px solid rgba(226,232,240,0.8);
@@ -385,7 +391,6 @@ setOriginalVisible(Boolean(Number(res.data.data.visible)));
           border-right-color: #bfdbfe;
         }
 
-        /* Skeleton loader for input */
         .ec-skeleton {
           height: 50px;
           border-radius: 14px;
@@ -399,7 +404,39 @@ setOriginalVisible(Boolean(Number(res.data.data.visible)));
           100% { background-position: -200% 0; }
         }
 
-        /* Changed indicator */
+        .ec-status-group {
+          display: flex;
+          gap: 12px;
+          margin-bottom: 1.5rem;
+        }
+        .ec-status-option {
+          flex: 1;
+          padding: 10px 16px;
+          border-radius: 12px;
+          border: 2px solid #e2e8f0;
+          background: #f8faff;
+          font-family: 'Plus Jakarta Sans', sans-serif;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+          text-align: center;
+        }
+        .ec-status-option.active {
+          border-color: #22c55e;
+          background: #f0fdf4;
+          color: #16a34a;
+        }
+        .ec-status-option.inactive {
+          border-color: #ef4444;
+          background: #fef2f2;
+          color: #dc2626;
+        }
+        .ec-status-option:hover:not(.active):not(.inactive) {
+          border-color: #94a3b8;
+          background: #f1f5f9;
+        }
+
         .ec-changed {
           display: flex;
           align-items: center;
@@ -479,6 +516,35 @@ setOriginalVisible(Boolean(Number(res.data.data.visible)));
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        .ec-preview-container {
+          margin-bottom: 1rem;
+          border-radius: 14px;
+          overflow: hidden;
+          border: 1.5px solid #e2e8f0;
+          max-height: 300px;
+        }
+        .ec-preview-container img,
+        .ec-preview-container video {
+          width: 100%;
+          display: block;
+        }
+
+        .ec-file-info {
+          font-size: 12px;
+          color: #64748b;
+          margin-bottom: 0.5rem;
+          padding: 6px 12px;
+          background: #f1f5f9;
+          border-radius: 8px;
+          display: inline-block;
+        }
+
+        .ec-bulk-upload-section {
+          margin-top: 20px;
+          border-top: 1px solid #e2e8f0;
+          padding-top: 20px;
+        }
+
         /* ── Toast ── */
         .ec-toast {
           pointer-events: auto;
@@ -557,7 +623,7 @@ setOriginalVisible(Boolean(Number(res.data.data.visible)));
             <div className="ec-icon-box">✏️</div>
             <div className="ec-header-text">
               <h1>Edit Category</h1>
-              <p>Update the category name below</p>
+              <p>Update category details below</p>
               <div className="ec-id-badge">🔖 Category ID: #{id}</div>
             </div>
           </div>
@@ -566,6 +632,7 @@ setOriginalVisible(Boolean(Number(res.data.data.visible)));
 
           <div className="ec-body">
 
+            {/* ─── Category Name ─── */}
             <div className="ec-label-row">
               <span className="ec-label">Category Name</span>
               <span className={`ec-char ${charCount > 0 ? "active" : ""}`}>{charCount}/50</span>
@@ -581,66 +648,88 @@ setOriginalVisible(Boolean(Number(res.data.data.visible)));
                   placeholder="e.g. Electronics, Beverages…"
                   value={name}
                   maxLength={50}
-                  onChange={handleChange}
+                  onChange={handleNameChange}
                   onKeyDown={e => e.key === "Enter" && handleUpdate()}
                 />
                 <div className="ec-input-prefix">#</div>
               </div>
             )}
 
+            {/* ─── Status ─── */}
+            <div className="ec-label-row">
+              <span className="ec-label">Category Status</span>
+            </div>
+            <div className="ec-status-group">
+              <button
+                className={`ec-status-option ${status === 'active' ? 'active' : ''}`}
+                onClick={() => setStatus('active')}
+                disabled={fetching}
+              >
+                ✅ Active
+              </button>
+              <button
+                className={`ec-status-option ${status === 'inactive' ? 'inactive' : ''}`}
+                onClick={() => setStatus('inactive')}
+                disabled={fetching}
+              >
+                ❌ Inactive
+              </button>
+            </div>
+
+            {/* ─── Visibility ─── */}
             <div style={{ marginBottom: "20px" }}>
-    <label className="ec-label">
-        Category Visibility
-    </label>
+              <label className="ec-label">Category Visibility</label>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  marginTop: "10px",
+                  cursor: "pointer",
+                  fontWeight: "600",
+                  color: "#334155",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={visible}
+                  onChange={(e) => setVisible(e.target.checked)}
+                  disabled={fetching}
+                  style={{
+                    width: "18px",
+                    height: "18px",
+                    cursor: "pointer",
+                  }}
+                />
+                Visible Category
+              </label>
+              <p
+                style={{
+                  fontSize: "12px",
+                  color: "#94a3b8",
+                  marginTop: "6px",
+                  marginLeft: "28px",
+                }}
+              >
+                Checked = <b>True</b> &nbsp;&nbsp; Unchecked = <b>False</b>
+              </p>
+            </div>
 
-    <label
-        style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-            marginTop: "10px",
-            cursor: "pointer",
-            fontWeight: "600",
-            color: "#334155",
-        }}
-    >
-        <input
-            type="checkbox"
-            checked={visible}
-            onChange={(e) =>
-                setVisible(e.target.checked)
-            }
-            style={{
-                width: "18px",
-                height: "18px",
-            }}
-        />
-
-        Visible Category
-    </label>
-
-    <p
-        style={{
-            fontSize: "12px",
-            color: "#94a3b8",
-            marginTop: "6px",
-            marginLeft: "28px",
-        }}
-    >
-        Checked = True &nbsp;&nbsp; Unchecked = False
-    </p>
-</div>
-
+            {/* ─── Banner Image ─── */}
             <div className="ec-label-row">
               <span className="ec-label">Banner Image</span>
               <span className="ec-char">Optional</span>
             </div>
+            {originalBannerImage && !bannerFile && (
+              <div className="ec-file-info">📷 Current: {originalBannerImage.split('/').pop()}</div>
+            )}
             <div className="ec-input-group">
               <input
                 type="file"
                 accept="image/*"
                 className="ec-input"
                 onChange={handleBannerFileChange}
+                disabled={fetching}
               />
             </div>
             <div className="ec-input-group">
@@ -654,33 +743,99 @@ setOriginalVisible(Boolean(Number(res.data.data.visible)));
                   setBannerFile(null);
                   setBannerPreview(e.target.value);
                 }}
+                disabled={fetching}
               />
             </div>
             {(bannerPreview || bannerImage) && (
-              <div className="mb-4 rounded-2xl overflow-hidden border border-[#e2e8f0]">
+              <div className="ec-preview-container">
                 <img
                   src={bannerPreview || bannerImage}
                   alt="Banner preview"
-                  className="w-full object-cover"
                 />
               </div>
             )}
 
-            {isDirty
+            {/* ─── Category Video ─── */}
+            <div className="ec-label-row">
+              <span className="ec-label">Category Video</span>
+              <span className="ec-char">Optional</span>
+            </div>
+            {originalCategoryVideo && !videoFile && (
+              <div className="ec-file-info">🎬 Current: {originalCategoryVideo.split('/').pop()}</div>
+            )}
+            <div className="ec-input-group">
+              <input
+                type="file"
+                accept="video/*"
+                className="ec-input"
+                onChange={handleVideoFileChange}
+                disabled={fetching}
+              />
+            </div>
+            <div className="ec-input-group">
+              <input
+                type="text"
+                className="ec-input"
+                placeholder="Or paste video URL"
+                value={categoryVideo}
+                onChange={(e) => {
+                  setCategoryVideo(e.target.value);
+                  setVideoFile(null);
+                  setVideoPreview(e.target.value);
+                }}
+                disabled={fetching}
+              />
+            </div>
+            {(videoPreview || categoryVideo) && (
+              <div className="ec-preview-container">
+                <video controls>
+                  <source src={videoPreview || categoryVideo} type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+            )}
+
+            {/* ─── Changed Indicator ─── */}
+            {isDirty && !fetching
               ? <div className="ec-changed">⚡ Unsaved changes — original: "{originalName}"</div>
               : <div className="ec-unchanged" />
             }
 
-            <button className="ec-btn" onClick={handleUpdate} disabled={loading || fetching}>
+            {/* ─── Buttons ─── */}
+            <button 
+              className="ec-btn" 
+              onClick={handleUpdate} 
+              disabled={loading || fetching || !isDirty}
+            >
               {loading
                 ? <><div className="ec-spinner" /> Updating…</>
                 : <>💾 Update Category</>
               }
             </button>
 
-            <button className="ec-btn-cancel" onClick={() => navigate("/category")}>
+            <button 
+              className="ec-btn-cancel" 
+              onClick={() => navigate("/category")}
+            >
               ← Back to Categories
             </button>
+
+            {/* ─── Bulk Video Upload Section ─── */}
+            {!fetching && id && (
+              <div className="ec-bulk-upload-section">
+                <BulkVideoUpload 
+                  key={refreshKey}
+                  categoryId={id}
+                  categoryName={name}
+                  onUploadComplete={() => {
+                    setRefreshKey(prev => prev + 1);
+                    show("success", "Upload Complete!", "Videos have been uploaded successfully.");
+                    // Refresh category data to show updated video list
+                    fetchCategory();
+                  }}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>

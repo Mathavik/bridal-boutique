@@ -16,7 +16,7 @@ function Footer() {
 
         {/* Main Footer - Added 'text-center md:text-left' here */}
         <div className="grid grid-cols-1 md:grid-cols-[250px_150px_150px_170px_210px] justify-center text-center md:text-left gap-x-12 gap-y-10 py-[60px]">
-          
+
           {/* Logo */}
           <div>
             <img
@@ -91,9 +91,29 @@ function Footer() {
               FOLLOW US
             </h3>
             <div className="flex justify-center md:justify-start items-center gap-4 text-[16px]">
-              <a href="#"><FaFacebookF /></a>
-              <a href="#"><FaInstagram /></a>
-              <a href="#"><FaYoutube /></a>
+              <a
+                href="https://www.facebook.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <FaFacebookF />
+              </a>
+
+              <a
+                href="https://www.instagram.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <FaInstagram />
+              </a>
+
+              <a
+                href="https://www.youtube.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <FaYoutube />
+              </a>
             </div>
           </div>
 
