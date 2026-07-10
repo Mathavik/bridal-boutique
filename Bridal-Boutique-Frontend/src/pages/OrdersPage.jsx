@@ -19,8 +19,7 @@ import {
   Mail,
   CreditCard
 } from "lucide-react";
-
-const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
+import { API_BASE_URL } from "..//services/api"; // ✅ Import from api.js
 
 // Helper function to format date
 const formatDate = (dateString) => {
@@ -78,7 +77,7 @@ function OrdersPage() {
       
       // Try endpoint 1
       try {
-        response = await axios.get(`${API_BASE}/orders/get_user_orders.php?user_id=${user.id}`);
+        response = await axios.get(`${API_BASE_URL}/orders/get_user_orders.php?user_id=${user.id}`); // ✅ Updated
       } catch (e) {
         console.log("Endpoint 1 failed, trying endpoint 2...");
       }
@@ -86,7 +85,7 @@ function OrdersPage() {
       // If first failed, try endpoint 2
       if (!response || !response.data?.status) {
         try {
-          response = await axios.get(`${API_BASE}/checkout/get_user_orders.php?user_id=${user.id}`);
+          response = await axios.get(`${API_BASE_URL}/checkout/get_user_orders.php?user_id=${user.id}`); // ✅ Updated
         } catch (e) {
           console.log("Endpoint 2 failed, trying endpoint 3...");
         }
@@ -95,7 +94,7 @@ function OrdersPage() {
       // If second failed, try endpoint 3
       if (!response || !response.data?.status) {
         try {
-          response = await axios.get(`${API_BASE}/order/get_user_orders.php?user_id=${user.id}`);
+          response = await axios.get(`${API_BASE_URL}/order/get_user_orders.php?user_id=${user.id}`); // ✅ Updated
         } catch (e) {
           console.log("Endpoint 3 failed");
         }
@@ -109,7 +108,6 @@ function OrdersPage() {
         console.log("API message:", response.data.message);
         setOrders([]);
       } else {
-        // If all endpoints fail, set empty orders with sample data for testing
         console.log("No orders found, showing sample data");
         setOrders([]);
       }
@@ -406,23 +404,29 @@ function OrdersPage() {
                     {order.items && order.items.length > 0 && (
                       <div className="mt-4 pt-4 border-t border-gray-100">
                         <div className="flex items-center gap-4 overflow-x-auto pb-2">
-                          {order.items.slice(0, 3).map((item, index) => (
-                            <div key={index} className="flex items-center gap-2 flex-shrink-0">
-                              <img
-                                src={item.image ? `${API_BASE}/${item.image}` : "/placeholder.jpg"}
-                                alt={item.product_name}
-                                className="w-12 h-12 object-cover rounded-lg bg-gray-50"
-                                onError={(e) => { e.target.src = "/placeholder.jpg"; }}
-                              />
-                              <div className="text-xs">
-                                <p className="font-medium text-gray-700 max-w-[100px] truncate">{item.product_name}</p>
-                                <p className="text-gray-400">Qty: {item.quantity}</p>
+                          {order.items.slice(0, 3).map((item, index) => {
+                            // Use the resolved image URL
+                            const imageUrl = item.image 
+                              ? (item.image.startsWith('http') ? item.image : `${API_BASE_URL}/${item.image}`)
+                              : "/placeholder.jpg";
+                            return (
+                              <div key={index} className="flex items-center gap-2 flex-shrink-0">
+                                <img
+                                  src={imageUrl}
+                                  alt={item.product_name}
+                                  className="w-12 h-12 object-cover rounded-lg bg-gray-50"
+                                  onError={(e) => { e.target.src = "/placeholder.jpg"; }}
+                                />
+                                <div className="text-xs">
+                                  <p className="font-medium text-gray-700 max-w-[100px] truncate">{item.product_name}</p>
+                                  <p className="text-gray-400">Qty: {item.quantity}</p>
+                                </div>
+                                {index < order.items.slice(0, 3).length - 1 && (
+                                  <span className="text-gray-300">•</span>
+                                )}
                               </div>
-                              {index < order.items.slice(0, 3).length - 1 && (
-                                <span className="text-gray-300">•</span>
-                              )}
-                            </div>
-                          ))}
+                            );
+                          })}
                           {itemCount > 3 && (
                             <span className="text-xs text-gray-400 font-medium">
                               +{itemCount - 3} more
@@ -547,29 +551,34 @@ function OrdersPage() {
                   Order Items ({selectedOrder.items?.length || 0})
                 </h4>
                 <div className="space-y-3">
-                  {selectedOrder.items?.map((item, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center gap-4 bg-gray-50/30 rounded-xl p-3 border border-gray-100 hover:bg-gray-50 transition"
-                    >
-                      <img
-                        src={item.image ? `${API_BASE}/${item.image}` : "/placeholder.jpg"}
-                        alt={item.product_name}
-                        className="w-16 h-16 object-cover rounded-lg bg-white border border-gray-100"
-                        onError={(e) => { e.target.src = "/placeholder.jpg"; }}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-[#1a1a1a] text-sm truncate">{item.product_name}</p>
-                        <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
-                          <span>Qty: {item.quantity}</span>
-                          {item.size && <span>• Size: {item.size}</span>}
-                          <span className="text-[#a97c50] font-semibold">
-                            ₹{parseFloat(item.total || item.price * item.quantity || 0).toLocaleString()}
-                          </span>
+                  {selectedOrder.items?.map((item, index) => {
+                    const imageUrl = item.image 
+                      ? (item.image.startsWith('http') ? item.image : `${API_BASE_URL}/${item.image}`)
+                      : "/placeholder.jpg";
+                    return (
+                      <div
+                        key={index}
+                        className="flex items-center gap-4 bg-gray-50/30 rounded-xl p-3 border border-gray-100 hover:bg-gray-50 transition"
+                      >
+                        <img
+                          src={imageUrl}
+                          alt={item.product_name}
+                          className="w-16 h-16 object-cover rounded-lg bg-white border border-gray-100"
+                          onError={(e) => { e.target.src = "/placeholder.jpg"; }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-[#1a1a1a] text-sm truncate">{item.product_name}</p>
+                          <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
+                            <span>Qty: {item.quantity}</span>
+                            {item.size && <span>• Size: {item.size}</span>}
+                            <span className="text-[#a97c50] font-semibold">
+                              ₹{parseFloat(item.total || item.price * item.quantity || 0).toLocaleString()}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
