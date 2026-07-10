@@ -1,22 +1,10 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { Link } from "react-router-dom";
 import { Heart, ShoppingBag, Trash2, MoveRight, Sparkles, ArrowLeft } from "lucide-react";
 import { formatCurrency } from "../utils/formatters";
 import { useStore } from "../contexts/StoreContext";
 import { showToast } from "../utils/toast";
-
-const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
-
-const resolveImageUrl = (src) => {
-  if (!src) return "";
-  if (src.startsWith("http")) return src;
-  let cleanPath = src.replace(/\\/g, "/");
-  if (cleanPath.startsWith("uploads/")) {
-    cleanPath = cleanPath.substring(8);
-  }
-  return `${API_BASE}/uploads/${cleanPath}`;
-};
+import api, { resolveImageUrl } from "../services/api"; // 👈 import from api.js
 
 export default function Wishlist() {
   const { guestId, wishlistItems, refreshCounts } = useStore();
@@ -32,7 +20,7 @@ export default function Wishlist() {
 
   const removeItem = async (id) => {
     try {
-      const response = await axios.delete(`${API_BASE}/wishlist/delete.php?id=${id}`);
+      const response = await api.delete(`/wishlist/delete.php?id=${id}`);
       if (response.data?.status) {
         await refreshCounts();
         showToast("Removed from wishlist", "success");
@@ -45,7 +33,7 @@ export default function Wishlist() {
 
   const moveToCart = async (product) => {
     try {
-      const response = await axios.post(`${API_BASE}/cart/save.php`, {
+      const response = await api.post("/cart/save.php", {
         guest_id: guestId(),
         product_id: product.product_id,
         quantity: 1,
@@ -183,11 +171,9 @@ export default function Wishlist() {
             {/* Bottom Action Bar */}
             {items.length > 0 && (
               <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-gray-200">
-                
-               
+                {/* You can add extra actions here if needed */}
               </div>
-            )
-            }
+            )}
           </>
         )}
       </div>

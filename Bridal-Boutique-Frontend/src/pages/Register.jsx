@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import LoginBanner from "../assets/LoginBanner.png";
+import api from "../services/api"; // 👈 Import the api instance (ready for future direct calls)
 
 export default function Register() {
   const { register, loading, user } = useAuth();

@@ -3,8 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { User, Mail, Phone, MapPin, ArrowLeft, Save } from "lucide-react";
 import { showToast } from "../../utils/toast";
-
-const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
+import api from "../../services/api";
 
 export default function EditUser() {
   const navigate = useNavigate();

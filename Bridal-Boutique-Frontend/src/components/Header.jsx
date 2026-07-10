@@ -1,21 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  Menu,
-  Search,
-  User,
-  Heart,
-  ShoppingBag,
-  X,
-} from "lucide-react";
+import { Menu, Search, User, Heart, ShoppingBag, X } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
-
-const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
-
 import botikLogo from "../assets/Botik.png";
 import { useStore } from "../contexts/StoreContext";
 import { useAuth } from "../contexts/AuthContext";
 import UserDropdown from "./UserDropdown";
+import api, { resolveImageUrl } from "../services/api"; // 👈 Central API config
 
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -45,31 +35,27 @@ function Header() {
         const companyId = params.get("company_id");
 
         const visibleUrl = companyId
-          ? `${API_BASE}/category/getVisibleCategories.php?company_id=${companyId}`
-          : `${API_BASE}/category/getVisibleCategories.php`;
+          ? `/category/getVisibleCategories.php?company_id=${companyId}`
+          : `/category/getVisibleCategories.php`;
 
         const activeUrl = companyId
-          ? `${API_BASE}/category/get_active_category.php?company_id=${companyId}`
-          : `${API_BASE}/category/get_active_category.php`;
+          ? `/category/get_active_category.php?company_id=${companyId}`
+          : `/category/get_active_category.php`;
 
         const [visibleRes, activeRes] = await Promise.all([
-          axios.get(visibleUrl),
-          axios.get(activeUrl),
+          api.get(visibleUrl),
+          api.get(activeUrl),
         ]);
 
         console.log("Visible:", visibleRes.data);
         console.log("Active:", activeRes.data);
 
         setNavCategories(
-          Array.isArray(visibleRes.data?.data)
-            ? visibleRes.data.data
-            : []
+          Array.isArray(visibleRes.data?.data) ? visibleRes.data.data : []
         );
 
         setShopAllCategories(
-          Array.isArray(activeRes.data?.data)
-            ? activeRes.data.data
-            : []
+          Array.isArray(activeRes.data?.data) ? activeRes.data.data : []
         );
       } catch (err) {
         console.error(err);
@@ -95,7 +81,7 @@ function Header() {
       const fetchSuggestions = async () => {
         setSearchLoading(true);
         try {
-          const response = await axios.get(`${API_BASE}/product/search.php`, {
+          const response = await api.get("/product/search.php", {
             params: { q: query, limit: 6 },
           });
           const items = response.data?.status ? response.data.data || [] : [];
@@ -204,74 +190,74 @@ function Header() {
           <div className="flex items-center gap-6 flex-1">
             {/* Desktop Shop Button */}
             <div className="relative hidden lg:flex" ref={dropdownRef}>
-             <button
-  onClick={() => setDropdownOpen((prev) => !prev)}
-  className="flex items-center gap-2 border border-[#D8D8D8] rounded-md px-4 h-[40px] text-[14px] font-medium hover:bg-gray-50 transition whitespace-nowrap"
->
-  <Menu size={15} />
-  <span>Shop All</span>
-</button>
-
-            <div
-  className={`absolute left-0 top-[calc(100%_+_14px)] z-40 w-[1220px] rounded-none border border-[#E7E2DA] bg-white shadow-[0_20px_60px_rgba(0,0,0,0.08)] transition-all duration-200 ${
-    dropdownOpen
-      ? "opacity-100 visible translate-y-0"
-      : "opacity-0 invisible translate-y-2"
-  }`}
->
-  <div className="px-8 py-6">
-    <div className="mb-4 flex items-center justify-between border-b border-black/10 pb-3">
-      <div>
-        <h3 className="text-[20px] font-semibold text-[#181818]">
-          Shop All Categories
-        </h3>
-        <p className="mt-1 text-[13px] text-gray-500">
-          Explore all available bridal collections
-        </p>
-      </div>
-    </div>
-
-    <div className="grid grid-cols-4">
-      {megaMenuColumns.map((column, columnIndex) => (
-        <div
-          key={columnIndex}
-          className={`px-4 min-h-[200px] ${
-            columnIndex !== megaMenuColumns.length - 1
-              ? "border-r border-black/10"
-              : ""
-          }`}
-        >
-          <div className="space-y-1">
-            {column.map((category) => (
-              <Link
-                key={category.id}
-                to={`/bridal-lehenga?category_id=${category.id}`}
-                className={`block rounded-md px-3 py-2 text-[15px] transition ${
-                  activeCategoryId === String(category.id)
-                    ? "bg-[#f8f3ed] text-[#a97c50] font-semibold"
-                    : "text-[#181818] hover:bg-[#faf7f2] hover:text-[#a97c50]"
-                }`}
-                onClick={() => setDropdownOpen(false)}
+              <button
+                onClick={() => setDropdownOpen((prev) => !prev)}
+                className="flex items-center gap-2 border border-[#D8D8D8] rounded-md px-4 h-[40px] text-[14px] font-medium hover:bg-gray-50 transition whitespace-nowrap"
               >
-                {category.name}
-              </Link>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
+                <Menu size={15} />
+                <span>Shop All</span>
+              </button>
 
-    <div className="mt-4 border-t border-black/10 pt-3">
-      <Link
-        to="/bridal-lehenga"
-        className="inline-flex items-center text-[14px] font-medium text-[#a97c50] hover:underline"
-        onClick={() => setDropdownOpen(false)}
-      >
-        View all products
-      </Link>
-    </div>
-  </div>
-</div>
+              <div
+                className={`absolute left-0 top-[calc(100%_+_14px)] z-40 w-[1220px] rounded-none border border-[#E7E2DA] bg-white shadow-[0_20px_60px_rgba(0,0,0,0.08)] transition-all duration-200 ${
+                  dropdownOpen
+                    ? "opacity-100 visible translate-y-0"
+                    : "opacity-0 invisible translate-y-2"
+                }`}
+              >
+                <div className="px-8 py-6">
+                  <div className="mb-4 flex items-center justify-between border-b border-black/10 pb-3">
+                    <div>
+                      <h3 className="text-[20px] font-semibold text-[#181818]">
+                        Shop All Categories
+                      </h3>
+                      <p className="mt-1 text-[13px] text-gray-500">
+                        Explore all available bridal collections
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-4">
+                    {megaMenuColumns.map((column, columnIndex) => (
+                      <div
+                        key={columnIndex}
+                        className={`px-4 min-h-[200px] ${
+                          columnIndex !== megaMenuColumns.length - 1
+                            ? "border-r border-black/10"
+                            : ""
+                        }`}
+                      >
+                        <div className="space-y-1">
+                          {column.map((category) => (
+                            <Link
+                              key={category.id}
+                              to={`/bridal-lehenga?category_id=${category.id}`}
+                              className={`block rounded-md px-3 py-2 text-[15px] transition ${
+                                activeCategoryId === String(category.id)
+                                  ? "bg-[#f8f3ed] text-[#a97c50] font-semibold"
+                                  : "text-[#181818] hover:bg-[#faf7f2] hover:text-[#a97c50]"
+                              }`}
+                              onClick={() => setDropdownOpen(false)}
+                            >
+                              {category.name}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-4 border-t border-black/10 pt-3">
+                    <Link
+                      to="/bridal-lehenga"
+                      className="inline-flex items-center text-[14px] font-medium text-[#a97c50] hover:underline"
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      View all products
+                    </Link>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Mobile Menu */}
@@ -280,21 +266,21 @@ function Header() {
             </button>
 
             {/* Desktop Navigation */}
-          <nav className="hidden lg:flex shrink-0 items-center gap-8 text-[14px] font-medium text-[#181818]">
-  {navCategories.slice(0, 3).map((category) => (
-    <Link
-      key={category.id}
-      to={`/bridal-lehenga?category_id=${category.id}`}
-      className={`whitespace-nowrap hover:text-[#a97c50] ${
-        activeCategoryId === String(category.id)
-          ? "text-[#a97c50] font-semibold"
-          : ""
-      }`}
-    >
-      {category.name}
-    </Link>
-  ))}
-</nav>
+            <nav className="hidden lg:flex shrink-0 items-center gap-8 text-[14px] font-medium text-[#181818]">
+              {navCategories.slice(0, 3).map((category) => (
+                <Link
+                  key={category.id}
+                  to={`/bridal-lehenga?category_id=${category.id}`}
+                  className={`whitespace-nowrap hover:text-[#a97c50] ${
+                    activeCategoryId === String(category.id)
+                      ? "text-[#a97c50] font-semibold"
+                      : ""
+                  }`}
+                >
+                  {category.name}
+                </Link>
+              ))}
+            </nav>
           </div>
 
           {/* LOGO */}
@@ -353,7 +339,7 @@ function Header() {
                       <img
                         src={
                           product.image
-                            ? `${API_BASE}/${product.image}`
+                            ? resolveImageUrl(product.image)
                             : "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f"
                         }
                         alt={product.product_name}

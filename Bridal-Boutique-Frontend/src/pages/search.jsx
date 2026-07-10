@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
 import ProductCard from "../components/ProductCard";
 import { useStore } from "../contexts/StoreContext";
 import { useAuth } from "../contexts/AuthContext";
 import { showToast } from "../utils/toast";
+import api from "../services/api"; // 👈 Import the axios instance
 
-const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
+// Removed: const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
 
 const parseQuery = (search) => {
   const params = new URLSearchParams(search);
@@ -42,7 +42,7 @@ export default function Search() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get(`${API_BASE}/category/get_active_category.php`);
+        const response = await api.get("/category/get_active_category.php");
         if (response.data?.status) {
           setCategories(response.data.data || []);
         }
@@ -64,7 +64,7 @@ export default function Search() {
     const fetchResults = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(`${API_BASE}/product/search.php`, {
+        const response = await api.get("/product/search.php", {
           params: {
             q: q || "",
             category_id: selectedCategory || 0,
@@ -88,7 +88,7 @@ export default function Search() {
     };
 
     fetchResults();
-  }, [q, selectedCategory, priceRange.min, priceRange.max, selectedAvailability]);
+  }, [q, selectedCategory, priceRange.min, priceRange.max, selectedAvailability, selectedSort]);
 
   const updateQuery = (updates) => {
     const params = new URLSearchParams(location.search);
@@ -110,7 +110,7 @@ export default function Search() {
     }
 
     try {
-      const response = await axios.post(`${API_BASE}/cart/save.php`, {
+      const response = await api.post("/cart/save.php", {
         guest_id: guestId(),
         product_id: product.id,
         quantity: 1,
@@ -145,7 +145,7 @@ export default function Search() {
     }
 
     try {
-      const response = await axios.post(`${API_BASE}/wishlist/save.php`, {
+      const response = await api.post("/wishlist/save.php", {
         guest_id: guestId(),
         product_id: product.id,
         size,
@@ -192,6 +192,7 @@ export default function Search() {
             </button>
           </div>
 
+          {/* Desktop Filters */}
           <div className="hidden md:grid grid-cols-1 gap-3 xl:grid-cols-[minmax(220px,1fr)_minmax(220px,1fr)_minmax(180px,1fr)_minmax(180px,1fr)_auto] mt-4">
             <div className="rounded-[12px] border border-[#E5E7EB] bg-white p-3 shadow-sm">
               <label className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-500">Category</label>
@@ -268,6 +269,7 @@ export default function Search() {
             </div>
           </div>
 
+          {/* Mobile Filters */}
           {showMobileFilters && (
             <div className="fixed inset-0 z-50 bg-black/30 p-4 md:hidden">
               <div className="h-full overflow-y-auto rounded-[20px] bg-white p-5 shadow-2xl">
