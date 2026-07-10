@@ -1,6 +1,6 @@
 ﻿import axios from "axios";
 
-export const API_BASE_URL = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api/";
+export const API_BASE_URL = "http://padmavathi.pcstech.in/Bridal-Boutique-backend/api/";
 
 // Axios instance
 const api = axios.create({

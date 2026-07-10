@@ -2,7 +2,7 @@
 import axios from "axios";
 
 // ✅ Base URL – remove trailing slash for clean concatenation
-export const API_BASE_URL = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
+export const API_BASE_URL = "http://padmavathi.pcstech.in/Bridal-Boutique-backend/api/";
 
 // ✅ Fallback image (can be used for both image & video errors)
 export const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0";
