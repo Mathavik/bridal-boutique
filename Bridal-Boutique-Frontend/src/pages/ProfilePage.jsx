@@ -15,6 +15,7 @@ import {
   ShoppingBag,
   Award
 } from "lucide-react";
+import { API_BASE_URL } from "../services/api"; // ✅ Import API_BASE_URL
 
 function ProfilePage() {
   const { user, updateProfile, loading } = useAuth();
@@ -141,47 +142,7 @@ function ProfilePage() {
           </div>
         </div>
 
-        {/* Stats Cards */}
-        {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="bg-white/95 backdrop-blur-sm rounded-xl p-5 shadow-lg border border-white/20">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-[#f8f7f2] rounded-lg">
-                <ShoppingBag size={20} className="text-[#a97c50]" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-[#181818]">12</p>
-                <p className="text-sm text-gray-500">Total Orders</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white/95 backdrop-blur-sm rounded-xl p-5 shadow-lg border border-white/20">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-[#f8f7f2] rounded-lg">
-                <Heart size={20} className="text-[#a97c50]" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-[#181818]">8</p>
-                <p className="text-sm text-gray-500">Wishlist Items</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white/95 backdrop-blur-sm rounded-xl p-5 shadow-lg border border-white/20">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-[#f8f7f2] rounded-lg">
-                <Calendar size={20} className="text-[#a97c50]" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-[#181818]">
-                  {user.created_at ? new Date(user.created_at).getFullYear() : "N/A"}
-                </p>
-                <p className="text-sm text-gray-500">Member Since</p>
-              </div>
-            </div>
-          </div>
-        </div> */}
-
+    
         {/* Profile Form */}
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 md:p-8 border border-white/20">
           {message.text && (

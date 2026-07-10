@@ -23,8 +23,7 @@ import {
   X,
   Package
 } from "lucide-react";
-
-const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
+import { API_BASE_URL } from "../../api"; // ✅ Import API_BASE_URL
 
 export default function UserList() {
   const navigate = useNavigate();
@@ -60,7 +59,7 @@ export default function UserList() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${API_BASE}/admin/get_users.php`);
+      const response = await axios.get(`${API_BASE_URL}/admin/get_users.php`); // ✅ Updated
       console.log("Users with orders response:", response.data);
       
       if (response.data?.status) {
@@ -84,7 +83,7 @@ export default function UserList() {
     
     setActionLoading(true);
     try {
-      const response = await axios.post(`${API_BASE}/admin/send_courier.php`, {
+      const response = await axios.post(`${API_BASE_URL}/admin/send_courier.php`, { // ✅ Updated
         user_id: courierUser.id
       });
       
@@ -120,7 +119,7 @@ export default function UserList() {
     if (!selectedUser) return;
     
     try {
-      const response = await axios.delete(`${API_BASE}/admin/delete_user.php?id=${selectedUser.id}`);
+      const response = await axios.delete(`${API_BASE_URL}/admin/delete_user.php?id=${selectedUser.id}`); // ✅ Updated
       if (response.data?.status) {
         showToast("User deleted successfully", "success");
         fetchUsers();

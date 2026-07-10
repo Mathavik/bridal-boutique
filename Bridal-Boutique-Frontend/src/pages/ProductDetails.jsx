@@ -6,8 +6,7 @@ import { formatCurrency, getDiscountPercent } from "../utils/formatters";
 import { useStore } from "../contexts/StoreContext";
 import { useAuth } from "../contexts/AuthContext";
 import { showToast } from "../utils/toast";
-
-const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
+import { API_BASE_URL, resolveMediaUrl } from "../services/api"; // ✅ Import from api.js
 
 export default function ProductDetails() {
   const { id } = useParams();
@@ -35,12 +34,12 @@ export default function ProductDetails() {
       }
 
       try {
-        const response = await axios.get(`${API_BASE}/product/get_by_id.php?id=${id}`);
+        const response = await axios.get(`${API_BASE_URL}/product/get_by_id.php?id=${id}`); // ✅ Updated
         if (response.data?.status) {
           setProduct(response.data.data);
 
           await axios.post(
-            `${API_BASE}/product/increment_view.php`,
+            `${API_BASE_URL}/product/increment_view.php`, // ✅ Updated
             { product_id: response.data.data.id }
           );
         } else {
@@ -102,13 +101,13 @@ export default function ProductDetails() {
     }
 
     try {
-      const response = await axios.post(`${API_BASE}/cart/save.php`, {
+      const response = await axios.post(`${API_BASE_URL}/cart/save.php`, { // ✅ Updated
         guest_id: guestId(),
         product_id: product.id,
         quantity: quantity,
         price: product.price,
         size: selectedSize,
-        gst_percentage: product.gst_percentage || 0, // Pass GST to cart
+        gst_percentage: product.gst_percentage || 0,
       });
       await refreshCounts();
       if (response.data?.status) {
@@ -142,7 +141,7 @@ export default function ProductDetails() {
 
       if (existingItem) {
         const response = await axios.delete(
-          `${API_BASE}/wishlist/delete.php?id=${existingItem.id}`
+          `${API_BASE_URL}/wishlist/delete.php?id=${existingItem.id}` // ✅ Updated
         );
 
         if (response.data?.status) {
@@ -156,7 +155,7 @@ export default function ProductDetails() {
 
       // Add to wishlist
       const response = await axios.post(
-        `${API_BASE}/wishlist/save.php`,
+        `${API_BASE_URL}/wishlist/save.php`, // ✅ Updated
         {
           guest_id: guestId(),
           product_id: product.id,
@@ -236,25 +235,13 @@ export default function ProductDetails() {
     }
   };
 
-  // Helper functions
+  // Helper functions - using resolveMediaUrl from api.js
   const convertImagePath = (imagePath) => {
-    if (!imagePath) return null;
-    if (imagePath.startsWith("http")) return imagePath;
-    let cleanPath = imagePath.replace(/\\/g, "/");
-    if (cleanPath.startsWith("uploads/")) {
-      cleanPath = cleanPath.substring(8);
-    }
-    return `${API_BASE}/uploads/${cleanPath}`;
+    return resolveMediaUrl(imagePath);
   };
 
   const convertVideoPath = (videoPath) => {
-    if (!videoPath) return null;
-    if (videoPath.startsWith("http")) return videoPath;
-    let cleanPath = videoPath.replace(/\\/g, "/");
-    if (cleanPath.startsWith("uploads/")) {
-      cleanPath = cleanPath.substring(8);
-    }
-    return `${API_BASE}/uploads/${cleanPath}`;
+    return resolveMediaUrl(videoPath);
   };
 
   // Parse gallery images

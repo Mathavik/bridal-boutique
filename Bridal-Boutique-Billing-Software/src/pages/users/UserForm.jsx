@@ -3,8 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { User, Mail, Phone, MapPin, ArrowLeft, Save } from "lucide-react";
 import { showToast } from "../../utils/toast";
-
-const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
+import { API_BASE_URL } from "../../api"; // ✅ Import API_BASE_URL
 
 export default function EditUser() {
   const navigate = useNavigate();
@@ -26,7 +25,7 @@ export default function EditUser() {
   const fetchUser = async () => {
     setFetchLoading(true);
     try {
-      const response = await axios.get(`${API_BASE}/admin/get_user.php?id=${id}`);
+      const response = await axios.get(`${API_BASE_URL}/admin/get_user.php?id=${id}`); // ✅ Updated
       if (response.data?.status) {
         setFormData({
           name: response.data.data.name || "",
@@ -78,7 +77,7 @@ export default function EditUser() {
     };
 
     try {
-      const response = await axios.post(`${API_BASE}/admin/update_user.php`, payload);
+      const response = await axios.post(`${API_BASE_URL}/admin/update_user.php`, payload); // ✅ Updated
       if (response.data?.status) {
         showToast("User updated successfully!", "success");
         navigate("/users");
