@@ -1,7 +1,9 @@
+// AuthContext.js
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import axios from "axios";
+// 👇 Import the shared base URL from api.js
+import { API_BASE_URL } from "../services/api";   // adjust path if needed
 
-const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
@@ -19,10 +21,11 @@ export function AuthProvider({ children }) {
     }
   }, [user]);
 
+  // ✅ Now use the imported API_BASE_URL
   const login = async (email, password) => {
     setLoading(true);
     try {
-      const response = await axios.post(`${API_BASE}/auth/user_login.php`, { email, password });
+      const response = await axios.post(`${API_BASE_URL}/auth/user_login.php`, { email, password });
       if (response.data?.status) {
         setUser(response.data.data);
       }
@@ -35,7 +38,7 @@ export function AuthProvider({ children }) {
   const register = async (name, email, phone, address, password) => {
     setLoading(true);
     try {
-      const response = await axios.post(`${API_BASE}/auth/user_register.php`, { 
+      const response = await axios.post(`${API_BASE_URL}/auth/user_register.php`, { 
         name, 
         email, 
         phone, 
@@ -56,7 +59,7 @@ export function AuthProvider({ children }) {
   const updateProfile = async (userData) => {
     setLoading(true);
     try {
-      const response = await axios.post(`${API_BASE}/user/update_user_profile.php`, {
+      const response = await axios.post(`${API_BASE_URL}/user/update_user_profile.php`, {
         user_id: user.id,
         name: userData.name,
         phone: userData.phone,

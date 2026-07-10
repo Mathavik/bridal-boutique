@@ -1,357 +1,371 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
 import { useStore } from "../contexts/StoreContext";
 import { useAuth } from "../contexts/AuthContext";
 import ProductCard from "../components/ProductCard";
 import FilterSidebar from "../components/filters/FilterSidebar";
 import { showToast } from "../utils/toast";
 import { Filter } from "lucide-react";
-
-const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
+// ✅ Import from centralized API config
+import api, { API_BASE_URL, resolveMediaUrl } from "../services/api";
 
 export default function Product() {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showMobileFilter, setShowMobileFilter] = useState(false);
-  const [totalProducts, setTotalProducts] = useState(0);
-  const [filterOptions, setFilterOptions] = useState(null);
-  const [filters, setFilters] = useState({
-    price_min: 0,
-    price_max: 1000000,
-    sizes: [],
-    availability: 'all',
-    rating: 0,
-    sort_by: 'newest',
-    limit: 20,
-    offset: 0,
-    availableOptions: {}
-  });
-
-  const { guestId, refreshCounts, wishlistItems } = useStore();
-  const { user } = useAuth();
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  // Get category_id from URL
-  const categoryId = useMemo(() => {
-    const params = new URLSearchParams(location.search);
-    return params.get("category_id");
-  }, [location.search]);
-
-  // Fetch filter options
-  useEffect(() => {
-    const fetchFilterOptions = async () => {
-      try {
-        const companyId = localStorage.getItem("selected_company_id") || "1";
-        const url = `${API_BASE}/product/get_filter_options.php?company_id=${companyId}${categoryId ? `&category_id=${categoryId}` : ''}`;
-        console.log("Fetching filter options from:", url);
-        const response = await axios.get(url);
-        console.log("Filter options response:", response.data);
-        if (response.data?.status) {
-          setFilterOptions(response.data.data);
-          setFilters(prev => ({
-            ...prev,
-            availableOptions: response.data.data
-          }));
-        }
-      } catch (error) {
-        console.error("Failed to load filter options:", error);
-      }
-    };
-    fetchFilterOptions();
-  }, [categoryId]);
-
-  // Fetch products with filters
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      const companyId = localStorage.getItem("selected_company_id") || "1";
-      
-      const payload = {
-        company_id: companyId,
-        ...filters,
-        category_id: categoryId || 0,
-        colors: [],
-        occasions: [],
-        fabrics: [],
-        product_types: []
-      };
-      
-      console.log("Fetching products with payload:", payload);
-
-      const response = await axios.post(
-        `${API_BASE}/product/get_filtered_products.php`,
-        payload
-      );
-      
-      console.log("Products response:", response.data);
-
-      if (response.data?.status) {
-        setProducts(response.data.data || []);
-        setTotalProducts(response.data.pagination?.total || 0);
-      } else {
-        console.error("API returned error:", response.data);
-      }
-    } catch (error) {
-      console.error("Failed to fetch products:", error);
-      showToast("Failed to load products", "error");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchProducts();
-  }, [filters.sort_by, filters.limit, filters.offset, categoryId]);
-
-  const applyFilters = () => {
-    setFilters(prev => ({ ...prev, offset: 0 }));
-    fetchProducts();
-    if (window.innerWidth < 768) {
-      setShowMobileFilter(false);
-    }
-  };
-
-  const clearFilters = () => {
-    setFilters({
-      price_min: 0,
-      price_max: filterOptions?.price_range?.max || 1000000,
-      sizes: [],
-      availability: 'all',
-      rating: 0,
-      sort_by: 'newest',
-      limit: 20,
-      offset: 0,
-      availableOptions: filterOptions || {}
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [showMobileFilter, setShowMobileFilter] = useState(false);
+    const [totalProducts, setTotalProducts] = useState(0);
+    const [filterOptions, setFilterOptions] = useState(null);
+    const [filters, setFilters] = useState({
+        price_min: 0,
+        price_max: 1000000,
+        sizes: [],
+        availability: 'all',
+        rating: 0,
+        sort_by: 'newest',
+        limit: 20,
+        offset: 0,
+        availableOptions: {}
     });
-    setTimeout(() => {
-      fetchProducts();
-    }, 100);
-  };
 
-  const getDefaultSize = (product) => {
-    if (!product?.available_sizes) return "";
-    const sizes = product.available_sizes
-      .split(/[,;|]/)
-      .map((size) => size.trim())
-      .filter(Boolean);
-    return sizes.length > 0 ? sizes[0] : "";
-  };
+    const { guestId, refreshCounts, wishlistItems } = useStore();
+    const { user } = useAuth();
+    const location = useLocation();
+    const navigate = useNavigate();
 
-  const addToCart = async (product, size = "") => {
-    if (!user) {
-      showToast('Please log in to add items to cart', 'error');
-      setTimeout(() => navigate('/login'), 500);
-      return;
-    }
+    // Get category_id from URL
+    const categoryId = useMemo(() => {
+        const params = new URLSearchParams(location.search);
+        return params.get("category_id");
+    }, [location.search]);
 
-    const selectedSize = size || getDefaultSize(product);
+    // Fetch filter options
+    useEffect(() => {
+        const fetchFilterOptions = async () => {
+            try {
+                const companyId = localStorage.getItem("selected_company_id") || "1";
+                // ✅ Use API_BASE_URL from config
+                const url =
+                    `${API_BASE_URL}/product/get_filter_options.php?company_id=${companyId}` +
+                    (categoryId ? `&category_id=${categoryId}` : '');
+                console.log("Fetching filter options from:", url);
+                // ✅ Use the api instance
+                const response = await api.get(url);
+                console.log("Filter options response:", response.data);
+                if (response.data?.status) {
+                    setFilterOptions(response.data.data);
+                    setFilters(prev => ({
+                        ...prev,
+                        availableOptions: response.data.data
+                    }));
+                }
+            } catch (error) {
+                console.error("Failed to load filter options:", error);
+            }
+        };
+        fetchFilterOptions();
+    }, [categoryId]);
 
-    try {
-      const response = await axios.post(`${API_BASE}/cart/save.php`, {
-        guest_id: guestId(),
-        product_id: product.id,
-        quantity: 1,
-        price: product.offer_price || product.price,
-        size: selectedSize,
-      });
-      await refreshCounts();
-      if (response.data?.status) {
-        showToast('Added to cart successfully', 'success');
-      } else {
-        showToast(response.data?.message || 'Unable to add to cart', 'error');
-      }
-    } catch (error) {
-      console.error("Add to cart failed:", error);
-      await refreshCounts();
-      showToast('Add to cart failed. Please try again.', 'error');
-    }
-  };
+    // Fetch products with filters
+    const fetchProducts = async () => {
+        try {
+            setLoading(true);
+            const companyId = localStorage.getItem("selected_company_id") || "1";
 
-  const wishlistIds = useMemo(
-    () => new Set(wishlistItems.map((item) => item.product_id)),
-    [wishlistItems]
-  );
+            const payload = {
+                company_id: companyId,
+                ...filters,
+                category_id: categoryId || 0,
+                colors: [],
+                occasions: [],
+                fabrics: [],
+                product_types: []
+            };
 
-  const isWishlisted = (product) => wishlistIds.has(product.id);
+            console.log("Fetching products with payload:", payload);
 
-  const addToWishlist = async (product, size = "") => {
-    if (!user) {
-      showToast("Please log in to add items to wishlist", "error");
-      setTimeout(() => navigate("/login"), 500);
-      return;
-    }
+            // ✅ Use the api instance
+            const response = await api.post(
+                '/product/get_filtered_products.php',
+                payload
+            );
 
-    const existingItem = wishlistItems.find(
-      (item) => item.product_id === product.id
+            console.log("Products response:", response.data);
+
+            if (response.data?.status) {
+                // ✅ Resolve image URLs for each product
+                const productsWithResolvedImages = (response.data.data || []).map(product => ({
+                    ...product,
+                    // Resolve main image
+                    image: resolveMediaUrl(product.image),
+                    // Resolve additional images if present
+                    additional_images: product.additional_images
+                        ? product.additional_images.map(img => resolveMediaUrl(img))
+                        : []
+                }));
+                setProducts(productsWithResolvedImages);
+                setTotalProducts(response.data.pagination?.total || 0);
+            } else {
+                console.error("API returned error:", response.data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch products:", error);
+            showToast("Failed to load products", "error");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchProducts();
+    }, [filters.sort_by, filters.limit, filters.offset, categoryId]);
+
+    const applyFilters = () => {
+        setFilters(prev => ({ ...prev, offset: 0 }));
+        fetchProducts();
+        if (window.innerWidth < 768) {
+            setShowMobileFilter(false);
+        }
+    };
+
+    const clearFilters = () => {
+        setFilters({
+            price_min: 0,
+            price_max: filterOptions?.price_range?.max || 1000000,
+            sizes: [],
+            availability: 'all',
+            rating: 0,
+            sort_by: 'newest',
+            limit: 20,
+            offset: 0,
+            availableOptions: filterOptions || {}
+        });
+        setTimeout(() => {
+            fetchProducts();
+        }, 100);
+    };
+
+    const getDefaultSize = (product) => {
+        if (!product?.available_sizes) return "";
+        const sizes = product.available_sizes
+            .split(/[,;|]/)
+            .map((size) => size.trim())
+            .filter(Boolean);
+        return sizes.length > 0 ? sizes[0] : "";
+    };
+
+    const addToCart = async (product, size = "") => {
+        if (!user) {
+            showToast('Please log in to add items to cart', 'error');
+            setTimeout(() => navigate('/login'), 500);
+            return;
+        }
+
+        const selectedSize = size || getDefaultSize(product);
+
+        try {
+            // ✅ Use the api instance
+            const response = await api.post('/cart/save.php', {
+                guest_id: guestId(),
+                product_id: product.id,
+                quantity: 1,
+                price: product.offer_price || product.price,
+                size: selectedSize,
+            });
+            await refreshCounts();
+            if (response.data?.status) {
+                showToast('Added to cart successfully', 'success');
+            } else {
+                showToast(response.data?.message || 'Unable to add to cart', 'error');
+            }
+        } catch (error) {
+            console.error("Add to cart failed:", error);
+            await refreshCounts();
+            showToast('Add to cart failed. Please try again.', 'error');
+        }
+    };
+
+    const wishlistIds = useMemo(
+        () => new Set(wishlistItems.map((item) => item.product_id)),
+        [wishlistItems]
     );
 
-    try {
-      if (existingItem) {
-        const response = await axios.delete(
-          `${API_BASE}/wishlist/delete.php?id=${existingItem.id}`
+    const isWishlisted = (product) => wishlistIds.has(product.id);
+
+    const addToWishlist = async (product, size = "") => {
+        if (!user) {
+            showToast("Please log in to add items to wishlist", "error");
+            setTimeout(() => navigate("/login"), 500);
+            return;
+        }
+
+        const existingItem = wishlistItems.find(
+            (item) => item.product_id === product.id
         );
-        if (response.data?.status) {
-          await refreshCounts();
-          showToast("Removed from wishlist", "success");
+
+        try {
+            if (existingItem) {
+                // ✅ Use the api instance
+                const response = await api.delete(
+                    `/wishlist/delete.php?id=${existingItem.id}`
+                );
+                if (response.data?.status) {
+                    await refreshCounts();
+                    showToast("Removed from wishlist", "success");
+                }
+                return;
+            }
+
+            const selectedSize = size || getDefaultSize(product);
+            // ✅ Use the api instance
+            const response = await api.post('/wishlist/save.php', {
+                guest_id: guestId(),
+                product_id: product.id,
+                size: selectedSize,
+            });
+
+            if (response.data?.status) {
+                await refreshCounts();
+                showToast("Added to wishlist", "success");
+            }
+        } catch (error) {
+            console.error(error);
+            showToast("Something went wrong", "error");
         }
-        return;
-      }
+    };
 
-      const selectedSize = size || getDefaultSize(product);
-      const response = await axios.post(
-        `${API_BASE}/wishlist/save.php`,
-        {
-          guest_id: guestId(),
-          product_id: product.id,
-          size: selectedSize,
-        }
-      );
+    const handleSortChange = (e) => {
+        setFilters(prev => ({ ...prev, sort_by: e.target.value, offset: 0 }));
+    };
 
-      if (response.data?.status) {
-        await refreshCounts();
-        showToast("Added to wishlist", "success");
-      }
-    } catch (error) {
-      console.error(error);
-      showToast("Something went wrong", "error");
-    }
-  };
+    const activeFilterCount =
+        (filters.sizes || []).length +
+        (filters.availability !== 'all' ? 1 : 0) +
+        (filters.rating > 0 ? 1 : 0) +
+        (filters.price_min > 0 ? 1 : 0);
 
-  const handleSortChange = (e) => {
-    setFilters(prev => ({ ...prev, sort_by: e.target.value, offset: 0 }));
-  };
+    return (
+        <div className="min-h-screen bg-[#f8f7f2] pt-28 pb-16 px-4 md:px-8 lg:px-12">
+            <div className="max-w-7xl mx-auto">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-6">
+                    <div>
+                        <h1 className="text-2xl font-semibold text-gray-900">Products</h1>
+                        <p className="text-sm text-gray-500 mt-1">
+                            {totalProducts} products found
+                        </p>
+                    </div>
 
-  const activeFilterCount = 
-    (filters.sizes || []).length + 
-    (filters.availability !== 'all' ? 1 : 0) + 
-    (filters.rating > 0 ? 1 : 0) + 
-    (filters.price_min > 0 ? 1 : 0);
+                    <div className="flex items-center gap-3">
+                        {/* Sort */}
+                        <select
+                            value={filters.sort_by}
+                            onChange={handleSortChange}
+                            className="px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="newest">Newest First</option>
+                            <option value="price_low">Price: Low to High</option>
+                            <option value="price_high">Price: High to Low</option>
+                            <option value="popular">Most Popular</option>
+                            <option value="rating">Top Rated</option>
+                        </select>
 
-  return (
-    <div className="min-h-screen bg-[#f8f7f2] pt-28 pb-16 px-4 md:px-8 lg:px-12">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Products</h1>
-            <p className="text-sm text-gray-500 mt-1">
-              {totalProducts} products found
-            </p>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {/* Sort */}
-            <select
-              value={filters.sort_by}
-              onChange={handleSortChange}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="newest">Newest First</option>
-              <option value="price_low">Price: Low to High</option>
-              <option value="price_high">Price: High to Low</option>
-              <option value="popular">Most Popular</option>
-              <option value="rating">Top Rated</option>
-            </select>
+                        {/* Filter Button - Mobile */}
+                        <button
+                            onClick={() => setShowMobileFilter(true)}
+                            className="md:hidden flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                        >
+                            <Filter className="w-4 h-4" />
+                            Filters
+                            {activeFilterCount > 0 && (
+                                <span className="bg-blue-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                                    {activeFilterCount}
+                                </span>
+                            )}
+                        </button>
+                    </div>
+                </div>
 
-            {/* Filter Button - Mobile */}
-            <button
-              onClick={() => setShowMobileFilter(true)}
-              className="md:hidden flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-            >
-              <Filter className="w-4 h-4" />
-              Filters
-              {activeFilterCount > 0 && (
-                <span className="bg-blue-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
-                  {activeFilterCount}
-                </span>
-              )}
-            </button>
-          </div>
-        </div>
+                {/* Main Layout */}
+                <div className="flex gap-8">
+                    {/* Desktop Filter Sidebar */}
+                    <div className="hidden md:block w-72 flex-shrink-0">
+                        <FilterSidebar
+                            filters={filters}
+                            setFilters={setFilters}
+                            onApply={applyFilters}
+                            onClear={clearFilters}
+                        />
+                    </div>
 
-        {/* Main Layout */}
-        <div className="flex gap-8">
-          {/* Desktop Filter Sidebar */}
-          <div className="hidden md:block w-72 flex-shrink-0">
-            <FilterSidebar
-              filters={filters}
-              setFilters={setFilters}
-              onApply={applyFilters}
-              onClear={clearFilters}
-            />
-          </div>
+                    {/* Product Grid */}
+                    <div className="flex-1">
+                        {loading ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {Array.from({ length: 6 }).map((_, index) => (
+                                    <div key={index} className="h-96 rounded-xl bg-white animate-pulse" />
+                                ))}
+                            </div>
+                        ) : products.length === 0 ? (
+                            <div className="text-center py-20">
+                                <svg className="w-20 h-20 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                                </svg>
+                                <p className="text-lg text-gray-500">No products found</p>
+                                <p className="text-sm text-gray-400">Try adjusting your filters</p>
+                                <button
+                                    onClick={clearFilters}
+                                    className="mt-4 text-blue-500 hover:text-blue-700"
+                                >
+                                    Clear all filters
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                                {products.map((product) => (
+                                    <ProductCard
+                                        key={product.id}
+                                        product={product}
+                                        onNavigate={() => navigate(`/product/${product.id}`)}
+                                        onAddToCart={(prod, size) => addToCart(prod, size)}
+                                        onAddToWishlist={(prod, size) => addToWishlist(prod, size)}
+                                        isWishlisted={isWishlisted(product)}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
 
-          {/* Product Grid */}
-          <div className="flex-1">
-            {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {Array.from({ length: 6 }).map((_, index) => (
-                  <div key={index} className="h-96 rounded-xl bg-white animate-pulse" />
-                ))}
-              </div>
-            ) : products.length === 0 ? (
-              <div className="text-center py-20">
-                <svg className="w-20 h-20 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                </svg>
-                <p className="text-lg text-gray-500">No products found</p>
-                <p className="text-sm text-gray-400">Try adjusting your filters</p>
-                <button
-                  onClick={clearFilters}
-                  className="mt-4 text-blue-500 hover:text-blue-700"
-                >
-                  Clear all filters
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                {products.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    onNavigate={() => navigate(`/product/${product.id}`)}
-                    onAddToCart={(prod, size) => addToCart(prod, size)}
-                    onAddToWishlist={(prod, size) => addToWishlist(prod, size)}
-                    isWishlisted={isWishlisted(product)}
-                  />
-                ))}
-              </div>
+            {/* Mobile Filter Overlay */}
+            {showMobileFilter && (
+                <div className="fixed inset-0 z-50 md:hidden">
+                    <div
+                        className="absolute inset-0 bg-black/50"
+                        onClick={() => setShowMobileFilter(false)}
+                    />
+                    <div className="absolute right-0 top-0 h-full w-full max-w-sm bg-white overflow-y-auto p-4 animate-slide-in">
+                        <FilterSidebar
+                            filters={filters}
+                            setFilters={setFilters}
+                            onApply={applyFilters}
+                            onClear={clearFilters}
+                            isMobile={true}
+                            onClose={() => setShowMobileFilter(false)}
+                        />
+                    </div>
+                </div>
             )}
-          </div>
-        </div>
-      </div>
 
-      {/* Mobile Filter Overlay */}
-      {showMobileFilter && (
-        <div className="fixed inset-0 z-50 md:hidden">
-          <div 
-            className="absolute inset-0 bg-black/50"
-            onClick={() => setShowMobileFilter(false)}
-          />
-          <div className="absolute right-0 top-0 h-full w-full max-w-sm bg-white overflow-y-auto p-4 animate-slide-in">
-            <FilterSidebar
-              filters={filters}
-              setFilters={setFilters}
-              onApply={applyFilters}
-              onClear={clearFilters}
-              isMobile={true}
-              onClose={() => setShowMobileFilter(false)}
-            />
-          </div>
+            <style>{`
+                @keyframes slide-in {
+                  from { transform: translateX(100%); }
+                  to { transform: translateX(0); }
+                }
+                .animate-slide-in {
+                  animation: slide-in 0.3s ease-out;
+                }
+            `}</style>
         </div>
-      )}
-
-      <style>{`
-        @keyframes slide-in {
-          from { transform: translateX(100%); }
-          to { transform: translateX(0); }
-        }
-        .animate-slide-in {
-          animation: slide-in 0.3s ease-out;
-        }
-      `}</style>
-    </div>
-  );
+    );
 }

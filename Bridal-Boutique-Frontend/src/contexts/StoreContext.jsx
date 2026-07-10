@@ -1,8 +1,9 @@
+// StoreContext.js
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import axios from "axios";
+// 👇 Import the shared API instance and base URL from the central file
+import api, { API_BASE_URL } from "../services/api";   // adjust path if needed
 import { useAuth } from "./AuthContext";
 
-const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
 const StoreContext = createContext();
 
 const createGuestId = () => {
@@ -47,22 +48,21 @@ export function StoreProvider({ children }) {
 
   useEffect(() => {
     const previousUser = previousUserRef.current;
-
     if (previousUser && !user) {
       resetStore();
     } else if (previousUser && user && previousUser.id !== user.id) {
       resetStore();
     }
-
     previousUserRef.current = user;
   }, [user, resetStore]);
 
-  // Refresh cart and wishlist counts
+  // Refresh cart and wishlist counts – now using the `api` instance
   const refreshCounts = useCallback(async () => {
     const id = guestId();
     
     try {
-      const cartRes = await axios.get(`${API_BASE}/cart/get.php?guest_id=${id}`);
+      // ✅ Using api.get – baseURL is automatically prepended
+      const cartRes = await api.get(`/cart/get.php?guest_id=${id}`);
       if (cartRes.data?.status) {
         const items = cartRes.data.data || [];
         setCartItems(items);
@@ -74,7 +74,7 @@ export function StoreProvider({ children }) {
     }
 
     try {
-      const wishlistRes = await axios.get(`${API_BASE}/wishlist/get.php?guest_id=${id}`);
+      const wishlistRes = await api.get(`/wishlist/get.php?guest_id=${id}`);
       if (wishlistRes.data?.status) {
         const items = wishlistRes.data.data || [];
         setWishlistItems(items);
@@ -89,25 +89,19 @@ export function StoreProvider({ children }) {
     refreshCounts();
   }, [refreshCounts]);
 
-  // Clear cart function
+  // Clear cart
   const clearCart = async () => {
     setLoading(true);
     try {
       const id = guestId();
-      // Clear from server
-      await axios.delete(`${API_BASE}/cart/clear.php?guest_id=${id}`);
-      
-      // Clear from state
+      await api.delete(`/cart/clear.php?guest_id=${id}`);
       setCartItems([]);
       setCartCount(0);
-      
-      // Clear from localStorage
       localStorage.removeItem("bridal_cart");
-      
       return { status: true, message: "Cart cleared successfully" };
     } catch (error) {
       console.error("Error clearing cart:", error);
-      // Even if server fails, clear local state
+      // Fallback: clear local state anyway
       setCartItems([]);
       setCartCount(0);
       localStorage.removeItem("bridal_cart");
@@ -121,7 +115,7 @@ export function StoreProvider({ children }) {
   const addToCart = async (productId, quantity = 1, price = 0) => {
     try {
       const id = guestId();
-      const response = await axios.post(`${API_BASE}/cart/add.php`, {
+      const response = await api.post(`/cart/add.php`, {
         guest_id: id,
         product_id: productId,
         quantity: quantity,
@@ -143,7 +137,7 @@ export function StoreProvider({ children }) {
   // Remove from cart
   const removeFromCart = async (cartItemId) => {
     try {
-      await axios.delete(`${API_BASE}/cart/delete.php?id=${cartItemId}`);
+      await api.delete(`/cart/delete.php?id=${cartItemId}`);
       await refreshCounts();
       return { status: true, message: "Removed from cart" };
     } catch (error) {
@@ -155,7 +149,7 @@ export function StoreProvider({ children }) {
   // Update cart quantity
   const updateCartQuantity = async (cartItemId, quantity) => {
     try {
-      await axios.post(`${API_BASE}/cart/update.php`, {
+      await api.post(`/cart/update.php`, {
         id: cartItemId,
         quantity: quantity
       });
@@ -171,7 +165,7 @@ export function StoreProvider({ children }) {
   const addToWishlist = async (productId) => {
     try {
       const id = guestId();
-      const response = await axios.post(`${API_BASE}/wishlist/add.php`, {
+      const response = await api.post(`/wishlist/add.php`, {
         guest_id: id,
         product_id: productId
       });
@@ -191,7 +185,7 @@ export function StoreProvider({ children }) {
   // Remove from wishlist
   const removeFromWishlist = async (wishlistItemId) => {
     try {
-      await axios.delete(`${API_BASE}/wishlist/delete.php?id=${wishlistItemId}`);
+      await api.delete(`/wishlist/delete.php?id=${wishlistItemId}`);
       await refreshCounts();
       return { status: true, message: "Removed from wishlist" };
     } catch (error) {
@@ -205,12 +199,11 @@ export function StoreProvider({ children }) {
     return wishlistItems.some(item => item.product_id === productId);
   };
 
-  // Change cart count (for manual updates)
+  // Manual count updates
   const changeCartCount = (delta = 1) => {
     setCartCount((prev) => Math.max(0, prev + delta));
   };
 
-  // Change wishlist count (for manual updates)
   const changeWishlistCount = (delta = 1) => {
     setWishlistCount((prev) => Math.max(0, prev + delta));
   };

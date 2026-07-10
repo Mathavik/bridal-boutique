@@ -1,50 +1,176 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
-import api from "../services/api";
+import api, { resolveMediaUrl, API_BASE_URL } from "../services/api";
 import { formatCurrency } from "../utils/formatters";
 import { useStore } from "../contexts/StoreContext";
 import { useAuth } from "../contexts/AuthContext";
 import { showToast } from "../utils/toast";
 
-const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
+// ─── Helper Component: Loading Spinner ──────────────────────────────────────
+const LoadingSpinner = () => (
+  <div className="min-h-screen bg-[#f8f7f2] pt-28 pb-12 px-4 flex items-center justify-center">
+    <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#a97c50]/20 border-t-[#a97c50]" />
+  </div>
+);
 
-const resolveImageUrl = (src) => {
-  if (!src) return "";
-  if (src.startsWith("http")) return src;
-  let cleanPath = src.replace(/\\/g, "/");
-  if (cleanPath.startsWith("uploads/")) {
-    cleanPath = cleanPath.substring(8);
-  }
-  return `${API_BASE}/uploads/${cleanPath}`;
+// ─── Helper Component: Empty Cart ──────────────────────────────────────────
+const EmptyCart = () => (
+  <div className="rounded-xl bg-white p-6 shadow text-center">
+    <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
+      <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+      </svg>
+    </div>
+    <p className="text-gray-500 text-lg">Your cart is empty.</p>
+    <p className="text-gray-400 text-sm mt-1">Start shopping to add items to your cart</p>
+    <Link to="/" className="mt-6 inline-block px-6 py-2 bg-[#a97c50] text-white rounded-full hover:bg-[#8a6540] transition">
+      Continue Shopping →
+    </Link>
+  </div>
+);
+
+// ─── Helper Component: Single Cart Item ────────────────────────────────────
+const CartItem = ({ item, onUpdate, onRemove }) => {
+  const imageSrc = resolveMediaUrl(item.image) || 
+                   "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0";
+
+  return (
+    <div className="flex flex-col md:flex-row items-start md:items-center justify-between rounded-xl bg-white p-4 shadow-sm hover:shadow-md transition">
+      {/* Left: Image + Details */}
+      <div className="flex items-center gap-4 w-full md:w-auto">
+        <div className="h-20 w-20 md:h-24 md:w-24 rounded-lg overflow-hidden bg-[#f8f7f2] flex items-center justify-center flex-shrink-0">
+          <img
+            src={imageSrc}
+            alt={item.product_name || "Product"}
+            className="w-full h-full object-cover"
+          />
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold truncate">{item.product_name}</h3>
+          <p className="text-sm font-medium text-[#a97c50]">
+            {formatCurrency(Number(item.price))}
+            {Number(item.gst_percentage) > 0 && (
+              <span className="text-xs text-gray-400 ml-1">
+                (GST: {item.gst_percentage}%)
+              </span>
+            )}
+          </p>
+          {item.size && (
+            <span className="inline-flex items-center rounded-full bg-[#f0f0f0] px-3 py-1 text-xs font-medium text-gray-700 mt-1">
+              Size: {item.size}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Right: Quantity + Remove */}
+      <div className="flex items-center gap-3 mt-4 md:mt-0 w-full md:w-auto justify-end">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => onUpdate(item.id, Number(item.quantity) - 1)}
+            className="h-8 w-8 rounded-full border hover:bg-gray-50 transition flex items-center justify-center disabled:opacity-40"
+            disabled={Number(item.quantity) <= 1}
+          >
+            −
+          </button>
+          <span className="w-6 text-center font-medium">{item.quantity}</span>
+          <button
+            onClick={() => onUpdate(item.id, Number(item.quantity) + 1)}
+            className="h-8 w-8 rounded-full border hover:bg-gray-50 transition flex items-center justify-center"
+          >
+            +
+          </button>
+        </div>
+
+        <button
+          onClick={() => onRemove(item.id)}
+          className="text-red-500 text-sm hover:text-red-700 transition ml-2"
+        >
+          Remove
+        </button>
+      </div>
+    </div>
+  );
 };
 
+// ─── Helper Component: Order Summary ───────────────────────────────────────
+const OrderSummary = ({ subtotal, gst, total, onCheckout, itemCount }) => {
+  const avgGst = itemCount > 0 && gst > 0 
+    ? Math.round((gst / subtotal) * 100) 
+    : 0;
+
+  return (
+    <div className="rounded-xl bg-white p-6 shadow-sm h-fit sticky top-28">
+      <h2 className="text-xl font-semibold">Order Summary</h2>
+
+      <div className="mt-5 space-y-3">
+        <div className="flex justify-between">
+          <span className="text-gray-600">Subtotal</span>
+          <span className="font-medium">{formatCurrency(subtotal)}</span>
+        </div>
+
+        {gst > 0 && (
+          <div className="flex justify-between">
+            <span className="text-gray-600">GST ({avgGst}%)</span>
+            <span className="font-medium">{formatCurrency(gst)}</span>
+          </div>
+        )}
+
+        <div className="flex justify-between">
+          <span className="text-gray-600">Shipping</span>
+          <span className="text-green-600">Free</span>
+        </div>
+
+        <hr className="my-2" />
+
+        <div className="flex justify-between font-bold text-lg">
+          <span>Total</span>
+          <span>{formatCurrency(total)}</span>
+        </div>
+
+        {gst > 0 && (
+          <div className="text-xs text-gray-400 text-right mt-1">
+            Inclusive of all taxes
+          </div>
+        )}
+      </div>
+
+      <Link to="/" className="block text-center mt-5 text-[#a97c50] hover:underline">
+        Continue Shopping
+      </Link>
+
+      <button
+        onClick={onCheckout}
+        className="w-full mt-4 bg-[#181818] text-white py-3 rounded-md hover:bg-[#333] transition"
+      >
+        Proceed to Checkout
+      </button>
+    </div>
+  );
+};
+
+// ─── MAIN COMPONENT: Cart ──────────────────────────────────────────────────
 export default function Cart() {
   const { cartItems, refreshCounts } = useStore();
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // ─── Load cart on mount ──────────────────────────────────────────────────
   useEffect(() => {
-    refreshCounts();
+    refreshCounts()
+      .catch((err) => console.error("Failed to load cart:", err))
+      .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => {
-    setItems(cartItems || []);
-    setLoading(false);
-  }, [cartItems]);
-
+  // ─── API: Update quantity ──────────────────────────────────────────────
   const updateQuantity = async (id, quantity) => {
     if (quantity < 1) return;
 
     try {
-      await api.post("cart/update.php", {
-        id,
-        quantity,
-      });
-
+      await api.post("cart/update.php", { id, quantity });
       await refreshCounts();
       showToast("Quantity updated", "success");
     } catch (err) {
@@ -53,6 +179,7 @@ export default function Cart() {
     }
   };
 
+  // ─── API: Remove item ──────────────────────────────────────────────────
   const removeItem = async (id) => {
     try {
       await api.delete(`cart/delete.php?id=${id}`);
@@ -64,6 +191,26 @@ export default function Cart() {
     }
   };
 
+  // ─── Calculations ──────────────────────────────────────────────────────
+  const subtotal = useMemo(() => {
+    if (!cartItems || cartItems.length === 0) return 0;
+    return cartItems.reduce(
+      (sum, item) => sum + Number(item.price) * Number(item.quantity),
+      0
+    );
+  }, [cartItems]);
+
+  const gstTotal = useMemo(() => {
+    if (!cartItems || cartItems.length === 0) return 0;
+    return cartItems.reduce((sum, item) => {
+      const gst = Number(item.gst_percentage || 0);
+      return sum + (Number(item.price) * Number(item.quantity) * gst / 100);
+    }, 0);
+  }, [cartItems]);
+
+  const grandTotal = subtotal + gstTotal;
+
+  // ─── Checkout handler ──────────────────────────────────────────────────
   const handleCheckout = () => {
     if (!user) {
       showToast("Please login first", "error");
@@ -71,27 +218,18 @@ export default function Cart() {
       return;
     }
 
-    if (items.length === 0) {
+    if (!cartItems || cartItems.length === 0) {
       showToast("Your cart is empty", "error");
       return;
     }
 
-    // Calculate GST and totals
-    const subtotalAmount = subtotal;
-    const gstAmount = items.reduce((sum, item) => {
-      const gstPercent = Number(item.gst_percentage || 0);
-      const itemTotal = Number(item.price || 0) * Number(item.quantity || 1);
-      return sum + (itemTotal * gstPercent / 100);
-    }, 0);
-    const totalAmount = subtotalAmount + gstAmount;
-
     navigate("/checkout", {
       state: {
         fromCart: true,
-        cartItems: items,
-        subtotal: subtotalAmount,
-        gstAmount: gstAmount,
-        total: totalAmount,
+        cartItems,
+        subtotal,
+        gstAmount: gstTotal,
+        total: grandTotal,
         customer_name: user.name || "",
         email: user.email || "",
         mobile: user.phone || "",
@@ -100,206 +238,43 @@ export default function Cart() {
     });
   };
 
-  const subtotal = useMemo(() => {
-    if (!items || items.length === 0) return 0;
-    return items.reduce((sum, item) => {
-      return (
-        sum +
-        Number(item.price || 0) * Number(item.quantity || 1)
-      );
-    }, 0);
-  }, [items]);
-
-  // Calculate GST total
-  const gstTotal = useMemo(() => {
-    if (!items || items.length === 0) return 0;
-    return items.reduce((sum, item) => {
-      const gstPercent = Number(item.gst_percentage || 0);
-      const itemTotal = Number(item.price || 0) * Number(item.quantity || 1);
-      return sum + (itemTotal * gstPercent / 100);
-    }, 0);
-  }, [items]);
-
-  const grandTotal = subtotal + gstTotal;
-
-  // Calculate average GST for display
-  const avgGst = useMemo(() => {
-    if (!items || items.length === 0) return 0;
-    const itemsWithGst = items.filter(item => Number(item.gst_percentage || 0) > 0);
-    if (itemsWithGst.length === 0) return 0;
-    const totalGst = itemsWithGst.reduce((sum, item) => sum + Number(item.gst_percentage || 0), 0);
-    return Math.round(totalGst / itemsWithGst.length);
-  }, [items]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#f8f7f2] pt-28 pb-12 px-4 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#a97c50]/20 border-t-[#a97c50]"></div>
-      </div>
-    );
-  }
+  // ─── Render ────────────────────────────────────────────────────────────
+  if (loading) return <LoadingSpinner />;
 
   return (
     <div className="min-h-screen bg-[#f8f7f2] pt-28 pb-12 px-4 md:px-8 lg:px-12">
       <div className="max-w-7xl mx-auto grid lg:grid-cols-[2fr_1fr] gap-8">
-
-        {/* Cart Items */}
+        {/* ─── Left Column: Cart Items ────────────────────────────────── */}
         <div>
           <h1 className="text-3xl font-semibold uppercase tracking-wider lg:tracking-[4px]">
-            Cart ({items.length})
+            Cart ({cartItems?.length || 0})
           </h1>
 
           <div className="mt-6 space-y-4">
-            {items.length === 0 ? (
-              <div className="rounded-xl bg-white p-6 shadow text-center">
-                <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                </div>
-                <p className="text-gray-500 text-lg">Your cart is empty.</p>
-                <p className="text-gray-400 text-sm mt-1">Start shopping to add items to your cart</p>
-                <Link to="/" className="mt-6 inline-block px-6 py-2 bg-[#a97c50] text-white rounded-full hover:bg-[#8a6540] transition">
-                  Continue Shopping →
-                </Link>
-              </div>
+            {!cartItems || cartItems.length === 0 ? (
+              <EmptyCart />
             ) : (
-              items.map((item) => (
-                <div
+              cartItems.map((item) => (
+                <CartItem
                   key={item.id}
-                  className="flex flex-col md:flex-row items-start md:items-center justify-between rounded-xl bg-white p-4 shadow-sm hover:shadow-md transition"
-                >
-                  <div className="flex items-center gap-4 w-full md:w-auto">
-                    {/* Image container */}
-                    <div className="h-20 w-20 md:h-24 md:w-24 rounded-lg overflow-hidden bg-[#f8f7f2] flex items-center justify-center flex-shrink-0">
-                      <img
-                        src={
-                          resolveImageUrl(item.image) ||
-                          "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0"
-                        }
-                        alt={item.product_name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold truncate">
-                        {item.product_name}
-                      </h3>
-                      <p className="text-sm font-medium text-[#a97c50]">
-                        {formatCurrency(item.price)}
-                        {item.gst_percentage && Number(item.gst_percentage) > 0 && (
-                          <span className="text-xs text-gray-400 ml-1">
-                            (GST: {item.gst_percentage}%)
-                          </span>
-                        )}
-                      </p>
-                      {item.size && (
-                        <span className="inline-flex items-center rounded-full bg-[#f0f0f0] px-3 py-1 text-xs font-medium text-gray-700 mt-1">
-                          Size: {item.size}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 mt-4 md:mt-0 w-full md:w-auto justify-end">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() =>
-                          updateQuantity(
-                            item.id,
-                            Number(item.quantity) - 1
-                          )
-                        }
-                        className="h-8 w-8 rounded-full border hover:bg-gray-50 transition flex items-center justify-center"
-                        disabled={Number(item.quantity) <= 1}
-                      >
-                        -
-                      </button>
-
-                      <span className="w-6 text-center font-medium">
-                        {item.quantity}
-                      </span>
-
-                      <button
-                        onClick={() =>
-                          updateQuantity(
-                            item.id,
-                            Number(item.quantity) + 1
-                          )
-                        }
-                        className="h-8 w-8 rounded-full border hover:bg-gray-50 transition flex items-center justify-center"
-                      >
-                        +
-                      </button>
-                    </div>
-
-                    <button
-                      onClick={() => removeItem(item.id)}
-                      className="text-red-500 text-sm hover:text-red-700 transition ml-2"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                </div>
+                  item={item}
+                  onUpdate={updateQuantity}
+                  onRemove={removeItem}
+                />
               ))
             )}
           </div>
         </div>
 
-        {/* Order Summary */}
-        {items.length > 0 && (
-          <div className="rounded-xl bg-white p-6 shadow-sm h-fit sticky top-28">
-            <h2 className="text-xl font-semibold">
-              Order Summary
-            </h2>
-
-            <div className="mt-5 space-y-3">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Subtotal</span>
-                <span className="font-medium">{formatCurrency(subtotal)}</span>
-              </div>
-
-              {gstTotal > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">GST ({avgGst}%)</span>
-                  <span className="font-medium">{formatCurrency(gstTotal)}</span>
-                </div>
-              )}
-
-              <div className="flex justify-between">
-                <span className="text-gray-600">Shipping</span>
-                <span className="text-green-600">Free</span>
-              </div>
-
-              <hr className="my-2" />
-
-              <div className="flex justify-between font-bold text-lg">
-                <span>Total</span>
-                <span>{formatCurrency(grandTotal)}</span>
-              </div>
-
-              {gstTotal > 0 && (
-                <div className="text-xs text-gray-400 text-right mt-1">
-                  Inclusive of all taxes
-                </div>
-              )}
-            </div>
-
-            <Link
-              to="/"
-              className="block text-center mt-5 text-[#a97c50] hover:underline"
-            >
-              Continue Shopping
-            </Link>
-
-            <button
-              onClick={handleCheckout}
-              className="w-full mt-4 bg-[#181818] text-white py-3 rounded-md hover:bg-[#333] transition"
-            >
-              Proceed to Checkout
-            </button>
-          </div>
+        {/* ─── Right Column: Order Summary ───────────────────────────── */}
+        {cartItems && cartItems.length > 0 && (
+          <OrderSummary
+            subtotal={subtotal}
+            gst={gstTotal}
+            total={grandTotal}
+            itemCount={cartItems.length}
+            onCheckout={handleCheckout}
+          />
         )}
       </div>
     </div>

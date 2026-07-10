@@ -1,14 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Heart, ShoppingBag } from "lucide-react";
 import { formatCurrency, getDiscountPercent } from "../utils/formatters";
-
-const API_BASE = "http://localhost/bridal-boutique/Bridal-Boutique-backend/api";
-
-const resolveImageUrl = (src) => {
-  if (!src) return "";
-  return src.startsWith("http") ? src : `${API_BASE}/${src}`;
-};
-
+// 👇 Import from common api file
+import { resolveMediaUrl, FALLBACK_IMAGE } from "../services/api";
 export default function ProductCard({
   product,
   onAddToCart,
@@ -38,17 +32,17 @@ export default function ProductCard({
 
   const isOutOfStock = Number(product.stock) <= 0;
 
-  // Get the image source
+  // 🖼️ Get image source – now uses centralized resolveMediaUrl
   const getImageSrc = () => {
-    if (imageError) return "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0";
-    if (product.image) return resolveImageUrl(product.image);
-    return "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0";
+    if (imageError) return FALLBACK_IMAGE;
+    if (product.image) return resolveMediaUrl(product.image);
+    return FALLBACK_IMAGE;
   };
 
-  // Get the video source
+  // 🎬 Get video source – uses the SAME function!
   const getVideoSrc = () => {
     if (videoError) return null;
-    if (product.video_url) return resolveImageUrl(product.video_url);
+    if (product.video_url) return resolveMediaUrl(product.video_url);
     return null;
   };
 
@@ -89,7 +83,7 @@ export default function ProductCard({
           <div className={`w-full h-full transition-all duration-500 ${isOutOfStock ? "blur-[3px]" : ""}`}>
             {videoSrc && !videoError ? (
               <video
-                src={videoSrc}
+                src={videoSrc}  // ✅ Now resolved via common function
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 autoPlay
                 muted
@@ -102,7 +96,7 @@ export default function ProductCard({
               />
             ) : (
               <img
-                src={imageSrc}
+                src={imageSrc}  // ✅ Now resolved via common function
                 alt={product.product_name || "Product"}
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 onError={() => {
