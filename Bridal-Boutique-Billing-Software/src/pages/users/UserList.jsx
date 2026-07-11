@@ -23,7 +23,7 @@ import {
   X,
   Package
 } from "lucide-react";
-import { API_BASE_URL } from "../../api"; // ✅ Import API_BASE_URL
+import { API_BASE_URL } from "../../services/api"; // ✅ Import API_BASE_URL
 
 export default function UserList() {
   const navigate = useNavigate();

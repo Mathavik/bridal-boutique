@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { User, Mail, Phone, MapPin, ArrowLeft, Save } from "lucide-react";
 import { showToast } from "../../utils/toast";
-import { API_BASE_URL } from "../../api"; // ✅ Import API_BASE_URL
+import { API_BASE_URL } from "../../services/api"; // ✅ Import API_BASE_URL
 
 export default function EditUser() {
   const navigate = useNavigate();
