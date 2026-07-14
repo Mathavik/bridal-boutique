@@ -113,6 +113,14 @@ const response = await login(email, password);
                       className="w-full rounded-lg border border-gray-200 px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-[#a97c50] focus:border-transparent transition outline-none bg-gray-50 hover:bg-white" 
                     />
                   </div>
+                  <div className="text-right mt-1">
+  <Link
+    to={`/forgot-password?redirect=${encodeURIComponent(redirect)}`}
+    className="text-xs text-[#a97c50] hover:underline"
+  >
+    Forgot password?
+  </Link>
+</div>
 
                   <button 
                     type="submit" 

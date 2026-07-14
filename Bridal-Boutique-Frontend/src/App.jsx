@@ -18,6 +18,8 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import InvoicePage from "./pages/InvoicePage";
 import Search from "./pages/search";
 import FilterSidebar from "./components/filters/FilterSidebar";
+import ForgotPassword from "./pages/login/ForgotPassword";
+import ResetPassword from "./pages/login/ResetPassword";
 // import ForEveryOccasion from "./Home/ForEveryOccasion";
 
 export default function App() {
@@ -43,7 +45,8 @@ export default function App() {
         <Route path="/invoice/:id" element={<InvoicePage />} />
         <Route path="/filtersidebar" element={<FilterSidebar />} />
         {/* <Route path="/foreveryoccassion" element={<ForEveryOccasion />} /> */}
-
+<Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
         
 

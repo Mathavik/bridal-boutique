@@ -1,14 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, ChevronUp, X, SlidersHorizontal } from 'lucide-react';
 
-const FilterSidebar = ({ 
-  filters, 
-  setFilters, 
-  onApply, 
-  onClear, 
+const FilterSidebar = ({
+  filters,
+  setFilters,
+  onApply,
+  onClear,
   isMobile = false,
-  onClose 
+  onClose
 }) => {
+  // ---------- Refs for uncontrolled price inputs ----------
+  const minInputRef = useRef(null);
+  const maxInputRef = useRef(null);
+
+  // ---------- Section expand/collapse ----------
   const [expandedSections, setExpandedSections] = useState({
     price: true,
     sizes: true,
@@ -17,76 +22,71 @@ const FilterSidebar = ({
   });
 
   const toggleSection = (section) => {
-    setExpandedSections(prev => ({
+    setExpandedSections((prev) => ({
       ...prev,
       [section]: !prev[section]
     }));
   };
 
-  // Get available sizes from filter options
+  // Get available sizes
   const availableSizes = filters.availableOptions?.sizes || ['S', 'M', 'L', 'XL', 'XXL'];
 
-  // Handle price input changes
-  const handlePriceMinChange = (e) => {
-    const value = e.target.value;
-    if (value === '') {
-      setFilters(prev => ({ ...prev, price_min: 0 }));
-    } else {
-      const numValue = Number(value);
-      if (!isNaN(numValue) && numValue >= 0) {
-        setFilters(prev => ({ ...prev, price_min: numValue }));
-      }
+  // ---------- Helper: sync input values when filters change from outside ----------
+  useEffect(() => {
+    if (minInputRef.current) {
+      minInputRef.current.value = filters.price_min ? String(filters.price_min) : '';
     }
-  };
-
-  const handlePriceMaxChange = (e) => {
-    const value = e.target.value;
-    if (value === '') {
-      setFilters(prev => ({ ...prev, price_max: 1000000 }));
-    } else {
-      const numValue = Number(value);
-      if (!isNaN(numValue) && numValue >= 0) {
-        setFilters(prev => ({ ...prev, price_max: numValue }));
-      }
+    if (maxInputRef.current) {
+      maxInputRef.current.value =
+        filters.price_max && filters.price_max !== 1000000
+          ? String(filters.price_max)
+          : '';
     }
-  };
+  }, [filters.price_min, filters.price_max]);
 
+  // ---------- Price range renderer (uncontrolled) ----------
   const renderPriceRange = () => (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
         <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">₹</span>
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">
+            ₹
+          </span>
           <input
-  type="text"
-  inputMode="numeric"
-  value={filters.price_min || ""}
-  onChange={(e) => {
-    const value = e.target.value.replace(/\D/g, "");
-    setFilters((prev) => ({
-      ...prev,
-      price_min: value === "" ? 0 : Number(value),
-    }));
-  }}
-  className="w-full pl-7 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#a97c50] focus:border-transparent bg-gray-50"
-  placeholder="Min"
-/>
+            ref={minInputRef}
+            type="text"
+            inputMode="numeric"
+            defaultValue={filters.price_min ? String(filters.price_min) : ''}
+            onBlur={(e) => {
+              const raw = e.target.value.replace(/\D/g, '');
+              const num = raw === '' ? 0 : Number(raw);
+              setFilters((prev) => ({ ...prev, price_min: num }));
+            }}
+            className="w-full pl-7 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#a97c50] focus:border-transparent bg-gray-50"
+            placeholder="Min"
+          />
         </div>
         <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">₹</span>
-         <input
-  type="text"
-  inputMode="numeric"
-  value={filters.price_max || ""}
-  onChange={(e) => {
-    const value = e.target.value.replace(/\D/g, "");
-    setFilters((prev) => ({
-      ...prev,
-      price_max: value === "" ? 1000000 : Number(value),
-    }));
-  }}
-  className="w-full pl-7 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#a97c50] focus:border-transparent bg-gray-50"
-  placeholder="Max"
-/>
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">
+            ₹
+          </span>
+          <input
+            ref={maxInputRef}
+            type="text"
+            inputMode="numeric"
+            defaultValue={
+              filters.price_max && filters.price_max !== 1000000
+                ? String(filters.price_max)
+                : ''
+            }
+            onBlur={(e) => {
+              const raw = e.target.value.replace(/\D/g, '');
+              const num = raw === '' ? 1000000 : Number(raw);
+              setFilters((prev) => ({ ...prev, price_max: num }));
+            }}
+            className="w-full pl-7 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#a97c50] focus:border-transparent bg-gray-50"
+            placeholder="Max"
+          />
         </div>
       </div>
       <div className="flex justify-between text-xs text-gray-400 px-1">
@@ -96,6 +96,7 @@ const FilterSidebar = ({
     </div>
   );
 
+  // ---------- Size chips ----------
   const renderSizeChips = () => {
     const sizes = availableSizes;
     if (!sizes || sizes.length === 0) {
@@ -108,10 +109,10 @@ const FilterSidebar = ({
             key={size}
             onClick={() => {
               const selected = (filters.sizes || []).includes(size);
-              setFilters(prev => ({
+              setFilters((prev) => ({
                 ...prev,
-                sizes: selected 
-                  ? (prev.sizes || []).filter(s => s !== size)
+                sizes: selected
+                  ? (prev.sizes || []).filter((s) => s !== size)
                   : [...(prev.sizes || []), size]
               }));
             }}
@@ -128,35 +129,48 @@ const FilterSidebar = ({
     );
   };
 
+  // ---------- Availability ----------
   const renderAvailability = () => (
     <div className="space-y-2">
       {['all', 'in_stock', 'out_of_stock'].map((option) => (
-        <label key={option} className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-all">
+        <label
+          key={option}
+          className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-all"
+        >
           <input
             type="radio"
             name="availability"
             value={option}
             checked={filters.availability === option}
-            onChange={() => setFilters(prev => ({ ...prev, availability: option }))}
+            onChange={() =>
+              setFilters((prev) => ({ ...prev, availability: option }))
+            }
             className="w-4 h-4 text-[#a97c50] focus:ring-[#a97c50] border-gray-300"
           />
           <span className="text-sm text-gray-700 capitalize">
-            {option === 'all' ? 'All Products' : option === 'in_stock' ? 'In Stock' : 'Out of Stock'}
+            {option === 'all'
+              ? 'All Products'
+              : option === 'in_stock'
+              ? 'In Stock'
+              : 'Out of Stock'}
           </span>
         </label>
       ))}
     </div>
   );
 
+  // ---------- Rating ----------
   const renderRating = () => (
     <div className="space-y-2">
       {[4, 3, 2, 1].map((star) => (
         <button
           key={star}
-          onClick={() => setFilters(prev => ({ 
-            ...prev, 
-            rating: prev.rating === star ? 0 : star 
-          }))}
+          onClick={() =>
+            setFilters((prev) => ({
+              ...prev,
+              rating: prev.rating === star ? 0 : star
+            }))
+          }
           className={`flex items-center gap-3 w-full p-2 rounded-lg transition-all hover:bg-gray-50 ${
             filters.rating === star ? 'bg-yellow-50' : ''
           }`}
@@ -184,6 +198,7 @@ const FilterSidebar = ({
     </div>
   );
 
+  // ---------- Section component ----------
   const FilterSection = ({ title, section, children }) => (
     <div className="border-b border-gray-100 py-4 last:border-0">
       <button
@@ -199,14 +214,11 @@ const FilterSidebar = ({
           <ChevronDown className="w-4 h-4 text-gray-400 group-hover:text-[#a97c50] transition-colors" />
         )}
       </button>
-      {expandedSections[section] && (
-        <div className="mt-3">
-          {children}
-        </div>
-      )}
+      {expandedSections[section] && <div className="mt-3">{children}</div>}
     </div>
   );
 
+  // ---------- Helpers ----------
   const hasActiveFilters = () => {
     return (
       (filters.price_min || 0) > 0 ||
@@ -225,6 +237,32 @@ const FilterSidebar = ({
     return count;
   };
 
+  // ---------- Clear handler ----------
+  const handleClear = () => {
+    // Reset input fields
+    if (minInputRef.current) minInputRef.current.value = '';
+    if (maxInputRef.current) maxInputRef.current.value = '';
+    onClear();
+  };
+
+  // ---------- Apply handler (read from refs) ----------
+  const handleApply = () => {
+    const minRaw = minInputRef.current?.value || '';
+    const maxRaw = maxInputRef.current?.value || '';
+    const min = minRaw === '' ? 0 : Number(minRaw.replace(/\D/g, ''));
+    const max = maxRaw === '' ? 1000000 : Number(maxRaw.replace(/\D/g, ''));
+    setFilters((prev) => ({ ...prev, price_min: min, price_max: max }));
+    onApply();
+  };
+
+  // ---------- Remove individual price filter ----------
+  const removePriceFilter = () => {
+    if (minInputRef.current) minInputRef.current.value = '';
+    if (maxInputRef.current) maxInputRef.current.value = '';
+    setFilters((prev) => ({ ...prev, price_min: 0, price_max: 1000000 }));
+  };
+
+  // ---------- Main render ----------
   return (
     <div className="bg-white rounded-2xl shadow-lg p-5 border border-gray-100">
       {/* Header */}
@@ -256,23 +294,26 @@ const FilterSidebar = ({
               <span className="bg-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm border border-gray-200">
                 ₹{filters.price_min} - ₹{filters.price_max}
                 <button
-                  onClick={() => {
-                    setFilters(prev => ({ ...prev, price_min: 0, price_max: 1000000 }));
-                  }}
+                  onClick={removePriceFilter}
                   className="hover:text-red-500 transition-colors"
                 >
                   ×
                 </button>
               </span>
             )}
-            {(filters.sizes || []).map(size => (
-              <span key={size} className="bg-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm border border-gray-200">
+            {(filters.sizes || []).map((size) => (
+              <span
+                key={size}
+                className="bg-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm border border-gray-200"
+              >
                 Size {size}
                 <button
-                  onClick={() => setFilters(prev => ({ 
-                    ...prev, 
-                    sizes: (prev.sizes || []).filter(s => s !== size) 
-                  }))}
+                  onClick={() =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      sizes: (prev.sizes || []).filter((s) => s !== size)
+                    }))
+                  }
                   className="hover:text-red-500 transition-colors"
                 >
                   ×
@@ -283,7 +324,9 @@ const FilterSidebar = ({
               <span className="bg-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm border border-gray-200">
                 {filters.availability === 'in_stock' ? 'In Stock' : 'Out of Stock'}
                 <button
-                  onClick={() => setFilters(prev => ({ ...prev, availability: 'all' }))}
+                  onClick={() =>
+                    setFilters((prev) => ({ ...prev, availability: 'all' }))
+                  }
                   className="hover:text-red-500 transition-colors"
                 >
                   ×
@@ -294,7 +337,7 @@ const FilterSidebar = ({
               <span className="bg-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm border border-gray-200">
                 {filters.rating}★ & above
                 <button
-                  onClick={() => setFilters(prev => ({ ...prev, rating: 0 }))}
+                  onClick={() => setFilters((prev) => ({ ...prev, rating: 0 }))}
                   className="hover:text-red-500 transition-colors"
                 >
                   ×
@@ -303,7 +346,7 @@ const FilterSidebar = ({
             )}
           </div>
           <button
-            onClick={onClear}
+            onClick={handleClear}
             className="text-xs text-[#a97c50] hover:text-[#8b6a43] mt-2 font-medium transition-colors"
           >
             Clear All
@@ -332,7 +375,7 @@ const FilterSidebar = ({
 
       {/* Apply Button */}
       <button
-        onClick={onApply}
+        onClick={handleApply}
         className="w-full mt-4 py-3 bg-[#a97c50] hover:bg-[#8b6a43] text-white rounded-xl font-medium transition-all duration-300 hover:shadow-lg active:scale-95"
       >
         Apply Filters
