@@ -62,8 +62,10 @@ try {
                         oi.product_name,
                         oi.quantity,
                         oi.price,
-                        oi.size
+                        oi.size,
+                        COALESCE(NULLIF(oi.gst_percentage, 0), p.gst_percentage, 0) AS gst_percentage
                       FROM order_items oi
+                      LEFT JOIN products p ON oi.product_id = p.id
                       WHERE oi.order_id = " . intval($row['id']);
         $itemsResult = mysqli_query($conn, $itemsQuery);
         $items = [];

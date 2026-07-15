@@ -170,12 +170,22 @@ mysqli_query($conn, "CREATE TABLE IF NOT EXISTS order_items (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+addColumnIfNotExists($conn, 'order_items', 'gst_percentage', 'DECIMAL(5,2) DEFAULT 0');
+addColumnIfNotExists($conn, 'orders', 'invoice_id', 'INT DEFAULT NULL');
+
 mysqli_query($conn, "CREATE TABLE IF NOT EXISTS frontend_users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     status VARCHAR(50) DEFAULT 'active',
+    reset_token VARCHAR(255) DEFAULT NULL,
+    reset_token_expiry DATETIME DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+addColumnIfNotExists($conn, 'invoices', 'company_name', 'VARCHAR(255) DEFAULT NULL');
+addColumnIfNotExists($conn, 'invoices', 'company_address', 'TEXT DEFAULT NULL');
+addColumnIfNotExists($conn, 'invoices', 'company_phone', 'VARCHAR(50) DEFAULT NULL');
+addColumnIfNotExists($conn, 'invoices', 'company_gstin', 'VARCHAR(50) DEFAULT NULL');
 ?>

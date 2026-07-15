@@ -20,10 +20,10 @@ try {
     // First try to find by invoice_id directly
     $query = "SELECT 
                 i.*, 
-                c.company_name,
-                c.company_address,
-                c.phone AS company_phone,
-                c.gstin AS company_gstin,
+                COALESCE(c.company_name, i.company_name) AS company_name,
+                COALESCE(c.company_address, i.company_address) AS company_address,
+                COALESCE(c.phone, i.company_phone) AS company_phone,
+                COALESCE(c.gstin, i.company_gstin) AS company_gstin,
                 c.logo AS company_logo,
                 c.gst_type AS company_gst_type
               FROM invoices i

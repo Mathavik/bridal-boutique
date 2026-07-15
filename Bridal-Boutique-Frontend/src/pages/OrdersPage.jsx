@@ -49,6 +49,17 @@ const formatDateShort = (dateString) => {
   return date.toLocaleDateString('en-US', options);
 };
 
+// Compute GST for an order: prefer stored gst_total, else sum per-item GST
+const getOrderGst = (order) => {
+  const stored = parseFloat(order?.gst_total || 0);
+  if (stored > 0) return stored;
+  return (order?.items || []).reduce(
+    (sum, it) =>
+      sum + (Number(it.quantity || 0) * Number(it.price || 0) * Number(it.gst_percentage || 0)) / 100,
+    0
+  );
+};
+
 function OrdersPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -354,7 +365,10 @@ function OrdersPage() {
                             <Truck size={14} className="text-gray-400" />
                             <span>{order.tracking_id ? 'Shipped' : 'Not shipped'}</span>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-[11px] text-gray-400">
+                              GST ₹{parseFloat(getOrderGst(order) || 0).toLocaleString()}
+                            </span>
                             <span className="font-semibold text-[#a97c50] text-base">
                               ₹{parseFloat(order.total || 0).toLocaleString()}
                             </span>
@@ -571,6 +585,9 @@ function OrdersPage() {
                           <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
                             <span>Qty: {item.quantity}</span>
                             {item.size && <span>• Size: {item.size}</span>}
+                            {item.gst_percentage ? (
+                              <span className="text-gray-400">GST {Number(item.gst_percentage)}%</span>
+                            ) : null}
                             <span className="text-[#a97c50] font-semibold">
                               ₹{parseFloat(item.total || item.price * item.quantity || 0).toLocaleString()}
                             </span>
@@ -584,7 +601,19 @@ function OrdersPage() {
 
               {/* Total */}
               <div className="bg-gradient-to-r from-[#a97c50]/10 to-[#a97c50]/5 rounded-2xl p-5 border border-[#a97c50]/20">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600 font-medium">Subtotal</span>
+                  <span className="font-semibold text-[#1a1a1a]">
+                    ₹{parseFloat(selectedOrder.sub_total || selectedOrder.total || 0).toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm mt-1">
+                  <span className="text-gray-600 font-medium">GST</span>
+                  <span className="font-semibold text-[#1a1a1a]">
+                    ₹{parseFloat(getOrderGst(selectedOrder) || 0).toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#a97c50]/20">
                   <span className="text-gray-600 font-medium">Total Amount</span>
                   <span className="text-2xl font-bold text-[#a97c50]">
                     ₹{parseFloat(selectedOrder.total || 0).toLocaleString()}

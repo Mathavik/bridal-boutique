@@ -53,6 +53,17 @@ if (count($products) == 0) {
 if ($gst_type == "without_gst") {
     $gst_total    = 0;
     $total_amount = $sub_total;
+} else {
+    // Compute GST from each product's gst_percentage (backend source of truth)
+    $calc_gst = 0;
+    foreach ($products as $item) {
+        $gst_pct = floatval($item['gst_percentage'] ?? 0);
+        $qty     = floatval($item['qty'] ?? 0);
+        $price   = floatval($item['price'] ?? 0);
+        $calc_gst += ($price * $qty * $gst_pct) / 100;
+    }
+    $gst_total    = $calc_gst;
+    $total_amount = $sub_total + $calc_gst;
 }
 
 /* ── CREDIT / CASH LOGIC ── */
@@ -143,6 +154,19 @@ if ($customer_id > 0) {
 }
 $current_balance = $previous_balance + $balance_amount;
 
+/* ── COMPANY SNAPSHOT (for invoice "From" details) ── */
+$snap_name = $snap_address = $snap_phone = $snap_gstin = '';
+if ($company_id > 0) {
+    $compRes = $conn->query("SELECT company_name, company_address, phone, gstin FROM companies WHERE id='$company_id' LIMIT 1");
+    if ($compRes && $compRes->num_rows > 0) {
+        $comp = $compRes->fetch_assoc();
+        $snap_name    = $conn->real_escape_string($comp['company_name'] ?? '');
+        $snap_address = $conn->real_escape_string($comp['company_address'] ?? '');
+        $snap_phone   = $conn->real_escape_string($comp['phone'] ?? '');
+        $snap_gstin   = $conn->real_escape_string($comp['gstin'] ?? '');
+    }
+}
+
 /* ── INSERT INVOICE ── */
 $product_json    = $conn->real_escape_string(json_encode($products));
 $customer_id_sql = $customer_id > 0 ? $customer_id : "NULL";
@@ -155,13 +179,15 @@ $sql = "
         products, sub_total, gst_total, total_amount,
         paid_amount, balance_amount, previous_balance, current_balance,
         payment_method, payment_type, gst_type, gst_no,
-        payment_status, company_id, due_date
+        payment_status, company_id, due_date,
+        company_name, company_address, company_phone, company_gstin
     ) VALUES (
         '$invoice_no', $customer_id_sql, '$customer_name', '$customer_phone', '$cashier_id',
         '$product_json', '$sub_total', '$gst_total', '$total_amount',
         '$final_paid', '$balance_amount', '$previous_balance', '$current_balance',
         '$payment_method', '$payment_type', '$gst_type', $gst_no_sql,
-        '$payment_status', '$company_id', $due_date_sql
+        '$payment_status', '$company_id', $due_date_sql,
+        '$snap_name', '$snap_address', '$snap_phone', '$snap_gstin'
     )
 ";
 if (!$conn->query($sql)) {
@@ -271,6 +297,8 @@ if (!$conn->query($order_sql)) {
             $product_name = $conn->real_escape_string($prodData['product_name']);
         }
         
+        $item_gst = floatval($item['gst_percentage'] ?? 0);
+
         $item_sql = "
             INSERT INTO order_items (
                 order_id,
@@ -279,6 +307,7 @@ if (!$conn->query($order_sql)) {
                 price,
                 quantity,
                 size,
+                gst_percentage,
                 created_at
             ) VALUES (
                 '$order_id',
@@ -287,11 +316,15 @@ if (!$conn->query($order_sql)) {
                 '$price',
                 '$qty',
                 '$size',
+                '$item_gst',
                 NOW()
             )
         ";
         $conn->query($item_sql);
     }
+
+    // Link the order to its invoice so My Orders -> Invoice resolves correctly
+    $conn->query("UPDATE orders SET invoice_id = '$invoice_id' WHERE id = '$order_id'");
 }
 
 /* ── LAST INVOICE ── */
