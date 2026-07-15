@@ -8,6 +8,8 @@ import {
 import botikLogo from "../assets/Botik.png";
 
 function Footer() {
+  const currentYear = new Date().getFullYear(); // Dynamic year
+
   return (
     <footer className="w-full bg-white ">
       <div className="max-w-[1220px] mx-auto px-6 lg:px-8">
@@ -122,7 +124,7 @@ function Footer() {
         {/* Bottom */}
         <div className="border-t border-[#E5E5E5] py-5 flex flex-col md:flex-row items-center justify-between text-center md:text-left">
           <p className="text-[12px] text-[#222222]">
-            © 2026 Pathavathi Collections Fashion. All rights reserved.
+            © {currentYear} Pathavathi Collections Fashion. All rights reserved.
           </p>
           <div className="flex items-center gap-6 text-[12px] text-[#222222] mt-3 md:mt-0">
             <a href="#">Privacy Policy</a>

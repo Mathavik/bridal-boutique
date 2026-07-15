@@ -226,11 +226,10 @@ function ProfilePage() {
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 md:p-8 border border-white/20">
           {message.text && (
             <div
-              className={`mb-6 p-4 rounded-xl flex items-start gap-3 ${
-                message.type === "success"
+              className={`mb-6 p-4 rounded-xl flex items-start gap-3 ${message.type === "success"
                   ? "bg-green-50 text-green-700 border border-green-200"
                   : "bg-red-50 text-red-700 border border-red-200"
-              }`}
+                }`}
             >
               {message.type === "success" ? (
                 <CheckCircle size={20} className="flex-shrink-0 mt-0.5" />
@@ -269,11 +268,10 @@ function ProfilePage() {
                   onChange={handleChange}
                   required
                   disabled={!isEditing}
-                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#a97c50] focus:border-transparent transition ${
-                    isEditing
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#a97c50] focus:border-transparent transition ${isEditing
                       ? "border-gray-300 bg-white"
                       : "border-gray-200 bg-gray-50 text-gray-600 cursor-not-allowed"
-                  }`}
+                    }`}
                   placeholder="Enter your full name"
                 />
               </div>
@@ -306,11 +304,10 @@ function ProfilePage() {
                 value={formData.phone}
                 onChange={handleChange}
                 disabled={!isEditing}
-                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#a97c50] focus:border-transparent transition ${
-                  isEditing
+                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#a97c50] focus:border-transparent transition ${isEditing
                     ? "border-gray-300 bg-white"
                     : "border-gray-200 bg-gray-50 text-gray-600 cursor-not-allowed"
-                }`}
+                  }`}
                 placeholder="Enter your 10-digit phone number"
               />
               {isEditing && (
@@ -331,11 +328,10 @@ function ProfilePage() {
                 onChange={handleChange}
                 rows={3}
                 disabled={!isEditing}
-                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#a97c50] focus:border-transparent transition ${
-                  isEditing
+                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#a97c50] focus:border-transparent transition ${isEditing
                     ? "border-gray-300 bg-white"
                     : "border-gray-200 bg-gray-50 text-gray-600 cursor-not-allowed"
-                }`}
+                  }`}
                 placeholder="Enter your complete shipping address"
               />
             </div>
@@ -415,11 +411,10 @@ function ProfilePage() {
               >
                 {passwordMessage.text && (
                   <div
-                    className={`p-3 rounded-lg text-sm flex items-center gap-2 ${
-                      passwordMessage.type === "success"
+                    className={`p-3 rounded-lg text-sm flex items-center gap-2 ${passwordMessage.type === "success"
                         ? "bg-green-50 text-green-700"
                         : "bg-red-50 text-red-700"
-                    }`}
+                      }`}
                   >
                     {passwordMessage.type === "success" ? (
                       <CheckCircle size={16} />
@@ -468,6 +463,14 @@ function ProfilePage() {
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#a97c50] focus:border-transparent"
                     placeholder="Re-enter new password"
                   />
+                </div>
+                <div className="text-right mt-2">
+                  <Link
+                    to="/forgot-password"
+                    className="text-sm text-[#a97c50] hover:underline"
+                  >
+                    Forgot your password?
+                  </Link>
                 </div>
                 <button
                   type="submit"
